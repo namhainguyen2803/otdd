@@ -71,7 +71,6 @@ class NewDatasetDistance():
         self.tgt_embedding = None
 
         self._init_data(self.D1, self.D2)
-        self._load_datasets(maxsamples=10000)
 
     def _init_data(self, D1, D2):
         """ Preprocessing of datasets. Extracts value and coding for effective
@@ -278,19 +277,27 @@ class NewDatasetDistance():
 
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
-    def distance(self, num_projection=10000):
+    def distance(self, maxsamples=None, num_projection=10000):
         """
         self.X: tensor of features
         self.Y: tensor of labels corresponding to features to be considered
         self.V: set of all labels to be considered
         """
+
+        self._load_datasets(maxsamples=maxsamples)
+
+        print(self.X1.shape, self.Y1.shape)
+        print(self.X2.shape, self.Y2.shape)
+
         dtype = torch.DoubleTensor if self.precision == 'double' else torch.FloatTensor
         # use this matrix to project all X into 1D, has shape (num_projection, X.shape[1])
         projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[1],num_projection=num_projection, device=self.device)
         projection_matrix = projection_matrix.type(dtype)
 
         # sample random high-order moment, has shape (num_projection)
-        k = torch.poisson(torch.randint(low=1, high=5, size=(num_projection,)).type(dtype))
+        k = torch.poisson(torch.rand(num_projection, device=self.device) * 2) + 1
+
+        print(f"Order moment: {torch.unique(k)}")
 
         # use this matrix to project vector concat([projected_x, high-order moment]) into 1D, has shape (num_projection, 2)
         projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=2,num_projection=num_projection, device=self.device)
