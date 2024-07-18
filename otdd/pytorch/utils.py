@@ -27,6 +27,7 @@ from munkres import Munkres
 from .nets import BoWSentenceEmbedding
 from .sqrtm import sqrtm, sqrtm_newton_schulz
 
+
 DATASET_NORMALIZATION = {
     'MNIST': ((0.1307,), (0.3081,)),
     'USPS' : ((0.1307,), (0.3081,)),
@@ -202,7 +203,7 @@ def load_full_dataset(data, targets=False, return_both_targets=False,
     """ Loads full dataset into memory.
 
     Arguments:
-        targets (bool, or 'infer'): Whether to colleect and return targets (labels) too
+        targets (bool, or 'infer'): Whether to collect and return targets (labels) too
         return_both_targets (bool): Only used when targets='infer'. Indicates whether
             the true targets should also be returned.
         labels_keep (list): If provided, will only keep examples with these labels
@@ -558,3 +559,27 @@ def set_parameter_requires_grad(model, feature_extracting):
     if feature_extracting:
         for param in model.parameters():
             param.requires_grad = False
+
+
+
+#### NEW UTILS CODES
+
+def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="cpu"):
+    """
+    Generate random uniform unit sphere projections matrix
+    :param dim: dimension of measures
+    :param num_projection: number of projection vectors to generate
+    :return: projection matrix \in \mathbb R^(num_projection, dim)
+    """
+    projection_matrix = torch.randn((num_projection, dim), device=device)
+    projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=1, keepdim=True))
+    return projection_matrix
+
+
+def quantile_function(qs, cws, xs):
+    n = xs.shape[0]
+    cws = cws.t().contiguous()
+    qs = qs.t().contiguous()
+    idx = torch.searchsorted(cws, qs).t()
+    return torch.take_along_dim(input=xs, indices=torch.clip(idx, 0, n - 1), dim=0)
+

@@ -36,10 +36,9 @@ from sklearn.cluster import k_means, DBSCAN
 
 ## Local Imports
 from ..plotting import heatmap, gaussian_density_plot, imshow_group_boundaries
-from .utils import load_full_dataset, augmented_dataset, extract_data_targets
+from .utils import load_full_dataset, augmented_dataset, extract_data_targets, register_gradient_hook, process_device_arg, multiclass_hinge_loss
 from .moments import compute_label_stats
 from .wasserstein import efficient_pwdist_gauss, pwdist_exact, pwdist_upperbound, pwdist_means_only
-from .utils import register_gradient_hook, process_device_arg, multiclass_hinge_loss, load_full_dataset
 
 
 import matplotlib
