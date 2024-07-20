@@ -15,6 +15,7 @@ import torch.utils.data.dataloader as dataloader
 from torch.utils.data.sampler import SubsetRandomSampler
 from tqdm.autonotebook import tqdm
 import numpy as np
+import random
 
 from .utils import load_full_dataset, extract_data_targets, process_device_arg, generate_uniform_unit_sphere_projections
 from .wasserstein import Sliced_Wasserstein_Distance, Wasserstein_One_Dimension
@@ -250,34 +251,42 @@ class NewDatasetDistance():
         num_projection = projection_matrix.shape[0]
         num_examples = X.shape[0]
         X_projection = torch.matmul(X, projection_matrix.t())  # shape == (num_examples, num_projection)
-        moment_X_projection = X_projection**k
-        avg_moment_X_projection = torch.sum(moment_X_projection, dim=0) / num_examples # shape == (num_projection)
 
-        return X_projection, avg_moment_X_projection # shape == (num_examples, num_projection); (num_projection)
+        moment_X_projection = torch.pow(input=X_projection.permute(1, 0).unsqueeze(-1), exponent=k) # shape == (num_projection, num_examples, num_moments)
+
+        avg_moment_X_projection = torch.sum(moment_X_projection, dim=1) / num_examples # shape == (num_projection, num_moments)
+
+        return X_projection, avg_moment_X_projection # shape == (num_examples, num_projection); (num_projection, num_moments)
 
     def _compute_projected_dataset_matrix(self, dict_data, projection_matrix, projection_matrix_2, k):
 
         proj_matrix_dataset = list()
         for (cls_id, data) in dict_data.items():
             X_projection, avg_moment_X_projection = self._compute_moments_projected_distrbution(X=data, projection_matrix=projection_matrix, k=k) 
-            # shape == (num_examples, num_projection); (num_projection)
+            # shape == (num_examples, num_projection); (num_projection, num_moments)
             X_projection = torch.permute(X_projection, dims=(1, 0)) # shape == (num_projection, num_examples)
 
+            # X_projection.shape == (num_projection, num_examples)
+            # avg_moment_X_projection.shape == (num_projection, num_moments)
+
             num_examples = X_projection.shape[1]
-            # print(f"Hello {X_projection.shape, avg_moment_X_projection.shape}")
-            h = torch.stack((X_projection, 
-                            avg_moment_X_projection.unsqueeze(1).expand(-1, num_examples)), 
-                            dim=2) # shape == (num_projection, num_examples, 2)
+            num_projection = avg_moment_X_projection.shape[0]
+            num_moments = avg_moment_X_projection.shape[1]
+
+            # print(X_projection.shape, avg_moment_X_projection.shape, avg_moment_X_projection.unsqueeze(1).expand(num_projection, num_examples, num_moments).shape)
+            h = torch.cat((X_projection.unsqueeze(-1),
+                            avg_moment_X_projection.unsqueeze(1).expand(num_projection, num_examples, num_moments)), 
+                            dim=2) # shape == (num_projection, num_examples, num_moments+1)
             
             proj_matrix_dataset.append(h)
         
-        proj_matrix_dataset = torch.cat(proj_matrix_dataset, dim=1) # shape == (num_projection, total_examples, 2) # total_examples = sum(num_examples)
+        proj_matrix_dataset = torch.cat(proj_matrix_dataset, dim=1) # shape == (num_projection, total_examples, num_moments+1) # total_examples = sum(num_examples)
 
         proj_proj_matrix_dataset = torch.matmul(proj_matrix_dataset, projection_matrix_2.unsqueeze(-1)).squeeze(-1) # shape == (num_projection, total_examples)
 
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
-    def distance(self, maxsamples=None, num_projection=10000):
+    def distance(self, maxsamples=None, num_projection=10000, num_moments=5, lambd=None, moments=[1,2,3]):
         """
         self.X: tensor of features
         self.Y: tensor of labels corresponding to features to be considered
@@ -294,24 +303,34 @@ class NewDatasetDistance():
         projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[1],num_projection=num_projection, device=self.device)
         projection_matrix = projection_matrix.type(dtype)
 
-        # sample random high-order moment, has shape (num_projection)
-        k = torch.poisson(torch.rand(num_projection, device=self.device) * 2) + 1
-
-        print(f"Order moment: {torch.unique(k)}")
+        if moments is None:
+            # sample random high-order moment, has shape (num_projection)
+            if lambd is None:
+                lambd = random.random() * num_moments
+            
+            moments = list()
+            while len(moments) < num_moments:
+                k = torch.poisson(torch.tensor(lambd).float())
+                if k not in list_k and k > 0:
+                    moments.append(k)
+        else:
+            num_moments = len(moments)
+        moments = torch.tensor(moments, device=self.device)
+        print(f"Order moment: {moments}")
 
         # use this matrix to project vector concat([projected_x, high-order moment]) into 1D, has shape (num_projection, 2)
-        projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=2,num_projection=num_projection, device=self.device)
+        projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=num_projection, device=self.device)
         projection_matrix_2 = projection_matrix_2.type(dtype)
 
         proj_proj_matrix_dataset_1 = self._compute_projected_dataset_matrix(dict_data=self.dict_data_1,
-                                                                        projection_matrix=projection_matrix, 
-                                                                        projection_matrix_2=projection_matrix_2, 
-                                                                        k=k) # shape == (total_examples_of_dataset_1, num_projection)
+                                                                            projection_matrix=projection_matrix,
+                                                                            projection_matrix_2=projection_matrix_2,
+                                                                            k=moments) # shape == (total_examples_of_dataset_1, num_projection)
 
         proj_proj_matrix_dataset_2 = self._compute_projected_dataset_matrix(dict_data=self.dict_data_2,
-                                                                        projection_matrix=projection_matrix, 
-                                                                        projection_matrix_2=projection_matrix_2, 
-                                                                        k=k) # shape == (total_examples_of_dataset_2, num_projection)
+                                                                            projection_matrix=projection_matrix,
+                                                                            projection_matrix_2=projection_matrix_2,
+                                                                            k=moments) # shape == (total_examples_of_dataset_2, num_projection)
 
 
         num_supports_source = self.X1.shape[0]
@@ -334,3 +353,4 @@ class NewDatasetDistance():
             return torch.mean(w_1d)
         sw = torch.pow(input=w_1d, exponent=self.p)
         return torch.pow(torch.mean(sw), exponent=1/self.p)
+
