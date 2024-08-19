@@ -5,10 +5,9 @@ scikit-learn
 numpy
 scipy
 matplotlib
-torchvision
-torchtext
 sentence-transformers
 skorch
+torchtext
 
 pot
 

@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=1 python3 augmentation_exp.py

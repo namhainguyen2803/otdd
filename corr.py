@@ -1,0 +1,67 @@
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from scipy import stats
+
+LIST_DATASETS = ["MNIST", "FMNIST", "EMNIST", "KMNIST", "USPS"]
+
+# Load ACC_ADAPT
+file_path = 'saved/acc_adapt2.json'
+with open(file_path, 'r') as file:
+    ACC_ADAPT = json.load(file)
+
+# Load ACC_NO_ADAPT
+file_path = 'saved/acc_no_adapt2.json'
+with open(file_path, 'r') as file:
+    ACC_NO_ADAPT = json.load(file)
+
+# Load DIST
+file_path = 'saved/dist3.json'
+with open(file_path, 'r') as file:
+    DIST = json.load(file)
+
+list_performance_gains = []
+list_dists = []
+list_labels = []  # To store the labels (notations) for each point
+
+for i in range(len(LIST_DATASETS)):
+    for j in range(len(LIST_DATASETS)):
+        source = LIST_DATASETS[i]
+        target = LIST_DATASETS[j]
+
+        if source == target:
+            continue
+        else:
+            perf_gain = (ACC_NO_ADAPT[target] - ACC_ADAPT[source][target])
+            list_performance_gains.append(perf_gain * 100)
+            list_dists.append(DIST[source][target])
+            list_labels.append(f'{source[0]}->{target[0]}')
+
+# Calculate the Pearson correlation
+ovr_rho, ovr_p_value = stats.pearsonr(list_dists, list_performance_gains)
+print(f"Overall Pearson correlation coefficient: {ovr_rho}")
+print(f"Overall P-value: {ovr_p_value}")
+
+# Fit the linear regression model
+list_X = np.array(list_dists).reshape(-1, 1)
+list_y = np.array(list_performance_gains)
+model = LinearRegression().fit(list_X, list_y)
+list_y_pred = model.predict(list_X)
+
+# Create the plot
+plt.figure(figsize=(10, 8))
+plt.scatter(list_dists, list_performance_gains, s=100, color='blue', label='Data points')
+plt.plot(list_dists, list_y_pred, color='blue', linewidth=2, label='Fitted line')
+
+# Annotate each point with its label
+for i in range(len(list_dists)):
+    plt.text(list_dists[i], list_performance_gains[i], list_labels[i], fontsize=12, ha='right')
+
+plt.xlabel('WTE Distance')
+plt.ylabel('Performance Gap (%)')
+plt.title(f'$r = {ovr_rho:.2f}$ $p = {ovr_p_value:.2f}$')
+
+plt.legend()
+plt.savefig('distance_vs_adaptations.png')
+plt.show()

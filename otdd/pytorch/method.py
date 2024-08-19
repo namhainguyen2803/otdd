@@ -241,7 +241,7 @@ class NewDatasetDistance():
 
     def _compute_moments_projected_distrbution(self, X, projection_matrix, k):
         """
-        encode distribution into a number, 
+        encode distribution into a vector having length num_moments, 
         which calculates high-order moment of projected distribution having support X.
 
         projection_matrix has shape  R^(num_projection, dim)
@@ -286,10 +286,10 @@ class NewDatasetDistance():
 
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
-    def distance(self, maxsamples=None, num_projection=10000, num_moments=5, lambd=None, moments=[1,2,3]):
+    def distance(self, maxsamples=None, num_projection=10000, num_moments=5, lambd=None, moments=[1,2,3,4,5,6]):
         """
-        self.X: tensor of features
-        self.Y: tensor of labels corresponding to features to be considered
+        self.X: tensor of features 60000x1x28x28 = 60000x784
+        self.Y: tensor of labels corresponding to features to be considered [60000]
         self.V: set of all labels to be considered
         """
 
@@ -318,7 +318,7 @@ class NewDatasetDistance():
         moments = torch.tensor(moments, device=self.device)
         print(f"Order moment: {moments}")
 
-        # use this matrix to project vector concat([projected_x, high-order moment]) into 1D, has shape (num_projection, 2)
+        # use this matrix to project vector concat([projected_x, high-order moment]) into 1D, has shape (num_projection, num_moment+1)
         projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=num_projection, device=self.device)
         projection_matrix_2 = projection_matrix_2.type(dtype)
 

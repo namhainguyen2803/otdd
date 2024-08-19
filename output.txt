@@ -1,0 +1,140 @@
+--- TARGET DATA: mnist ---
+Accuracy in adaptation: {'kmnist': 0.9833, 'emnist': 0.9877, 'fmnist': 0.977, 'usps': 0.982}, Accuracy in training from scratch: 0.99
+Relative error in adaptation: {'fmnist': 1.3, 'emnist': 0.22999999999999668, 'kmnist': 0.6700000000000034, 'usps': 0.8}
+Distance between sources and target: {'mnist': 0, 'fmnist': 1249.955078125, 'emnist': 872.8924560546875, 'kmnist': 1156.57666015625, 'usps': 913.115478515625}
+Pearson correlation coefficient: 0.7685528918826708
+P-value: 0.23144710811732905
+
+--- TARGET DATA: kmnist ---
+Accuracy in adaptation: {'mnist': 0.8902, 'emnist': 0.9097, 'fmnist': 0.8715, 'usps': 0.8899}, Accuracy in training from scratch: 0.9279
+Relative error in adaptation: {'mnist': 0.5228848821081821, 'fmnist': 0.782246879334256, 'emnist': 0.25242718446601914, 'usps': 0.5270457697642149}
+Distance between sources and target: {'mnist': 1156.57666015625, 'fmnist': 1268.7593994140625, 'emnist': 1138.68017578125, 'kmnist': 0, 'usps': 973.1685791015625}
+Pearson correlation coefficient: 0.41742446938881844
+P-value: 0.5825755306111815
+
+--- TARGET DATA: emnist ---
+Accuracy in adaptation: {'mnist': 0.8958653846153846, 'kmnist': 0.8970192307692307, 'fmnist': 0.8728846153846154, 'usps': 0.8907692307692308}, Accuracy in training from scratch: 0.9237980769230769
+Relative error in adaptation: {'mnist': 0.36656151419558414, 'fmnist': 0.6681388012618297, 'kmnist': 0.3514195583596218, 'usps': 0.4334384858044164}
+Distance between sources and target: {'mnist': 872.8924560546875, 'fmnist': 1166.3681640625, 'emnist': 0, 'kmnist': 1138.68017578125, 'usps': 963.4732666015625}
+Pearson correlation coefficient: 0.5356190254661884
+P-value: 0.46438097453381166
+
+--- TARGET DATA: fmnist ---
+Accuracy in adaptation: {'mnist': 0.8509, 'kmnist': 0.8553, 'emnist': 0.8524, 'usps': 0.8428}, Accuracy in training from scratch: 0.8969
+Relative error in adaptation: {'mnist': 0.44616876818622747, 'emnist': 0.43161978661493694, 'kmnist': 0.40349175557711053, 'usps': 0.5247332686711935}
+Distance between sources and target: {'mnist': 1249.955078125, 'fmnist': 0, 'emnist': 1166.3681640625, 'kmnist': 1268.7593994140625, 'usps': 782.001220703125}
+Pearson correlation coefficient: -0.9450689603070195
+P-value: 0.05493103969298052
+
+--- TARGET DATA: usps ---
+Accuracy in adaptation: {'mnist': 0.9521674140508222, 'kmnist': 0.9422022919780767, 'emnist': 0.9526656701544594, 'fmnist': 0.9357249626307922}, Accuracy in training from scratch: 0.9581464872944694
+Relative error in adaptation: {'mnist': 0.1428571428571425, 'fmnist': 0.5357142857142876, 'emnist': 0.1309523809523826, 'kmnist': 0.3809523809523826}
+Distance between sources and target: {'mnist': 913.115478515625, 'fmnist': 782.001220703125, 'emnist': 963.4732666015625, 'kmnist': 973.1685791015625, 'usps': 0}
+Pearson correlation coefficient: -0.6685491731326662
+P-value: 0.33145082686733396
+
+--- TARGET DATA: mnist ---
+Accuracy in adaptation: {'kmnist': 0.9841, 'emnist': 0.9881, 'fmnist': 0.9802, 'usps': 0.9826}, Accuracy in training from scratch: 0.9893
+Relative error in adaptation: {'fmnist': 0.8504672897196225, 'emnist': 0.11214953271027794, 'kmnist': 0.48598130841121134, 'usps': 0.6261682242990562}
+Distance between sources and target: {'mnist': 0, 'fmnist': 1247.545166015625, 'emnist': 877.2701416015625, 'kmnist': 1158.103515625, 'usps': 916.7822265625}
+Pearson correlation coefficient: 0.7008240168838107
+P-value: 0.2991759831161893
+
+--- TARGET DATA: kmnist ---
+Accuracy in adaptation: {'mnist': 0.8801, 'emnist': 0.9048, 'fmnist': 0.8774, 'usps': 0.8878}, Accuracy in training from scratch: 0.9326
+Relative error in adaptation: {'mnist': 0.7789317507418394, 'fmnist': 0.8189910979228489, 'emnist': 0.4124629080118684, 'usps': 0.6646884272997023}
+Distance between sources and target: {'mnist': 1158.103515625, 'fmnist': 1275.3369140625, 'emnist': 1134.252685546875, 'kmnist': 0, 'usps': 979.267822265625}
+Pearson correlation coefficient: 0.36595303690313336
+P-value: 0.6340469630968666
+
+--- TARGET DATA: emnist ---
+Accuracy in adaptation: {'mnist': 0.8969711538461539, 'kmnist': 0.9037019230769231, 'fmnist': 0.8733653846153846, 'usps': 0.886201923076923}, Accuracy in training from scratch: 0.9270192307692308
+Relative error in adaptation: {'mnist': 0.41172595520421534, 'fmnist': 0.7351778656126483, 'kmnist': 0.3194993412384713, 'usps': 0.5592885375494077}
+Distance between sources and target: {'mnist': 877.2701416015625, 'fmnist': 1167.7208251953125, 'emnist': 0, 'kmnist': 1134.252685546875, 'usps': 965.0931396484375}
+Pearson correlation coefficient: 0.30616849586437306
+P-value: 0.6938315041356269
+
+--- TARGET DATA: fmnist ---
+Accuracy in adaptation: {'mnist': 0.8501, 'kmnist': 0.8616, 'emnist': 0.8518, 'usps': 0.8525}, Accuracy in training from scratch: 0.8971
+Relative error in adaptation: {'mnist': 0.4567541302235184, 'emnist': 0.4402332361516036, 'kmnist': 0.3449951409135081, 'usps': 0.4334305150631679}
+Distance between sources and target: {'mnist': 1247.545166015625, 'fmnist': 0, 'emnist': 1167.7208251953125, 'kmnist': 1275.3369140625, 'usps': 783.0140380859375}
+Pearson correlation coefficient: -0.3064068147421009
+P-value: 0.6935931852578991
+
+--- TARGET DATA: usps ---
+Accuracy in adaptation: {'mnist': 0.953662182361734, 'kmnist': 0.9481813652217239, 'emnist': 0.9441953163926258, 'fmnist': 0.9506726457399103}, Accuracy in training from scratch: 0.955655206776283
+Relative error in adaptation: {'mnist': 0.04494382022471896, 'fmnist': 0.11235955056179865, 'emnist': 0.2584269662921359, 'kmnist': 0.16853932584269798}
+Distance between sources and target: {'mnist': 916.7822265625, 'fmnist': 783.0140380859375, 'emnist': 965.0931396484375, 'kmnist': 979.267822265625, 'usps': 0}
+Pearson correlation coefficient: 0.4677854549158579
+P-value: 0.532214545084142
+
+--- TARGET DATA: mnist ---
+Accuracy in adaptation: {'kmnist': 0.9842, 'emnist': 0.9872, 'fmnist': 0.9787, 'usps': 0.9826}, Accuracy in training from scratch: 0.9907
+Relative error in adaptation: {'fmnist': 1.290322580645166, 'emnist': 0.3763440860215127, 'kmnist': 0.6989247311828042, 'usps': 0.8709677419354858}
+Distance between sources and target: {'mnist': 0, 'fmnist': 2.7971506388141467, 'emnist': 1.0434917436954496, 'kmnist': 1.0651241455163258, 'usps': 1.7082489976784283}
+Pearson correlation coefficient: 0.9395454700527288
+P-value: 0.060454529947271185
+
+--- TARGET DATA: kmnist ---
+Accuracy in adaptation: {'mnist': 0.8868, 'emnist': 0.9012, 'fmnist': 0.8794, 'usps': 0.8889}, Accuracy in training from scratch: 0.9289
+Relative error in adaptation: {'mnist': 0.5921237693389576, 'fmnist': 0.696202531645569, 'emnist': 0.38959212376933794, 'usps': 0.5625879043600548}
+Distance between sources and target: {'mnist': 1.0651241455163258, 'fmnist': 2.577318302579456, 'emnist': 0.8700650608890202, 'kmnist': 0, 'usps': 0.9729859759420749}
+Pearson correlation coefficient: 0.7739078572388846
+P-value: 0.22609214276111533
+
+--- TARGET DATA: emnist ---
+Accuracy in adaptation: {'mnist': 0.8946634615384615, 'kmnist': 0.8980769230769231, 'fmnist': 0.8737980769230769, 'usps': 0.8904326923076923}, Accuracy in training from scratch: 0.9273076923076923
+Relative error in adaptation: {'mnist': 0.44907407407407335, 'fmnist': 0.736111111111111, 'kmnist': 0.40211640211640115, 'usps': 0.507275132275132}
+Distance between sources and target: {'mnist': 1.0434917436954496, 'fmnist': 3.3010506557629, 'emnist': 0, 'kmnist': 0.8700650608890202, 'usps': 1.5953938755318815}
+Pearson correlation coefficient: 0.9977731061342952
+P-value: 0.0022268938657048487
+
+--- TARGET DATA: fmnist ---
+Accuracy in adaptation: {'mnist': 0.8484, 'kmnist': 0.8489, 'emnist': 0.8623, 'usps': 0.8536}, Accuracy in training from scratch: 0.8913
+Relative error in adaptation: {'mnist': 0.39466421343146213, 'emnist': 0.2667893284268631, 'kmnist': 0.3900643974241029, 'usps': 0.3468261269549213}
+Distance between sources and target: {'mnist': 2.7971506388141467, 'fmnist': 0, 'emnist': 3.3010506557629, 'kmnist': 2.577318302579456, 'usps': 2.892806345511066}
+Pearson correlation coefficient: -0.9448341199639378
+P-value: 0.055165880036062154
+
+--- TARGET DATA: usps ---
+Accuracy in adaptation: {'mnist': 0.9471848530144494, 'kmnist': 0.9476831091180867, 'emnist': 0.9466865969108121, 'fmnist': 0.9332336821126059}, Accuracy in training from scratch: 0.9551569506726457
+Relative error in adaptation: {'mnist': 0.17777777777777712, 'fmnist': 0.4888888888888871, 'emnist': 0.1888888888888888, 'kmnist': 0.16666666666666544}
+Distance between sources and target: {'mnist': 1.7082489976784283, 'fmnist': 2.892806345511066, 'emnist': 1.5953938755318815, 'kmnist': 0.9729859759420749, 'usps': 0}
+Pearson correlation coefficient: 0.9319822086750401
+P-value: 0.06801779132496
+
+--- TARGET DATA: mnist ---
+Accuracy in adaptation: {'kmnist': 0.984, 'emnist': 0.9873, 'fmnist': 0.9738, 'usps': 0.9785}, Accuracy in training from scratch: 0.9883
+Relative error in adaptation: {'fmnist': 1.2393162393162311, 'emnist': 0.08547008547008522, 'kmnist': 0.3675213675213636, 'usps': 0.8376068376068276}
+Distance between sources and target: {'mnist': 0, 'fmnist': 218.53110805941822, 'emnist': 24.800574402178288, 'kmnist': 34.26264171773431, 'usps': 65.79292297775824}
+Pearson correlation coefficient: 0.8951909721405777
+P-value: 0.10480902785942225
+
+--- TARGET DATA: kmnist ---
+Accuracy in adaptation: {'mnist': 0.8803, 'emnist': 0.9046, 'fmnist': 0.8579, 'usps': 0.881}, Accuracy in training from scratch: 0.9281
+Relative error in adaptation: {'mnist': 0.6648122392211417, 'fmnist': 0.9763560500695421, 'emnist': 0.3268428372739929, 'usps': 0.6550764951321287}
+Distance between sources and target: {'mnist': 34.26264171773431, 'fmnist': 229.0358831011453, 'emnist': 28.709873010127833, 'kmnist': 0, 'usps': 44.031749952754204}
+Pearson correlation coefficient: 0.8335058363689245
+P-value: 0.1664941636310755
+
+--- TARGET DATA: emnist ---
+Accuracy in adaptation: {'mnist': 0.8938942307692308, 'kmnist': 0.8922596153846154, 'fmnist': 0.8663461538461539, 'usps': 0.8880769230769231}, Accuracy in training from scratch: 0.9305769230769231
+Relative error in adaptation: {'mnist': 0.5283933518005536, 'fmnist': 0.9252077562326866, 'kmnist': 0.5519390581717449, 'usps': 0.6121883656509693}
+Distance between sources and target: {'mnist': 24.800574402178288, 'fmnist': 232.49788356623992, 'emnist': 0, 'kmnist': 28.709873010127833, 'usps': 60.84067698006843}
+Pearson correlation coefficient: 0.9991059663001806
+P-value: 0.0008940336998195519
+
+--- TARGET DATA: fmnist ---
+Accuracy in adaptation: {'mnist': 0.8498, 'kmnist': 0.8622, 'emnist': 0.8611, 'usps': 0.8484}, Accuracy in training from scratch: 0.8903
+Relative error in adaptation: {'mnist': 0.36918869644484936, 'emnist': 0.26618049225159524, 'kmnist': 0.2561531449407476, 'usps': 0.3819507748404734}
+Distance between sources and target: {'mnist': 218.53110805941822, 'fmnist': 0, 'emnist': 232.49788356623992, 'kmnist': 229.0358831011453, 'usps': 189.8200956344158}
+Pearson correlation coefficient: -0.8317527074146255
+P-value: 0.16824729258537463
+
+--- TARGET DATA: usps ---
+Accuracy in adaptation: {'mnist': 0.9516691579471849, 'kmnist': 0.9476831091180867, 'emnist': 0.9461883408071748, 'fmnist': 0.9446935724962631}, Accuracy in training from scratch: 0.955655206776283
+Relative error in adaptation: {'mnist': 0.08988764044943792, 'fmnist': 0.24719101123595552, 'emnist': 0.21348314606741695, 'kmnist': 0.17977528089887584}
+Distance between sources and target: {'mnist': 65.79292297775824, 'fmnist': 189.8200956344158, 'emnist': 60.84067698006843, 'kmnist': 44.031749952754204, 'usps': 0}
+Pearson correlation coefficient: 0.5815402699682782
+P-value: 0.41845973003172166
+

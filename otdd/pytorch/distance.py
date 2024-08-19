@@ -638,11 +638,12 @@ class DatasetDistance():
         """
         device_dists = self.device
         GPU_LIMIT = 10000
-        if (self.n1 > GPU_LIMIT or self.n2 > GPU_LIMIT) and maxsamples > GPU_LIMIT and self.device != 'cpu':
-            logger.warning('Warning: maxsamples = {} > 5000, and device = {}. Loaded data' \
-                   ' might not fit in GPU. Computing distances on' \
-                   ' CPU.'.format(maxsamples, self.device))
-            device_dists = 'cpu'
+        if self.device != 'cpu':
+            if (self.n1 > GPU_LIMIT or self.n2 > GPU_LIMIT) and maxsamples > GPU_LIMIT:
+                logger.warning('Warning: maxsamples = {} > 5000, and device = {}. Loaded data' \
+                    ' might not fit in GPU. Computing distances on' \
+                    ' CPU.'.format(maxsamples, self.device))
+                device_dists = 'cpu'
         if self.X1 is None or self.X2 is None:
             if (not self.method == 'jdot') and (self.λ_y is not None) and (self.λ_y > 0):
                 s = time()

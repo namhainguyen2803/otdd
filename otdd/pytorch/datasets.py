@@ -8,7 +8,7 @@ import string
 import numpy as np
 import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
-from torch.utils.data import TensorDataset
+from torch.utils.data import TensorDataset, Dataset
 import torch.nn as nn
 import torch.utils.data as torchdata
 import torch.utils.data.dataloader as dataloader
@@ -112,6 +112,49 @@ class Cutout(object):
         img *= mask
         return img
 
+class SentencesDataset(Dataset):
+
+    def __init__(self, examples, model, device='cpu'):
+        self.device = device
+        self.examples = examples
+        self.model = model.to(self.device)
+        self.tokenizer = self.model.tokenizer
+        self.labels = self._create_labels()
+
+    def _create_labels(self):
+        labels = []
+        for i in range(len(self.examples)):
+            labels.append(self.examples[i].label)
+        return torch.tensor(labels)
+
+    def __getitem__(self, item):
+        encoding = self.tokenizer(self.examples[item].texts,
+                            padding=True,
+                            truncation=True,
+                            return_tensors='pt').to(self.device)
+        return self.model(encoding)["sentence_embedding"], self.labels[item]
+
+    def __len__(self):
+        return len(self.examples)
+
+class SentencesDataset2(Dataset):
+
+    def __init__(self, examples):
+        self.device = device
+        self.examples = examples
+        self.labels = self._create_labels()
+
+    def _create_labels(self):
+        labels = []
+        for i in range(len(self.examples)):
+            labels.append(self.examples[i].label)
+        return torch.tensor(labels)
+
+    def __getitem__(self, item):
+        return self.examples[item].texts, self.labels[item]
+
+    def __len__(self):
+        return len(self.examples)
 
 class SubsetSampler(torch.utils.data.Sampler):
     r"""Samples elements in order (not randomly) from a given list of indices, without replacement.
@@ -218,11 +261,10 @@ gmm_configs = {
                      ],
             'spread': 6,
     }
-
 }
 
 def make_gmm_dataset(config='random', classes=10,dim=2,samples=10,spread = 1,
-                     shift=None, rotate=None, diagonal_cov=False, shuffle=True):
+                     shift=None, rotate=None, diagonal_cov=False, shuffle=True, **kwargs):
     """ Generate Gaussian Mixture Model datasets.
 
     Arguments:
@@ -282,7 +324,7 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
                     stratified=False, random_seed=None, batch_size = 64,
                     resize=None, to3channels=False,
                     maxsize = None, maxsize_test=None, num_workers = 0, transform=None,
-                    data=None, datadir=None, download=True, filt=False, print_stats = False):
+                    data=None, datadir=None, download=True, filt=False, print_stats = False, **kwargs):
     """ Load torchvision datasets.
 
         We return train and test for plots and post-training experiments
@@ -325,26 +367,34 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
         DATASET = getattr(torchvision.datasets, dataname)
         if datadir is None:
             datadir = DATA_DIR
+        # breakpoint()
         if dataname == 'EMNIST':
             split = 'letters'
             train = DATASET(datadir, split=split, train=True, download=download, transform=train_transform)
             test = DATASET(datadir, split=split, train=False, download=download, transform=valid_transform)
-            ## EMNIST seems to have a bug - classes are wrong
-            _merged_classes = set(['C', 'I', 'J', 'K', 'L', 'M', 'O', 'P', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z'])
-            _all_classes = set(list(string.digits + string.ascii_letters))
-            classes_split_dict = {
-                'byclass': list(_all_classes),
-                'bymerge': sorted(list(_all_classes - _merged_classes)),
-                'balanced': sorted(list(_all_classes - _merged_classes)),
-                'letters': list(string.ascii_lowercase),
-                'digits': list(string.digits),
-                'mnist': list(string.digits),
-            }
-            train.classes = classes_split_dict[split]
+            
             if split == 'letters':
-                ## The letters fold (and only that fold!!!) is 1-indexed
                 train.targets -= 1
                 test.targets -= 1
+            
+            # Define the number of classes to keep (e.g., 10)
+            num_classes = 10
+            
+            # Filter the training set to only include the desired number of classes
+            train_mask = torch.isin(train.targets, torch.arange(num_classes))
+            train.data = train.data[train_mask]
+            train.targets = train.targets[train_mask]
+
+            # Filter the test set to only include the desired number of classes
+            test_mask = torch.isin(test.targets, torch.arange(num_classes))
+            test.data = test.data[test_mask]
+            test.targets = test.targets[test_mask]
+
+            # Create datasets for each class
+            datasets_i = []
+            for i in range(num_classes):
+                datasets_i.append([(data, i) for data in train.data[train.targets == i]])
+                    
         elif dataname == 'STL10':
             train = DATASET(datadir, split='train', download=download, transform=train_transform)
             test = DATASET(datadir, split='test', download=download, transform=valid_transform)
@@ -453,7 +503,6 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
 
     return fold_loaders, {'train': train, 'test':test}
 
-
 def load_imagenet(datadir=None, resize=None, tiny=False, augmentations=False, **kwargs):
     """ Load ImageNet dataset """
     if datadir is None and (not tiny):
@@ -464,12 +513,16 @@ def load_imagenet(datadir=None, resize=None, tiny=False, augmentations=False, **
     traindir = os.path.join(datadir, "train")
     validdir = os.path.join(datadir, "val")
     if augmentations:
+
+        brightness = kwargs.get('brightness', 0.4)
+        contrast = kwargs.get('contrast', 0.4)
+        saturation = kwargs.get('saturation', 0.4)
+        hue = kwargs.get('hue', 0.2)
+
         train_transform_list = [
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
-            transforms.ColorJitter(
-                brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2
-            ),
+            transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue),
             transforms.ToTensor(),
             transforms.Normalize(*DATASET_NORMALIZATION['ImageNet'])
         ]
@@ -526,10 +579,10 @@ TEXTDATA_PATHS = {
 }
 
 def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=True,
-            random_seed=None, num_workers = 0, preembed_sentences=True,
+            random_seed=None, num_workers = 0, preembed_sentences=False,
             loading_method='sentence_transformers', device='cpu',
             embedding_model=None,
-            batch_size = 16, valid_size=0.1, maxsize=None, print_stats = False):
+            batch_size = 16, valid_size=0.1, maxsize=None, print_stats = False, load_tensor=False):
     """ Load torchtext datasets.
 
     Note: torchtext's TextClassification datasets are a bit different from the others:
@@ -612,22 +665,32 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
             model = embedding_model.eval()
         else:
             raise ValueError('embedding model has wrong type')
-        print('Reading and embedding {} train data...'.format(dataname))
-        train  = st.SentencesDataset(reader.get_examples('train.tsv'), model=model)
+        
+        if load_tensor is True:
+            print('Reading and embedding {} train data...'.format(dataname))
+            train  = SentencesDataset(reader.get_examples('train.tsv'), model=model)
+            print('Reading and embedding {} test data...'.format(dataname))
+            test   = SentencesDataset(reader.get_examples('test.tsv'), model=model)
+        
+        else:
+            print('Reading and embedding {} train data...'.format(dataname))
+            train  = SentencesDataset2(reader.get_examples('train.tsv'))
+            print('Reading and embedding {} test data...'.format(dataname))
+            test   = SentencesDataset2(reader.get_examples('test.tsv'))
+        
         train.targets = train.labels
-        print('Reading and embedding {} test data...'.format(dataname))
-        test   = st.SentencesDataset(reader.get_examples('test.tsv'), model=model)
         test.targets = test.labels
+        
         if preembed_sentences:
             batch_processor = partial(batch_processor_st, model=model, device=device)
         else:
             batch_processor = None
 
     ## Seems like torchtext alredy maps class ids to 0...n-1. Adapt class names to account for this.
-    classes = torchtext.datasets.text_classification.LABELS[dataname]
-    classes = [classes[k+1] for k in range(len(classes))]
-    train.classes = classes
-    test.classes  = classes
+    # classes = torchtext.datasets.text_classification.LABELS[dataname]
+    # classes = [classes[k+1] for k in range(len(classes))]
+    train.classes = train.labels
+    test.classes  = test.labels
 
     train_idx, valid_idx = random_index_split(len(train), 1-valid_size, (maxsize, None)) # No maxsize for validation
     train_sampler = SubsetRandomSampler(train_idx)
