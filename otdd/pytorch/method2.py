@@ -38,7 +38,7 @@ class NewDatasetDistance():
                 b=None,
                 p=2,
                 device="cpu",
-                precision="double"):
+                precision="float"):
 
         self.D1 = D1
         self.D2 = D2
@@ -104,24 +104,26 @@ class NewDatasetDistance():
         self.class_to_idx_2 = {i: c for i, c in enumerate(self.V2)}
 
 
-    def _load_datasets(self, maxsamples=None):
+    def _load_datasets(self, maxsamples=None, device=None):
         """ Dataset loading, wrapper for `load_full_dataset` function.
 
         Loads full datasets into memory (into gpu if in CUDA mode).
 
         Arguments:
             maxsamples (int, optional): maximum number of samples to load.
+            device (str, optional): if provided, will override class attribute device.
         """
         logger.info('Concatenating feature vectors...')
 
         ## We probably don't ever want to store the full datasets in GPU
+        device = 'cpu'
         dtype = torch.DoubleTensor if self.precision == 'double' else torch.FloatTensor
         reindex_start_d2 = 0
         if self.X1 is None or self.Y1 is None:
             self.X1, self.Y1, self.dict_data_1 = self.load_full_dataset(self.D1, 
                                                                         labels_keep=self.V1,
                                                                         maxsamples=maxsamples,
-                                                                        device=self.device,
+                                                                        device=device,
                                                                         dtype=dtype,
                                                                         reindex=True,
                                                                         reindex_start=0)
@@ -130,7 +132,7 @@ class NewDatasetDistance():
             self.X2, self.Y2, self.dict_data_2 = self.load_full_dataset(self.D2, 
                                                                         labels_keep=self.V2,
                                                                         maxsamples=maxsamples,
-                                                                        device=self.device,
+                                                                        device=device,
                                                                         dtype=dtype,
                                                                         reindex=True,
                                                                         reindex_start=reindex_start_d2)
@@ -237,7 +239,6 @@ class NewDatasetDistance():
 
         return X, Y, dict_data
 
-
     def _compute_moments_projected_distrbution(self, X, projection_matrix, k):
         """
         encode distribution into a vector having length num_moments, 
@@ -249,21 +250,31 @@ class NewDatasetDistance():
         """
         num_projection = projection_matrix.shape[0]
         num_examples = X.shape[0]
-
         X_projection = torch.matmul(X, projection_matrix.t())  # shape == (num_examples, num_projection)
 
-        moment_X_projection = torch.pow(input=X_projection.permute(1, 0).unsqueeze(-1), exponent=k) # shape == (num_projection, num_examples, num_moments)
+        # moment_X_projection = torch.pow(input=X_projection.permute(1, 0).unsqueeze(-1), exponent=k) 
+        # shape == (num_projection, num_examples, num_moments)
+
+        if k.ndim == 1:
+            k = k.unsqueeze(-1)
+        moment_X_projection = torch.pow(input=X_projection.unsqueeze(1), exponent=k.permute(1, 0))
+        moment_X_projection = moment_X_projection.permute(2, 0, 1) 
+        # shape == (num_projection, num_examples, num_moments)
 
         avg_moment_X_projection = torch.sum(moment_X_projection, dim=1) / num_examples # shape == (num_projection, num_moments)
-
+        # normalized_avg_moment_X_projection = torch.pow(input=avg_moment_X_projection, exponent=1/k)
+        # print(normalized_avg_moment_X_projection)
+        # print(avg_moment_X_projection[:2], normalized_avg_moment_X_projection[:2])
+        # print()
         return X_projection, avg_moment_X_projection # shape == (num_examples, num_projection); (num_projection, num_moments)
 
 
     def _compute_projected_dataset_matrix(self, dict_data, projection_matrix, projection_matrix_2, k):
-
+        
         proj_matrix_dataset = list()
         for (cls_id, data) in dict_data.items():
             X_projection, avg_moment_X_projection = self._compute_moments_projected_distrbution(X=data, projection_matrix=projection_matrix, k=k) 
+            # print(f"cls_id {cls_id}, avg_moment_X_projection: {torch.isnan(avg_moment_X_projection).any()}")
             # shape == (num_examples, num_projection); (num_projection, num_moments)
             X_projection = torch.permute(X_projection, dims=(1, 0)) # shape == (num_projection, num_examples)
 
@@ -287,8 +298,7 @@ class NewDatasetDistance():
 
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
-
-    def distance(self, maxsamples=None, num_projection=10000, num_moments=5, lambd=None, moments=[1,2,3]):
+    def distance(self, maxsamples=None, num_projection=10000):
         """
         self.X: tensor of features 60000x1x28x28 = 60000x784
         self.Y: tensor of labels corresponding to features to be considered [60000]
@@ -297,57 +307,72 @@ class NewDatasetDistance():
 
         self._load_datasets(maxsamples=maxsamples)
 
+        dtype = torch.DoubleTensor if self.precision == 'double' else torch.FloatTensor
+
         print(self.X1.shape, self.Y1.shape)
         print(self.X2.shape, self.Y2.shape)
 
-        dtype = torch.DoubleTensor if self.precision == 'double' else torch.FloatTensor
-        # use this matrix to project all X into 1D, has shape (num_projection, X.shape[1])
-        projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[1],num_projection=num_projection, device=self.device)
-        projection_matrix = projection_matrix.type(dtype).to(self.device)
+        chunk = 1000
+        chunk_num_projection = num_projection // chunk
 
-        if moments is None:
-            # sample random high-order moment, has shape (num_projection)
-            if lambd is None:
-                lambd = random.random() * num_moments
-            
-            moments = list()
-            while len(moments) < num_moments:
-                k = torch.poisson(torch.tensor(lambd).float())
-                if k not in list_k and k > 0:
-                    moments.append(k)
-        else:
-            num_moments = len(moments)
+        num_moments = 3
 
-        moments = torch.tensor(moments, device=self.device)
+        all_sw = list()
+        for i in range(chunk_num_projection):
 
-        print(f"Order moment: {set(moments)}")
+            # moments = torch.randint(1, 6, (chunk, num_moments))
 
-        # use this matrix to project vector concat([projected_x, high-order moment]) into 1D, has shape (num_projection, num_moment+1)
-        projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=num_projection, device=self.device)
-        projection_matrix_2 = projection_matrix_2.type(dtype).to(self.device)
+            row = torch.tensor([1])
+            num_moments = len(row)
+            moments = row.unsqueeze(0).repeat(chunk, 1)
 
-        proj_proj_matrix_dataset_1 = self._compute_projected_dataset_matrix(dict_data=self.dict_data_1,
-                                                                            projection_matrix=projection_matrix,
-                                                                            projection_matrix_2=projection_matrix_2,
-                                                                            k=moments) # shape == (total_examples_of_dataset_1, num_projection)
+            projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[1],num_projection=chunk, device=self.device)
+            projection_matrix = projection_matrix.type(dtype)
 
-        proj_proj_matrix_dataset_2 = self._compute_projected_dataset_matrix(dict_data=self.dict_data_2,
-                                                                            projection_matrix=projection_matrix,
-                                                                            projection_matrix_2=projection_matrix_2,
-                                                                            k=moments) # shape == (total_examples_of_dataset_2, num_projection)
+            # use this matrix to project vector concat([projected_x, high-order moment]) into 1D, has shape (chunk, num_moment+1)
+            projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=chunk, device=self.device)
+            projection_matrix_2 = projection_matrix_2.type(dtype)
 
-        num_supports_source = self.X1.shape[0]
-        num_supports_target = self.X2.shape[0]
+            proj_proj_matrix_dataset_1 = self._compute_projected_dataset_matrix(dict_data=self.dict_data_1,
+                                                                                projection_matrix=projection_matrix,
+                                                                                projection_matrix_2=projection_matrix_2,
+                                                                                k=moments) # shape == (total_examples_of_dataset_1, num_projection)
 
-        w_1d = Wasserstein_One_Dimension(X=proj_proj_matrix_dataset_1,
-                                        Y=proj_proj_matrix_dataset_2,
-                                        p=self.p,
-                                        device=self.device)  # shape (num_projection)
+            proj_proj_matrix_dataset_2 = self._compute_projected_dataset_matrix(dict_data=self.dict_data_2,
+                                                                                projection_matrix=projection_matrix,
+                                                                                projection_matrix_2=projection_matrix_2,
+                                                                                k=moments) # shape == (total_examples_of_dataset_2, num_projection)
 
-        if self.p == 1:
-            return torch.mean(w_1d)
-        sw = torch.pow(input=w_1d, exponent=self.p)
-        return torch.pow(torch.mean(sw), exponent=1/self.p)
+            num_supports_source = self.X1.shape[0]
+            num_supports_target = self.X2.shape[0]
+
+            w_1d = Wasserstein_One_Dimension(X=proj_proj_matrix_dataset_1,
+                                            Y=proj_proj_matrix_dataset_2,
+                                            p=self.p,
+                                            device=self.device)  # shape (chunk)
+
+            del proj_proj_matrix_dataset_1
+            del proj_proj_matrix_dataset_2
+
+            # contains_nan = torch.isnan(w_1d).any()
+            # print(f"w_1d {contains_nan}")
+
+            if self.p != 1:
+                sw = torch.pow(input=w_1d, exponent=self.p)
+            else:
+                sw = w_1d
+            all_sw.append(sw)
+
+            # print(f"cac {torch.mean(sw)}")
+            a = torch.pow(torch.mean(sw), exponent=1/self.p)
+            print(i, sw.shape, a)
+            # print(i, sw.shape)
+
+        all_sw = torch.cat(all_sw, dim=0)
+        print(f"Cac: {all_sw.shape}")
+        assert all_sw.shape[0] == chunk_num_projection * chunk
+
+        return torch.pow(torch.mean(all_sw), exponent=1/self.p)     
 
 
     def distance_without_labels(self, maxsamples, num_projection):
@@ -363,7 +388,6 @@ class NewDatasetDistance():
         for i in range(chunk_num_projection):
             sw = Sliced_Wasserstein_Distance(X=self.X1, Y=self.X2, num_projection=chunk)
             all_sw.append(sw)
-            print(i, sw.shape)
         all_sw = torch.cat(all_sw, dim=0)
         print(f"Cac: {all_sw.shape}")
         assert all_sw.shape[0] == chunk_num_projection * chunk

@@ -564,7 +564,7 @@ def set_parameter_requires_grad(model, feature_extracting):
 
 #### NEW UTILS CODES
 
-def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="cpu"):
+def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="cpu", dtype=torch.FloatTensor):
     """
     Generate random uniform unit sphere projections matrix
     :param dim: dimension of measures
@@ -573,7 +573,63 @@ def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="c
     """
     projection_matrix = torch.randn((num_projection, dim), device=device)
     projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=1, keepdim=True))
-    return projection_matrix
+    return projection_matrix.to(device).type(dtype)
+
+
+def generate_unit_convolution_projections(image_size=32, num_channels=3, num_projection=1000, device='cpu', dtype=torch.FloatTensor):
+    """
+    Generate random uniform unit sphere projections convolutions
+    :return: projection matrix \in \mathbb R^(num_projection, dim)
+    """
+    if image_size == 32:
+        choice = 2
+
+        if choice == 1:
+            U1 = nn.Conv2d(num_channels, num_projection, kernel_size=5, stride=1, padding=0, bias=False)
+            U2 = nn.Conv2d(num_projection, num_projection, kernel_size=5, stride=1, padding=0, bias=False, groups=num_projection)
+            U3 = nn.Conv2d(num_projection, num_projection, kernel_size=5, stride=2, padding=0, bias=False, groups=num_projection)
+            U4 = nn.Conv2d(num_projection, num_projection, kernel_size=5, stride=2, padding=0, bias=False, groups=num_projection)
+            U5 = nn.Conv2d(num_projection, num_projection, kernel_size=3, stride=1, padding=0, bias=False, groups=num_projection)
+            U_list = [U1, U2, U3, U4, U5]
+
+        elif choice == 2:
+            list_kernel_size = [7, 5, 5, 5, 3, 3, 3, 3, 3, 3, 2]
+
+            U_list = list()
+            U1 = nn.Conv2d(num_channels, num_projection, kernel_size=list_kernel_size[0], stride=1, padding=0, bias=False)
+            U_list.append(U1)
+
+            for ker_size in list_kernel_size[1:]:
+                u = nn.Conv2d(num_projection, num_projection, kernel_size=ker_size, stride=1, padding=0, bias=False, groups=num_projection)
+                U_list.append(u)
+    
+    elif image_size == 28:
+
+        choice = 1
+
+        if choice == 1:
+            list_kernel_size = [5, 5, 5, 5, 3, 3, 3, 3, 3, 2]
+
+            U_list = list()
+            U1 = nn.Conv2d(num_channels, num_projection, kernel_size=list_kernel_size[0], stride=1, padding=0, bias=False)
+            U_list.append(U1)
+
+            for ker_size in list_kernel_size[1:]:
+                u = nn.Conv2d(num_projection, num_projection, kernel_size=ker_size, stride=1, padding=0, bias=False, groups=num_projection)
+                U_list.append(u)
+        
+        elif choice == 2:
+            U1 = nn.Conv2d(num_channels, num_projection, kernel_size=4, stride=2, padding=1, bias=False)
+            U2 = nn.Conv2d(num_projection, num_projection, kernel_size=4, stride=2, padding=1, bias=False,groups=num_projection)
+            U3 = nn.Conv2d(num_projection, num_projection, kernel_size=7, stride=1, padding=0, bias=False, groups=num_projection)
+            U_list = [U1, U2, U3]
+
+    for U in U_list:
+        U.weight.data = torch.randn(U.weight.shape, device=device).type(dtype)
+        U.weight.data = U.weight / torch.sqrt(torch.sum(U.weight ** 2,dim=[1,2,3],keepdim=True))
+        U.requires_grad = False
+
+    return U_list
 
 
 def quantile_function(qs, cws, xs):

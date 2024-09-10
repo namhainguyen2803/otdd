@@ -74,20 +74,11 @@ def eval_bert(model, classifier, test_loader, device="cuda"):
 
 def main():
 
-    parser = argparse.ArgumentParser(description='OTDD')
-    parser.add_argument('--dataset', default='AG_NEWS', help='dataset name')
-    parser.add_argument('--num-epochs', type=int, default=10, metavar='N',
-                        help='number of epochs to train (default: 10)')
-
-
-    args = parser.parse_args()
-
-
     # time_difference = timedelta(hours=7)
     # current_utc = datetime.utcnow()
     # current_vietnam_time = current_utc + time_difference
     # current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
-    parent_dir = f"saved/text_cls_new/pretrained_weights"
+    parent_dir = f"saved/text_cls/baseline"
     os.makedirs(parent_dir, exist_ok=True)
 
 
@@ -96,15 +87,15 @@ def main():
 
     NUM_EXAMPLES = None
 
-    # DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
-    DATASET_NAMES = [args.dataset]
+    DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
+    # DATASET_NAMES = [args.dataset]
 
 
     METADATA_DATASET = dict()
     for dataset_name in DATASET_NAMES:
 
         METADATA_DATASET[dataset_name] = dict()
-        dataloader = load_textclassification_data(dataset_name, maxsize=NUM_EXAMPLES)
+        dataloader = load_textclassification_data(dataset_name, maxsize=NUM_EXAMPLES, maxsize_for_each_class=100)
 
         METADATA_DATASET[dataset_name]["train_loader"] = dataloader[0]
         METADATA_DATASET[dataset_name]["test_loader"] = dataloader[2]
@@ -135,16 +126,13 @@ def main():
 
         for dataset_name in DATASET_NAMES:
 
+            print(f"Training {dataset_name}...")
             model = BertModel.from_pretrained('bert-base-uncased').to(device)
             classifier = nn.Linear(768, METADATA_DATASET[dataset_name]["num_classes"]).to(device)
 
             for epoch in range(num_epochs):
                 avg_loss = train_bert(model=model, classifier=classifier, train_loader=METADATA_DATASET[dataset_name]["train_loader"], device=device)
-                if (epoch + 1) % 3 == 0:
-                    acc = eval_bert(model=model, classifier=classifier, test_loader=METADATA_DATASET[dataset_name]["test_loader"], device=device)
-                    print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}, Accuracy: {acc}')
-                else:
-                    print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}')
+                print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}')
 
             ft_extractor_path = f'{parent_dir}/{dataset_name}_bert.pth'
             torch.save(model.state_dict(), ft_extractor_path)
@@ -155,8 +143,7 @@ def main():
             METADATA_DATASET[dataset_name]["accuracy"] = acc
 
 
-
-    train(num_epochs=args.num_epochs, device=DEVICE)
+    train(num_epochs=2, device=DEVICE)
 
     for dataset_name in DATASET_NAMES:
         print(dataset_name, METADATA_DATASET[dataset_name]["accuracy"])

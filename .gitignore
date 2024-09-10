@@ -131,4 +131,6 @@ dmypy.json
 
 # Dont Save Data or Models
 data/
-models/
+saved/
+nist_corr/
+nist_corr2/

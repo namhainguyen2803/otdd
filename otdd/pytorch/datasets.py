@@ -19,6 +19,9 @@ import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
 import torchvision.datasets as dset
 
+from transformers import BertTokenizer
+import sentence_transformers as st
+
 import torchtext
 from torchtext.data.utils import get_tokenizer
 
@@ -139,19 +142,28 @@ class SentencesDataset(Dataset):
 
 class SentencesDataset2(Dataset):
 
-    def __init__(self, examples):
-        self.device = device
+    def __init__(self, examples, device='cpu', rescale_label=0):
         self.examples = examples
+        self.device = device
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.rescale_label = rescale_label
         self.labels = self._create_labels()
 
     def _create_labels(self):
         labels = []
         for i in range(len(self.examples)):
-            labels.append(self.examples[i].label)
+            labels.append(self.examples[i].label - self.rescale_label)
+
         return torch.tensor(labels)
 
     def __getitem__(self, item):
-        return self.examples[item].texts, self.labels[item]
+        encoding = self.tokenizer(self.examples[item].texts, 
+                                    padding='max_length',
+                                    truncation=True, 
+                                    return_tensors='pt')
+        input_ids = encoding['input_ids'].squeeze().to(self.device)
+        attention_mask = encoding['attention_mask'].squeeze().to(self.device)
+        return {'input_ids': input_ids, 'attention_mask': attention_mask}, self.labels[item]
 
     def __len__(self):
         return len(self.examples)
@@ -320,11 +332,11 @@ def make_gmm_dataset(config='random', classes=10,dim=2,samples=10,spread = 1,
         Y = Y[idxs]
     return X, Y, distribs
 
-def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
+def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
                     stratified=False, random_seed=None, batch_size = 64,
                     resize=None, to3channels=False,
                     maxsize = None, maxsize_test=None, num_workers = 0, transform=None,
-                    data=None, datadir=None, download=True, filt=False, print_stats = False, **kwargs):
+                    data=None, datadir=None, download=True, filt=False, print_stats = False, maxsize_for_each_class=None, **kwargs):
     """ Load torchvision datasets.
 
         We return train and test for plots and post-training experiments
@@ -368,32 +380,53 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
         if datadir is None:
             datadir = DATA_DIR
         # breakpoint()
+        # if dataname == 'EMNIST':
+        #     split = 'letters'
+        #     train = DATASET(datadir, split=split, train=True, download=download, transform=train_transform)
+        #     test = DATASET(datadir, split=split, train=False, download=download, transform=valid_transform)
+            
+        #     if split == 'letters':
+        #         train.targets -= 1
+        #         test.targets -= 1
+            
+        #     # Define the number of classes to keep (e.g., 10)
+        #     num_classes = 10
+            
+        #     # Filter the training set to only include the desired number of classes
+        #     train_mask = torch.isin(train.targets, torch.arange(num_classes))
+        #     train.data = train.data[train_mask]
+        #     train.targets = train.targets[train_mask]
+
+        #     # Filter the test set to only include the desired number of classes
+        #     test_mask = torch.isin(test.targets, torch.arange(num_classes))
+        #     test.data = test.data[test_mask]
+        #     test.targets = test.targets[test_mask]
+
+        #     # Create datasets for each class
+        #     datasets_i = []
+        #     for i in range(num_classes):
+        #         datasets_i.append([(data, i) for data in train.data[train.targets == i]])
+
         if dataname == 'EMNIST':
             split = 'letters'
             train = DATASET(datadir, split=split, train=True, download=download, transform=train_transform)
             test = DATASET(datadir, split=split, train=False, download=download, transform=valid_transform)
-            
+            ## EMNIST seems to have a bug - classes are wrong
+            _merged_classes = set(['C', 'I', 'J', 'K', 'L', 'M', 'O', 'P', 'S', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+            _all_classes = set(list(string.digits + string.ascii_letters))
+            classes_split_dict = {
+                'byclass': list(_all_classes),
+                'bymerge': sorted(list(_all_classes - _merged_classes)),
+                'balanced': sorted(list(_all_classes - _merged_classes)),
+                'letters': list(string.ascii_lowercase),
+                'digits': list(string.digits),
+                'mnist': list(string.digits),
+            }
+            train.classes = classes_split_dict[split]
             if split == 'letters':
+                ## The letters fold (and only that fold!!!) is 1-indexed
                 train.targets -= 1
                 test.targets -= 1
-            
-            # Define the number of classes to keep (e.g., 10)
-            num_classes = 10
-            
-            # Filter the training set to only include the desired number of classes
-            train_mask = torch.isin(train.targets, torch.arange(num_classes))
-            train.data = train.data[train_mask]
-            train.targets = train.targets[train_mask]
-
-            # Filter the test set to only include the desired number of classes
-            test_mask = torch.isin(test.targets, torch.arange(num_classes))
-            test.data = test.data[test_mask]
-            test.targets = test.targets[test_mask]
-
-            # Create datasets for each class
-            datasets_i = []
-            for i in range(num_classes):
-                datasets_i.append([(data, i) for data in train.data[train.targets == i]])
                     
         elif dataname == 'STL10':
             train = DATASET(datadir, split='train', download=download, transform=train_transform)
@@ -430,15 +463,28 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
 
     ### Data splitting
     fold_idxs    = {}
-    if splits is None and valid_size == 0:
-        ## Only train
-        fold_idxs['train'] = np.arange(len(train))
-    elif splits is None and valid_size > 0:
+    if splits is None:
         ## Train/Valid
         train_idx, valid_idx = random_index_split(len(train), 1-valid_size, (maxsize, None)) # No maxsize for validation
+        print("CACAC")
+        if maxsize_for_each_class is not None:
+            new_train_idx = list()
+            set_classes = torch.unique(train.targets)
+            print(f"Hello {set_classes}")
+            for i in range(len(set_classes)):
+                cls_id = set_classes[i]
+                X_cls = train_idx[train.targets[train_idx] == cls_id][:maxsize_for_each_class].tolist()
+                assert torch.unique(train.targets[X_cls]) == cls_id
+                print(f"In label: {cls_id}, number of training: {len(X_cls)}")
+
+                new_train_idx.extend(X_cls)
+            random.shuffle(new_train_idx)
+            train_idx = new_train_idx
+
         fold_idxs['train'] = train_idx
         fold_idxs['valid'] = valid_idx
-    elif splits is not None:
+
+    else:
         ## Custom splits - must be integer.
         if type(splits) is dict:
             snames, slens = zip(*splits.items())
@@ -503,7 +549,7 @@ def load_torchvision_data(dataname, valid_size=0.1, splits=None, shuffle=True,
 
     return fold_loaders, {'train': train, 'test':test}
 
-def load_imagenet(datadir=None, resize=None, tiny=False, augmentations=False, **kwargs):
+def load_imagenet(datadir=None, resize=None, tiny=False, augmentations=False, maxsize=None, **kwargs):
     """ Load ImageNet dataset """
     if datadir is None and (not tiny):
         datadir = os.path.join(DATA_DIR,'imagenet')
@@ -562,6 +608,7 @@ def load_imagenet(datadir=None, resize=None, tiny=False, augmentations=False, **
     )
     fold_loaders, dsets = load_torchvision_data('Imagenet', transform=[],
                                                 data=(train_data, valid_data),
+                                                maxsize=maxsize,
                                                 **kwargs)
 
     return fold_loaders, dsets
@@ -582,7 +629,7 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
             random_seed=None, num_workers = 0, preembed_sentences=False,
             loading_method='sentence_transformers', device='cpu',
             embedding_model=None,
-            batch_size = 16, valid_size=0.1, maxsize=None, print_stats = False, load_tensor=False):
+            batch_size = 16, valid_size=0.0, maxsize=None, print_stats = True, load_tensor=False, maxsize_for_each_class=None):
     """ Load torchtext datasets.
 
     Note: torchtext's TextClassification datasets are a bit different from the others:
@@ -653,8 +700,9 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
             batch_processor = partial(batch_processor_tt,TEXT=text_field,sentemb=sentembedder,return_lengths=False)
         else:
             batch_processor = partial(batch_processor_tt,TEXT=text_field,return_lengths=True)
+
     elif loading_method == 'sentence_transformers':
-        import sentence_transformers as st
+
         dpath  = os.path.join(dataroot,TEXTDATA_PATHS[dataname])
         reader = st.readers.LabelSentenceReader(dpath)
         if embedding_model is None:
@@ -666,6 +714,7 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
         else:
             raise ValueError('embedding model has wrong type')
         
+
         if load_tensor is True:
             print('Reading and embedding {} train data...'.format(dataname))
             train  = SentencesDataset(reader.get_examples('train.tsv'), model=model)
@@ -674,9 +723,14 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
         
         else:
             print('Reading and embedding {} train data...'.format(dataname))
-            train  = SentencesDataset2(reader.get_examples('train.tsv'))
             print('Reading and embedding {} test data...'.format(dataname))
-            test   = SentencesDataset2(reader.get_examples('test.tsv'))
+
+            if dataname == "AG_NEWS":
+                train  = SentencesDataset2(reader.get_examples('train.tsv')[1:], rescale_label=1)
+                test  = SentencesDataset2(reader.get_examples('test.tsv')[1:], rescale_label=1)
+            else:
+                train  = SentencesDataset2(reader.get_examples('train.tsv'), rescale_label=0)
+                test   = SentencesDataset2(reader.get_examples('test.tsv'), rescale_label=0)
         
         train.targets = train.labels
         test.targets = test.labels
@@ -693,21 +747,34 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
     test.classes  = test.labels
 
     train_idx, valid_idx = random_index_split(len(train), 1-valid_size, (maxsize, None)) # No maxsize for validation
+
+    if maxsize_for_each_class is not None:
+        new_train_idx = list()
+        set_classes = torch.unique(train.labels)
+        for i in range(len(set_classes)):
+            cls_id = set_classes[i]
+            X_cls = train_idx[train.labels[train_idx] == cls_id][:maxsize_for_each_class].tolist()
+            assert torch.unique(train.labels[X_cls]) == cls_id
+            print(f"In label: {cls_id}, number of training: {len(X_cls)}")
+
+            new_train_idx.extend(X_cls)
+        random.shuffle(new_train_idx)
+        train_idx = new_train_idx
+
     train_sampler = SubsetRandomSampler(train_idx)
     valid_sampler = SubsetRandomSampler(valid_idx)
 
-    dataloader_args = dict(batch_size=batch_size,num_workers=num_workers,collate_fn=batch_processor)
+    dataloader_args = dict(batch_size=batch_size,num_workers=num_workers,collate_fn=None)
     train_loader = dataloader.DataLoader(train, sampler=train_sampler,**dataloader_args)
     valid_loader = dataloader.DataLoader(train, sampler=valid_sampler,**dataloader_args)
     dataloader_args['shuffle'] = False
     test_loader  = dataloader.DataLoader(test, **dataloader_args)
 
     if print_stats:
-        print('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))))
+        print('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))), torch.unique(train.targets))
         print('Fold Sizes: {}/{}/{} (train/valid/test)'.format(len(train_idx), len(valid_idx), len(test)))
 
     return train_loader, valid_loader, test_loader, train, test
-
 
 class H5Dataset(torchdata.Dataset):
     def __init__(self, images_path, labels_path, transform=None):

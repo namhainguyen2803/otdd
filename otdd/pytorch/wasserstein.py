@@ -407,16 +407,21 @@ def Wasserstein_One_Dimension(X, Y, a=None, b=None, p=2, device="cpu"):
     assert X.shape[1] == Y.shape[1], "X and Y must have same number of measures"
 
     if num_supports_source == num_supports_target and a is None and b is None:
+        # print("equal in number of supports")
+        # print(f"X: {torch.isnan(X).any()}, Y: {torch.isnan(Y).any()}")
         "Special case when One dimensional space and number of supports are equal"
         X_sorted, X_rankings = torch.sort(X, dim=0)
         Y_sorted, Y_rankings = torch.sort(Y, dim=0)
         diff_quantiles = torch.abs(X_sorted - Y_sorted)
         if p == 1:
             return torch.mean(diff_quantiles, dim=0)
-        return torch.mean(torch.pow(diff_quantiles, p), dim=0)
+        contains_nan = torch.isnan(diff_quantiles).any()
+        # print(f"diff_quantiles: {contains_nan}")
+        return torch.pow(input=torch.mean(torch.pow(diff_quantiles, p), dim=0), exponent=1/p)
 
     else:
         "When number of supports are not equal"
+        # print("not equal in number of supports")
         if a is None:
             a = torch.full(X.shape, 1.0 / num_supports_source, device=device)
         elif a.ndim != X.ndim:
@@ -435,7 +440,7 @@ def Wasserstein_One_Dimension(X, Y, a=None, b=None, p=2, device="cpu"):
         a_cum_weights = torch.cumsum(a, dim=0)
         b_cum_weights = torch.cumsum(b, dim=0)
 
-        qs = torch.sort(torch.concatenate((a_cum_weights, b_cum_weights), 0), dim=0, descending=False)[0]
+        qs = torch.sort(torch.concat((a_cum_weights, b_cum_weights), 0), dim=0, descending=False)[0]
         # qs has shape (num_supports_source + num_supports_target, d)
 
         # torch.quantile(input=X_sorted, q=qs, dim=0, keepdim=False, interpolation='linear')
@@ -450,6 +455,7 @@ def Wasserstein_One_Dimension(X, Y, a=None, b=None, p=2, device="cpu"):
         if p == 1:
             return torch.sum(delta * diff_quantiles, dim=0)
         return torch.pow(input=torch.sum(delta * torch.pow(diff_quantiles, p), dim=0), exponent=1/p)
+        # return torch.sum(delta * torch.pow(diff_quantiles, p), dim=0)
 
 
 def Sliced_Wasserstein_Distance(X, Y, a=None, b=None, num_projection=1000, projection_vectors=None, p=2, device="cpu"):
@@ -477,6 +483,11 @@ def Sliced_Wasserstein_Distance(X, Y, a=None, b=None, num_projection=1000, proje
         projection_vectors = generate_uniform_unit_sphere_projections(dim=X.shape[1],
                                                                       num_projection=num_projection,
                                                                       device=device)  # shape == (num_projection, d)
+    
+    precision = X.dtype
+    projection_vectors = projection_vectors.type(precision)
+    a = a.type(precision)
+    b = b.type(precision)
 
     X_projection = torch.matmul(X, projection_vectors.t())  # shape == (num_supports_source, num_projection)
     Y_projection = torch.matmul(Y, projection_vectors.t())  # shape == (num_supports_target, num_projection)
@@ -487,9 +498,16 @@ def Sliced_Wasserstein_Distance(X, Y, a=None, b=None, num_projection=1000, proje
                                      b=b,
                                      p=p,
                                      device=device)  # shape (num_projection)
+    
+    del projection_vectors
+    del X_projection
+    del Y_projection
+    del a
+    del b
 
     if p == 1:
         return torch.mean(w_1d)
     sw = torch.pow(input=w_1d, exponent=p)
-    return torch.pow(torch.mean(sw), exponent=1/p)
+    return sw
+    # return torch.pow(torch.mean(sw), exponent=1/p)
 
