@@ -1,9 +1,3 @@
-import warnings
-warnings.filterwarnings("ignore", message=".*contains `gamma`.*")
-warnings.filterwarnings("ignore", message=".*contains `beta`.*")
-
-
-
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -78,7 +72,7 @@ def main():
     # current_utc = datetime.utcnow()
     # current_vietnam_time = current_utc + time_difference
     # current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
-    parent_dir = f"saved/text_cls/baseline"
+    parent_dir = f"saved/text_cls_new/baseline"
     os.makedirs(parent_dir, exist_ok=True)
 
 

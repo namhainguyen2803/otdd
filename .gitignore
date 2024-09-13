@@ -131,6 +131,11 @@ dmypy.json
 
 # Dont Save Data or Models
 data/
+data2/
+dataset/
 saved/
 nist_corr/
 nist_corr2/
+topmost/
+TopMost/
+vpt/

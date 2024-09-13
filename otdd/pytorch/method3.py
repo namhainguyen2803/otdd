@@ -73,6 +73,7 @@ class NewDatasetDistance():
 
         self._init_data(self.D1, self.D2)
 
+
     def _init_data(self, D1, D2):
         """ Preprocessing of datasets. Extracts value and coding for effective
         (i.e., those actually present in sampled data) class labels.
@@ -276,7 +277,7 @@ class NewDatasetDistance():
 
         avg_moment_X_projection = torch.sum(moment_X_projection, dim=1) / X_projection.shape[0] # shape == (num_projection, num_moments)
 
-        return avg_moment_X_projection # shape == (num_examples, num_projection); (num_projection, num_moments)
+        return avg_moment_X_projection # shape == (num_projection, num_moments)
 
 
     def _compute_projected_dataset_matrix(self, dict_data, projection_matrix, projection_matrix_2, k, use_conv=False):
@@ -288,7 +289,7 @@ class NewDatasetDistance():
                 data = X_projection.reshape(data.shape[0], -1)
 
             X_projection = self._project_X(X=data, projection_matrix=projection_matrix, use_conv=use_conv) # shape == (num_examples, num_projection)
-            avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k) 
+            avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k)
             # shape == (num_projection, num_moments)
             X_projection = torch.permute(X_projection, dims=(1, 0)) # shape == (num_projection, num_examples)
 
@@ -413,3 +414,4 @@ class NewDatasetDistance():
         assert all_sw.shape[0] == chunk_num_projection * chunk
 
         return torch.pow(torch.mean(all_sw), exponent=1/self.p)
+
