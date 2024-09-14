@@ -16,7 +16,7 @@ module load python/miniconda3/miniconda3
 # Corrected line
 eval "$(conda shell.bash hook)"
 
-conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd2
+conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd
 cd /lustre/scratch/client/vinai/users/hainn14/otdd
 
 
