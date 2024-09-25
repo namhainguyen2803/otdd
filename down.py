@@ -197,3 +197,4 @@ plt.title(f'Distance Correlation: *NIST Datasets {rho:.4f}, {p_value:.4f}')
 
 plt.legend()
 plt.savefig(f'{parent_dir}/distance_correlation.png')
+

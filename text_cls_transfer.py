@@ -70,7 +70,7 @@ def main():
         METADATA_DATASET[dataset_name]["test_loader"] = dataloader[2]
 
     
-        METADATA_DATASET[dataset_name]["pretrained_weights"] = f"saved/text_cls/pretrained_weights/{dataset_name}_bert.pth"
+        METADATA_DATASET[dataset_name]["pretrained_weights"] = f"{pretrained_weights}/{dataset_name}_bert.pth"
     
     for i in range(len(SOURCE_DATASET)):
         for j in range(len(TARGET_DATASET)):
