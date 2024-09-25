@@ -16,6 +16,16 @@ folders = [name for name in os.listdir(base_dir) if os.path.isdir(os.path.join(b
 list_dist = list()
 list_acc = list()
 
+method = "OTDD"
+
+
+def compute_rss(observed, predicted):
+    if len(observed) != len(predicted):
+        raise ValueError("Both lists must have the same length.")
+    rss = sum((obs - pred) ** 2 for obs, pred in zip(observed, predicted))
+    return rss
+
+
 # Print the folder names
 for date_run in folders:
     folder_name = base_dir + f"/{date_run}/result.txt"
@@ -30,7 +40,7 @@ for date_run in folders:
             
             # Extract the necessary information
             for line in lines:
-                if line.startswith("New method, Distance:"):
+                if line.startswith(f"{method}, Distance:"):
                     print(line.split(":")[1].split(",")[0].strip())
                     distance = float(line.split(":")[1].split(",")[0].strip())
                 elif "Accuracy when having pretraned" in line:
@@ -56,7 +66,9 @@ plt.plot(list_dist, list_y_pred, color='red', linewidth=2, label='Fitted line')
 plt.xlabel('OTDD')
 plt.ylabel('Accuracy')
 rho, p_value = stats.pearsonr(list_dist, list_acc)
-plt.title(f'OTDD {rho:.4f}, {p_value:.4f}')
+rss = compute_rss(list_y, list_y_pred)
+print(rss)
+plt.title(f'{method} corr={rho:.4f}, p_value={p_value:.4f}, rss={rss}')
 
 plt.legend()
-plt.savefig(f'aug.png')
+plt.savefig(f'aug_{method}.png')

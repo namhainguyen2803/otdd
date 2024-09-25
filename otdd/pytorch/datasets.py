@@ -249,7 +249,6 @@ def subdataset_from_labels(dataset, labels, remap=True):
     subdataset = Subset(dataset,idx, remap_targets=True)
     return subdataset
 
-
 def dataset_from_numpy(X, Y, classes = None):
     targets =  torch.LongTensor(list(Y))
     ds = TensorDataset(torch.from_numpy(X).type(torch.FloatTensor),targets)
@@ -379,33 +378,6 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
         DATASET = getattr(torchvision.datasets, dataname)
         if datadir is None:
             datadir = DATA_DIR
-        # breakpoint()
-        # if dataname == 'EMNIST':
-        #     split = 'letters'
-        #     train = DATASET(datadir, split=split, train=True, download=download, transform=train_transform)
-        #     test = DATASET(datadir, split=split, train=False, download=download, transform=valid_transform)
-            
-        #     if split == 'letters':
-        #         train.targets -= 1
-        #         test.targets -= 1
-            
-        #     # Define the number of classes to keep (e.g., 10)
-        #     num_classes = 10
-            
-        #     # Filter the training set to only include the desired number of classes
-        #     train_mask = torch.isin(train.targets, torch.arange(num_classes))
-        #     train.data = train.data[train_mask]
-        #     train.targets = train.targets[train_mask]
-
-        #     # Filter the test set to only include the desired number of classes
-        #     test_mask = torch.isin(test.targets, torch.arange(num_classes))
-        #     test.data = test.data[test_mask]
-        #     test.targets = test.targets[test_mask]
-
-        #     # Create datasets for each class
-        #     datasets_i = []
-        #     for i in range(num_classes):
-        #         datasets_i.append([(data, i) for data in train.data[train.targets == i]])
 
         if dataname == 'EMNIST':
             split = 'letters'
@@ -466,7 +438,6 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
     if splits is None:
         ## Train/Valid
         train_idx, valid_idx = random_index_split(len(train), 1-valid_size, (maxsize, None)) # No maxsize for validation
-        print("CACAC")
         if maxsize_for_each_class is not None:
             new_train_idx = list()
             set_classes = torch.unique(train.targets)
@@ -864,3 +835,4 @@ def combine_datasources(dset, dset_extra, valid_size=0, shuffle=True, random_see
     logger.info(f'Fold Sizes: {len(train_idx)}/{len(valid_idx)} (train/valid)')
 
     return train_loader_ext, valid_loader_ext
+

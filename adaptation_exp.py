@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data
-from otdd.pytorch.method import NewDatasetDistance
+from otdd.pytorch.method3 import NewDatasetDistance
 from otdd.pytorch.distance import DatasetDistance
 
 import os
@@ -18,6 +18,8 @@ from scipy import stats
 import json
 
 from trainer import *
+
+
 
 LIST_DATASETS = ["MNIST", "FashionMNIST", "EMNIST", "KMNIST", "USPS"]
 ACC_ADAPT = dict()
@@ -46,7 +48,7 @@ def create_dataset(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None):
         METADATA_DATASET[dataset_name] = dict()
 
         if dataset_name == "USPS":
-            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data/USPS", maxsize_for_each_class=maxsize_for_each_class)[0]
+            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data2/USPS", maxsize_for_each_class=maxsize_for_each_class)[0]
         else:
             dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, maxsize_for_each_class=maxsize_for_each_class)[0]
 
@@ -148,7 +150,7 @@ def training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING):
     ACC_NO_ADAPT = dict()
     for source in LIST_DATASETS:
         ft_extractor = FeatureExtractor(input_size=28).to(DEVICE)
-        ft_extractor_optimizer = optim.Adam(ft_extractor.parameters(), lr=1e-3, weight_decay=1e-6)
+        # ft_extractor_optimizer = optim.Adam(ft_extractor.parameters(), lr=1e-3, weight_decay=1e-6)
         classifier = Classifier(feat_dim=ft_extractor.feat_dim, num_classes=METADATA_DATASET[source]["num_classes"]).to(DEVICE)
         classifier_optimizer = optim.Adam(classifier.parameters(), lr=1e-3, weight_decay=1e-6)
         for epoch in range(1, num_epochs + 1):
@@ -156,9 +158,9 @@ def training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING):
                 classifier=classifier, 
                 device=DEVICE, 
                 train_loader=METADATA_DATASET[source]["train_loader"], 
-                epoch=epoch, 
-                criterion=nn.CrossEntropyLoss(), 
-                ft_extractor_optimizer=ft_extractor_optimizer, 
+                epoch=epoch,
+                criterion=nn.CrossEntropyLoss(),
+                ft_extractor_optimizer=None, 
                 classifier_optimizer=classifier_optimizer)
         
         acc_baseline = test(ft_extractor, classifier, DEVICE, METADATA_DATASET[source]["test_loader"])
@@ -234,4 +236,7 @@ if __name__ == "__main__":
 
     # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING)
     training_and_adaptation(num_epochs=10)
+
+
+
 

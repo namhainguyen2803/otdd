@@ -170,6 +170,7 @@ class NewDatasetDistance():
         """
         device = process_device_arg(device)
         orig_idxs = None
+        
         if type(data) == dataloader.DataLoader:
             loader = data
             if maxsamples:
@@ -193,7 +194,7 @@ class NewDatasetDistance():
                 else:
                     ## I don't think we'll ever be in this case.
                     print('Warning: maxsamplers provided but loader doesnt have subsampler or dataset. Cannot subsample.')
-
+            
         X = []
         Y = []
         seen_targets = {}
@@ -311,7 +312,7 @@ class NewDatasetDistance():
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
 
-    def distance(self, maxsamples=None, num_projection=10000):
+    def distance(self, maxsamples=None, num_projection=10000, list_moments=None, list_projection_matrix=None, list_projection_matrix_2=None):
         """
         self.X: tensor of features 60000x1x28x28 = 60000x784
         self.Y: tensor of labels corresponding to features to be considered [60000]
@@ -331,24 +332,42 @@ class NewDatasetDistance():
         num_moments = 3
 
         all_sw = list()
+        print(len(list_projection_matrix), len(list_projection_matrix_2), chunk_num_projection)
         for i in range(chunk_num_projection):
 
             # moments = torch.randint(1, 6, (chunk, num_moments))
-            moments = torch.stack([torch.sort(torch.randperm(8)[:num_moments])[0] + 1 for _ in range(chunk)])
+            if list_moments is None:
+                moments = torch.stack([torch.sort(torch.randperm(8)[:num_moments])[0] + 1 for _ in range(chunk)])
+            else:
+                moments = list_moments[i]
 
+            dict_moments = dict()
+            for cac in range(len(moments)):
+                for cacc in range(len(moments[cac])):
+                    a = moments[cac][cacc].item()
+                    if a not in dict_moments:
+                        dict_moments[a] = 0
+                    else:
+                        dict_moments[a] += 1
             # row = torch.tensor([1])
             # num_moments = len(row)
             # moments = row.unsqueeze(0).repeat(chunk, 1)
 
             use_conv = True
 
-            if use_conv is True:
-                projection_matrix = generate_unit_convolution_projections(image_size=self.X1.shape[2], num_channels=self.X1.shape[1], num_projection=chunk, device=self.device, dtype=dtype)
+            if list_projection_matrix is None:
+                if use_conv is True:
+                    projection_matrix = generate_unit_convolution_projections(image_size=self.X1.shape[2], num_channels=self.X1.shape[1], num_projection=chunk, device=self.device, dtype=dtype)
+                else:
+                    projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[1],num_projection=chunk, device=self.device, dtype=dtype)
             else:
-                projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[1],num_projection=chunk, device=self.device, dtype=dtype)
+                projection_matrix = list_projection_matrix[i]
 
             # use this matrix to project vector concat([projected_x, high-order moment]) into 1D, has shape (chunk, num_moment+1)
-            projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=chunk, device=self.device, dtype=dtype)
+            if list_projection_matrix_2 is None:
+                projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=chunk, device=self.device, dtype=dtype)
+            else:
+                projection_matrix_2 = list_projection_matrix_2[i]
             # projection_matrix_2 = generate_uniform_unit_sphere_projections_2(num_projection_1=chunk, num_projection_2=chunk, dim=num_moments+1, device=self.device, dtype=dtype)
 
             proj_proj_matrix_dataset_1 = self._compute_projected_dataset_matrix(dict_data=self.dict_data_1,
@@ -389,6 +408,8 @@ class NewDatasetDistance():
             # print(f"cac {torch.mean(sw)}")
             a = torch.pow(torch.mean(sw), exponent=1/self.p)
             print(i, sw.shape, a)
+
+            print(f"CC: {dict_moments}")
             # print(i, sw.shape)
 
         all_sw = torch.cat(all_sw, dim=0)
@@ -417,4 +438,60 @@ class NewDatasetDistance():
 
         return torch.pow(torch.mean(all_sw), exponent=1/self.p)
 
+
+def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000, chunk=100, num_moments=3, image_size=28, dimension=None, num_channels=1, device='cpu', dtype=torch.FloatTensor):
+
+    res = list()
+    for i in range(len(list_dataset)):
+        row = list()
+        for j in range(len(list_dataset)):
+            row.append(0)
+        res.append(row)
+
+    chunk_num_projection = num_projection // chunk
+
+    list_moments = list()
+    list_projection_matrix = list()
+    list_projection_matrix_2 = list()
+
+    for i in range(chunk_num_projection):
+        
+        # moments = torch.randint(1, 6, (chunk, num_moments))
+        # moments = torch.stack([torch.sort(torch.randperm(5)[:num_moments])[0] + 1 for _ in range(chunk)])
+        moments = torch.arange(1, num_moments+1).unsqueeze(0).repeat(chunk, 1)
+        list_moments.append(moments)
+
+        # row = torch.tensor([1])
+        # num_moments = len(row)
+        # moments = row.unsqueeze(0).repeat(chunk, 1)
+
+        use_conv = True
+
+        if use_conv is True:
+            projection_matrix = generate_unit_convolution_projections(image_size=image_size, num_channels=num_channels, num_projection=chunk, device=device, dtype=dtype)
+        else:
+            projection_matrix = generate_uniform_unit_sphere_projections(dim=dimension, num_projection=chunk, device=device, dtype=dtype)
+        list_projection_matrix.append(projection_matrix)
+
+        projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=chunk, device=device, dtype=dtype)
+        list_projection_matrix_2.append(projection_matrix_2)
+
+    for i in range(len(list_dataset)):
+        for j in range(i+1, len(list_dataset)):
+
+            D1 = list_dataset[i]
+            D2 = list_dataset[j]
+
+            new_dist = NewDatasetDistance(D1, D2, p=2, device='cpu')
+            
+            new_d = new_dist.distance(maxsamples=maxsamples, 
+                                    num_projection=num_projection, 
+                                    list_moments=list_moments, 
+                                    list_projection_matrix=list_projection_matrix, 
+                                    list_projection_matrix_2=list_projection_matrix_2).item()
+            
+            res[i][j] = new_d
+            res[j][i] = new_d
+
+    return res
 

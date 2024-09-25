@@ -83,6 +83,7 @@ def train(feature_extractor, classifier, device, train_loader, epoch, criterion=
     assert check_frozen_module(classifier) == False, "Classifier must be trained"
 
     if ft_extractor_optimizer is None:
+        frozen_module(feature_extractor)
         feature_extractor.eval()
         assert check_frozen_module(feature_extractor) == True, "Feature Extractor is set to be frozen."
     else:

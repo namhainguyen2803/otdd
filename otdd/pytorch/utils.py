@@ -572,7 +572,26 @@ def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="c
     :return: projection matrix \in \mathbb R^(num_projection, dim)
     """
     projection_matrix = torch.randn((num_projection, dim), device=device)
+
     projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=1, keepdim=True))
+
+    # max_vals, max_indices = torch.max(projection_matrix, dim=1)
+    # tmp = projection_matrix[:, 0].clone()
+    # projection_matrix[:, 0] = max_vals
+    # projection_matrix[range(num_projection), max_indices] = tmp
+
+    return projection_matrix.to(device).type(dtype)
+
+
+def generate_uniform_unit_sphere_projections_2(num_projection_1=1000, num_projection_2=1000, dim=1024, device="cpu", dtype=torch.FloatTensor):
+    """
+    Generate random uniform unit sphere projections matrix
+    :param dim: dimension of measures
+    :param num_projection: number of projection vectors to generate
+    :return: projection matrix \in \mathbb R^(num_projection, dim)
+    """
+    projection_matrix = torch.randn((num_projection_1, num_projection_2, dim), device=device)
+    projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=2, keepdim=True))
     return projection_matrix.to(device).type(dtype)
 
 
@@ -605,7 +624,7 @@ def generate_unit_convolution_projections(image_size=32, num_channels=3, num_pro
     
     elif image_size == 28:
 
-        choice = 1
+        choice = 2
 
         if choice == 1:
             list_kernel_size = [5, 5, 5, 5, 3, 3, 3, 3, 3, 2]

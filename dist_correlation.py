@@ -36,7 +36,7 @@ def create_dataset(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None):
         METADATA_DATASET[dataset_name] = dict()
 
         if dataset_name == "USPS":
-            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data/USPS", maxsize_for_each_class=maxsize_for_each_class)[0]
+            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data2/USPS", maxsize_for_each_class=maxsize_for_each_class)[0]
         else:
             dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, maxsize_for_each_class=maxsize_for_each_class)[0]
 
@@ -185,15 +185,16 @@ def compute_wasserstein(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None, nu
 
 if __name__ == "__main__":
 
-    time_difference = timedelta(hours=7)
-    current_utc = datetime.utcnow()
-    current_vietnam_time = current_utc + time_difference
-    current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
-    parent_dir = f"saved/corr/{current_datetime_vn}"
-    os.makedirs(parent_dir, exist_ok=True)
-
     compute_otdd = False
-    compute_new_dist = True
+    compute_new_dist = False
+
+    if compute_new_dist:
+        time_difference = timedelta(hours=7)
+        current_utc = datetime.utcnow()
+        current_vietnam_time = current_utc + time_difference
+        current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
+        parent_dir = f"saved/corr/{current_datetime_vn}"
+        os.makedirs(parent_dir, exist_ok=True)
 
     if compute_otdd:
         print("Compute OTDD...")
@@ -256,7 +257,7 @@ if __name__ == "__main__":
             
             f.write(f"Finish computing New method. Time taken: {new_method_time_taken:.2f} seconds \n \n")
     else:
-        dict_new_dist_saved_path = 'saved/corr/OTDD_dist.json'
+        dict_new_dist_saved_path = 'result.json'
         with open(dict_new_dist_saved_path, 'r') as file:
             dict_new_dist = json.load(file)
 
@@ -267,6 +268,10 @@ if __name__ == "__main__":
             
             source_dataset = LIST_DATASETS[i]
             target_dataset = LIST_DATASETS[j]
+            if source_dataset == "USPS" and target_dataset == "FashionMNIST":
+                continue
+            if source_dataset == "FashionMNIST" and target_dataset == "USPS":
+                continue
 
             list_otdd.append(dict_OTDD_dist[source_dataset][target_dataset])
             list_new_dist.append(dict_new_dist[source_dataset][target_dataset])
@@ -275,7 +280,7 @@ if __name__ == "__main__":
     print(f"Overall Pearson correlation coefficient: {rho}")
     print(f"Overall P-value: {p_value}")
 
-    with open(f'{parent_dir}/correlation_values.txt', 'a') as f:
+    with open(f'correlation_values.txt', 'a') as f:
         f.write(f"Pearson correlation coefficient: {rho}\n")
         f.write(f"P-value: {p_value}\n")
 
@@ -294,5 +299,6 @@ if __name__ == "__main__":
     plt.title(f'Distance Correlation: *NIST Datasets {rho:.4f}, {p_value:.4f}')
 
     plt.legend()
-    plt.savefig(f'{parent_dir}/distance_correlation.png')
+    plt.savefig(f'distance_correlation.png')
+
 

@@ -1,0 +1,4 @@
+Pearson correlation coefficient: 0.33875019099509235
+P-value: 0.3383221624913829
+Pearson correlation coefficient: 0.733072696953468
+P-value: 0.02463135429364732

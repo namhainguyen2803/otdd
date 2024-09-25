@@ -1,0 +1,14 @@
+Start computing new method 
+ New Method Distance: 
+ From MNIST to FashionMNIST, distance: 8575797.0 
+ From MNIST to EMNIST, distance: 39033.671875 
+ From MNIST to KMNIST, distance: 122799.265625 
+ From MNIST to USPS, distance: 663652.9375 
+ From FashionMNIST to EMNIST, distance: 8553021.0 
+ From FashionMNIST to KMNIST, distance: 8477095.0 
+ From FashionMNIST to USPS, distance: 8147380.0 
+ From EMNIST to KMNIST, distance: 103267.5078125 
+ From EMNIST to USPS, distance: 632761.0 
+ From KMNIST to USPS, distance: 586265.125 
+Finish computing New method. Time taken: 771.04 seconds 
+ 

@@ -11,17 +11,17 @@ parent_dir = f"nist_corr2"
 os.makedirs(parent_dir, exist_ok=True)
 
 # Load ACC_ADAPT
-file_path = 'saved/nist/adapt_weights/acc_adapt.json'
+file_path = 'saved/nist/finetune_weights/acc_adapt.json'
 with open(file_path, 'r') as file:
     ACC_ADAPT = json.load(file)
 
 # Load ACC_NO_ADAPT
-file_path = 'saved/nist/adapt_weights/acc_baseline.json'
+file_path = 'saved/nist/finetune_weights/acc_baseline.json'
 with open(file_path, 'r') as file:
     ACC_BASELINE = json.load(file)
 
 # Load DIST
-file_path = 'saved/nist/nist_dist.json'
+file_path = 'saved/nist/new_dist.json'
 with open(file_path, 'r') as file:
     DIST = json.load(file)
 
@@ -70,3 +70,5 @@ for i in range(len(LIST_DATASETS)):
     plt.legend()
     plt.savefig(f'{parent_dir}/{target}_corr.png')
     plt.show()
+
+
