@@ -16,7 +16,10 @@ folders = [name for name in os.listdir(base_dir) if os.path.isdir(os.path.join(b
 list_dist = list()
 list_acc = list()
 
+method = "New method"
 method = "OTDD"
+
+display_method = "sOTDD" if method == "New method" else "OTDD"
 
 
 def compute_rss(observed, predicted):
@@ -63,12 +66,18 @@ plt.figure(figsize=(10, 8))
 plt.scatter(list_dist, list_acc, s=100, color='blue', label='Data points')
 plt.plot(list_dist, list_y_pred, color='red', linewidth=2, label='Fitted line')
 
-plt.xlabel('OTDD')
-plt.ylabel('Accuracy')
 rho, p_value = stats.pearsonr(list_dist, list_acc)
 rss = compute_rss(list_y, list_y_pred)
 print(rss)
-plt.title(f'{method} corr={rho:.4f}, p_value={p_value:.4f}, rss={rss}')
+rss = rss * 1000
+# plt.title(f'{method} corr={rho:.4f}, p_value={p_value:.4f}, rss={rss:.4f}')
+
+FONT_SIZE = 25
+plt.title(f'{display_method} $\\rho={rho:.3f}, p={p_value:.3f}, \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-3}}$', fontsize=FONT_SIZE)  # Increase title size
+plt.xlabel(f'{display_method}', fontsize=FONT_SIZE)  # Increase x-axis label size
+plt.ylabel('Accuracy', fontsize=FONT_SIZE)  # Increase y-axis label size
+
 
 plt.legend()
-plt.savefig(f'aug_{method}.png')
+plt.savefig(f'aug_{display_method}.pdf')
+

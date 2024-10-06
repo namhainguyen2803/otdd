@@ -601,7 +601,7 @@ def generate_unit_convolution_projections(image_size=32, num_channels=3, num_pro
     :return: projection matrix \in \mathbb R^(num_projection, dim)
     """
     if image_size == 32:
-        choice = 2
+        choice = 1
 
         if choice == 1:
             U1 = nn.Conv2d(num_channels, num_projection, kernel_size=5, stride=1, padding=0, bias=False)

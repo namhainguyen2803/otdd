@@ -155,7 +155,6 @@ ft_extractor_path = f'{parent_dir}/imagenet_ft_extractor.pth'
 torch.save(imagenet_feature_extractor.state_dict(), ft_extractor_path)
 
 
-
 cifar10_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 10).to(DEVICE)
 
 cifar10_classifier_optimizer = optim.SGD(cifar10_classifier.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)

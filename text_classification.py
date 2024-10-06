@@ -16,13 +16,23 @@ print(f"Use CUDA or not: {DEVICE}")
 
 NUM_EXAMPLES = 1000
 
+# ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
+
+# def main():
+
+#     parser = argparse.ArgumentParser(description='OTDD')
+#     parser.add_argument('--source', default='AG_NEWS', help='dataset name')
+
+
+#     args = parser.parse_args()
+#     SOURCE_DATASET_NAMES = [args.source]
 
 METADATA_DATASET = dict()
 for dataset_name in DATASET_NAMES:
     METADATA_DATASET[dataset_name] = dict()
-    METADATA_DATASET[dataset_name]["dataloader"] = load_textclassification_data(dataset_name, maxsize=NUM_EXAMPLES)[0]
+    METADATA_DATASET[dataset_name]["dataloader"] = load_textclassification_data(dataset_name, maxsize=NUM_EXAMPLES, load_tensor=True)[0]
 
     if dataset_name == "AG_NEWS":
         METADATA_DATASET[dataset_name]["num_classes"] = 4
@@ -48,10 +58,13 @@ for dataset_name in DATASET_NAMES:
 DATA_DIST = dict()
 for i in range(len(DATASET_NAMES)):
 
-    for j in range(i + 1, len(DATASET_NAMES)):
+    for j in range(i+1, len(DATASET_NAMES)):
 
         data_source = DATASET_NAMES[i]
         data_target = DATASET_NAMES[j]
+        
+        if data_source == data_target:
+            continue
 
         dist = DatasetDistance(METADATA_DATASET[data_source]["dataloader"], 
                                 METADATA_DATASET[data_target]["dataloader"],
@@ -62,6 +75,8 @@ for i in range(len(DATASET_NAMES)):
 
         d = dist.distance(maxsamples=NUM_EXAMPLES)
 
+        del dist
+
         if data_source not in DATA_DIST:
             DATA_DIST[data_source] = dict()
             DATA_DIST[data_source][data_target] = d.item()
@@ -70,8 +85,11 @@ for i in range(len(DATASET_NAMES)):
         
         print(f"Data source: {data_source}, Data target: {data_target}, Distance: {d}")
 
-dist_file_path = f'saved/text_data_dist_.json'
+dist_file_path = f'saved/text_cls_spp/text_dist.json'
 with open(dist_file_path, 'w') as json_file:
     json.dump(DATA_DIST, json_file, indent=4)
 print(f"DIST: {DATA_DIST}")
 
+
+# if __name__ == "__main__":
+# main()
