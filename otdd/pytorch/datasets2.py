@@ -117,19 +117,17 @@ class Cutout(object):
 
 class SentencesDataset(Dataset):
 
-    def __init__(self, examples, model, device='cpu', rescale_label=0):
+    def __init__(self, examples, model, device='cpu'):
         self.device = device
         self.examples = examples
         self.model = model.to(self.device)
         self.tokenizer = self.model.tokenizer
-        self.rescale_label = rescale_label
-
         self.labels = self._create_labels()
 
     def _create_labels(self):
         labels = []
         for i in range(len(self.examples)):
-            labels.append(self.examples[i].label - self.rescale_label)
+            labels.append(self.examples[i].label)
         return torch.tensor(labels)
 
     def __getitem__(self, item):
@@ -155,6 +153,7 @@ class SentencesDataset2(Dataset):
         labels = []
         for i in range(len(self.examples)):
             labels.append(self.examples[i].label - self.rescale_label)
+
         return torch.tensor(labels)
 
     def __getitem__(self, item):
@@ -601,7 +600,7 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
             random_seed=None, num_workers = 0, preembed_sentences=False,
             loading_method='sentence_transformers', device='cpu',
             embedding_model=None,
-            batch_size = 2, valid_size=0.0, maxsize=None, print_stats = True, load_tensor=False, maxsize_for_each_class=None):
+            batch_size = 16, valid_size=0.0, maxsize=None, print_stats = True, load_tensor=False, maxsize_for_each_class=None):
     """ Load torchtext datasets.
 
     Note: torchtext's TextClassification datasets are a bit different from the others:
@@ -686,30 +685,51 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
         else:
             raise ValueError('embedding model has wrong type')
         
+        num_train = len(reader.get_examples('train.tsv'))
+        train_idx, valid_idx = random_index_split(num_train, 1-valid_size, (maxsize, None)) # No maxsize for validation
 
+        if maxsize_for_each_class is not None:
+            new_train_idx = list()
+            set_classes = torch.unique(train.labels)
+            for i in range(len(set_classes)):
+                cls_id = set_classes[i]
+                X_cls = train_idx[train.labels[train_idx] == cls_id][:maxsize_for_each_class].tolist()
+                assert torch.unique(train.labels[X_cls]) == cls_id
+                print(f"In label: {cls_id}, number of training: {len(X_cls)}")
+
+                new_train_idx.extend(X_cls)
+            random.shuffle(new_train_idx)
+            train_idx = new_train_idx
+
+        train_idx = train_idx.tolist()
+
+        for i in train_idx:
+            if not isinstance(i, int):
+                print(i, type(i))
+
+        print(len(train_idx), type(reader.get_examples('train.tsv')))
         if load_tensor is True:
 
-            if dataname == "AG_NEWS":
-                print('Reading and embedding {} train data...'.format(dataname))
-                train  = SentencesDataset(reader.get_examples('train.tsv')[1:], model=model, rescale_label=1)
-                print('Reading and embedding {} test data...'.format(dataname))
-                test  = SentencesDataset(reader.get_examples('test.tsv')[1:], model=model, rescale_label=1)
-            else:
-                print('Reading and embedding {} train data...'.format(dataname))
-                train  = SentencesDataset(reader.get_examples('train.tsv'), model=model, rescale_label=0)
-                print('Reading and embedding {} test data...'.format(dataname))
-                test   = SentencesDataset(reader.get_examples('test.tsv'), model=model, rescale_label=0)
+            train_set = list()
+            for i in train_idx:
+                print(i)
+                train_set.append(reader.get_examples('train.tsv')[i])
+            print(len(train_set))
+
+            print('Reading and embedding {} train data...'.format(dataname))
+            train  = SentencesDataset(train_set, model=model)
+            print('Reading and embedding {} test data...'.format(dataname))
+            test   = SentencesDataset(reader.get_examples('test.tsv'), model=model)
         
         else:
+            print('Reading and embedding {} train data...'.format(dataname))
+            print('Reading and embedding {} test data...'.format(dataname))
+
             if dataname == "AG_NEWS":
-                print('Reading and embedding {} train data...'.format(dataname))
-                train  = SentencesDataset2(reader.get_examples('train.tsv')[1:], rescale_label=1)
-                print('Reading and embedding {} test data...'.format(dataname))
-                test  = SentencesDataset2(reader.get_examples('test.tsv')[1:], rescale_label=1)
+                train  = SentencesDataset2(reader.get_examples('train.tsv')[train_idx+1], rescale_label=1)
+                test  = SentencesDataset2(reader.get_examples('test.tsv'), rescale_label=1)
             else:
-                print('Reading and embedding {} train data...'.format(dataname))
-                train  = SentencesDataset2(reader.get_examples('train.tsv'), rescale_label=0)
-                print('Reading and embedding {} test data...'.format(dataname))
+                train  = SentencesDataset2(reader.get_examples('train.tsv')[train_idx], rescale_label=0)
                 test   = SentencesDataset2(reader.get_examples('test.tsv'), rescale_label=0)
         
         train.targets = train.labels
@@ -726,28 +746,12 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
     train.classes = train.labels
     test.classes  = test.labels
 
-    train_idx, valid_idx = random_index_split(len(train), 1-valid_size, (maxsize, None)) # No maxsize for validation
-
-    if maxsize_for_each_class is not None:
-        new_train_idx = list()
-        set_classes = torch.unique(train.labels)
-        for i in range(len(set_classes)):
-            cls_id = set_classes[i]
-            X_cls = train_idx[train.labels[train_idx] == cls_id][:maxsize_for_each_class].tolist()
-            assert torch.unique(train.labels[X_cls]) == cls_id
-            print(f"In label: {cls_id}, number of training: {len(X_cls)}")
-
-            new_train_idx.extend(X_cls)
-        random.shuffle(new_train_idx)
-        train_idx = new_train_idx
-
     train_sampler = SubsetRandomSampler(train_idx)
     valid_sampler = SubsetRandomSampler(valid_idx)
 
     dataloader_args = dict(batch_size=batch_size,num_workers=num_workers,collate_fn=None)
-    train_loader = dataloader.DataLoader(train, sampler=train_sampler, **dataloader_args)
-    # valid_loader = dataloader.DataLoader(train, sampler=valid_sampler,**dataloader_args)
-    valid_loader = None
+    train_loader = dataloader.DataLoader(train, sampler=train_sampler,**dataloader_args)
+    valid_loader = dataloader.DataLoader(train, sampler=valid_sampler,**dataloader_args)
     dataloader_args['shuffle'] = False
     test_loader  = dataloader.DataLoader(test, **dataloader_args)
 

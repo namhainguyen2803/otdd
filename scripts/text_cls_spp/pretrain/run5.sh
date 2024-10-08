@@ -20,9 +20,9 @@ conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd
 cd /lustre/scratch/client/vinai/users/hainn14/otdd
 
 
-dataset="YahooAnswers"
-epochs=10
-python3 text_cls.py --dataset "$dataset" --num-epochs $epochs
+# dataset="YahooAnswers"
+# epochs=10
+# python3 text_cls.py --dataset "$dataset" --num-epochs $epochs
 
 dataset="AmazonReviewPolarity"
 epochs=10

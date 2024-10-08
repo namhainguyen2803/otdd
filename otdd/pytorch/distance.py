@@ -741,7 +741,7 @@ class DatasetDistance():
             else:
                 idxs_2 = np.s_[:]  # hack to get a full slice
 
-
+            print(self.X1.shape)
             Z1 = torch.cat((self.X1[idxs_1],
                             self.Y1[idxs_1].type(self.X1.dtype).unsqueeze(1)), -1)
             Z2 = torch.cat((self.X2[idxs_2],
