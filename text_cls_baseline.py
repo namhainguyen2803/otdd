@@ -72,7 +72,7 @@ def main():
     # current_utc = datetime.utcnow()
     # current_vietnam_time = current_utc + time_difference
     # current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
-    parent_dir = f"saved/text_cls_new/baseline"
+    parent_dir = f"saved/text_cls_new/baseline_new"
     os.makedirs(parent_dir, exist_ok=True)
 
 
@@ -127,6 +127,9 @@ def main():
             for epoch in range(num_epochs):
                 avg_loss = train_bert(model=model, classifier=classifier, train_loader=METADATA_DATASET[dataset_name]["train_loader"], device=device)
                 print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}')
+                if epoch == 1:
+                    acc2 = eval_bert(model=model, classifier=classifier, test_loader=METADATA_DATASET[dataset_name]["test_loader"], device=device)
+                    METADATA_DATASET[dataset_name]["accuracy_2"] = acc2
 
             ft_extractor_path = f'{parent_dir}/{dataset_name}_bert.pth'
             torch.save(model.state_dict(), ft_extractor_path)
@@ -137,17 +140,13 @@ def main():
             METADATA_DATASET[dataset_name]["accuracy"] = acc
 
 
-    train(num_epochs=2, device=DEVICE)
-
-    for dataset_name in DATASET_NAMES:
-        print(dataset_name, METADATA_DATASET[dataset_name]["accuracy"])
-
+    train(num_epochs=10, device=DEVICE)
 
     result_file = f"{parent_dir}/accuracy.txt"
 
     with open(result_file, 'a') as file:
         for dataset_name in DATASET_NAMES:
-            file.write(f"Dataset: {dataset_name}, Accuracy: {METADATA_DATASET[dataset_name]['accuracy']} \n")
+            file.write(f"Dataset: {dataset_name}, Accuracy_2: {METADATA_DATASET[dataset_name]['accuracy_2']}, Accuracy: {METADATA_DATASET[dataset_name]['accuracy']} \n")
 
 
 if __name__ == '__main__':

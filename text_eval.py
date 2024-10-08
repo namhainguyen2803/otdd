@@ -1,4 +1,14 @@
 import json
+import numpy as np 
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from scipy import stats
+
+
 
 baseline_result_path = "saved/text_cls_spp/text_baseline.txt"
 adapt_result_path = "saved/text_cls_spp/text_adapt.txt"
@@ -22,9 +32,6 @@ with open(adapt_result_path, 'r') as file:
             adapt_acc[source_dataset] = {}
         adapt_acc[source_dataset][target_dataset] = accuracy
 
-print("cac 1")
-print(adapt_acc["AmazonReviewPolarity"])
-
 
 # read baseline result
 baseline_acc = {}
@@ -35,10 +42,6 @@ with open(baseline_result_path, 'r') as file:
         accuracy = float(parts[2])
         baseline_acc[source_dataset] = accuracy
 
-print("cac 2")
-print(baseline_acc)
-
-
 perf_list = list()
 dist_list = list()
 DATASET_NAME = list(baseline_acc.keys())
@@ -47,12 +50,15 @@ for i in range(len(DATASET_NAME)):
     for j in range(i+1, len(DATASET_NAME)):
         source = DATASET_NAME[i]
         target = DATASET_NAME[j]
+        if source == "AmazonReviewPolarity" or target == "AmazonReviewPolarity":
+            continue
         print(source, target)
-        perf = adapt_acc[source][target] - baseline_acc[source]
+        perf = ((1 - adapt_acc[source][target]) - (1 - baseline_acc[source])) / (1 - baseline_acc[source])
         dist = text_dist[source][target]
 
-        perf_list.append(perf)
-        dist_list.append(dist)
+        if dist > 240:
+            perf_list.append(perf)
+            dist_list.append(dist)
 
 
 list_X = np.array(dist_list).reshape(-1, 1)
@@ -63,10 +69,10 @@ print(list_X)
 print(list_y)
 plt.figure(figsize=(10, 8))
 # sns.regplot(x=x, y=y, ci=95, scatter_kws={'s': 100}, line_kws={'color': 'blue'})
-plt.scatter(list_dist, perf_list, s=100, color='blue', label='Data points')
-plt.plot(list_dist, list_y_pred, color='red', linewidth=2, label='Fitted line')
+plt.scatter(dist_list, perf_list, s=100, color='blue', label='Data points')
+plt.plot(dist_list, list_y_pred, color='red', linewidth=2, label='Fitted line')
 
-rho, p_value = stats.pearsonr(list_dist, perf_list)
+rho, p_value = stats.pearsonr(dist_list, perf_list)
 
 display_method = "OTDD"
 FONT_SIZE = 25
@@ -76,5 +82,5 @@ plt.ylabel('Accuracy', fontsize=FONT_SIZE)  # Increase y-axis label size
 
 
 plt.legend()
-plt.savefig(f'text_{display_method}.pdf')
+plt.savefig(f'text_{display_method}.png')
 
