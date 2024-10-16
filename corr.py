@@ -38,7 +38,7 @@ for i in range(len(LIST_DATASETS)):
         if source == target:
             continue
         else:
-            perf_gain = (ACC_ADAPT[source][target])
+            perf_gain = (ACC_ADAPT[source][target] - ACC_BASELINE[target])
             list_performance_gains.append(perf_gain * 100)
             list_dists.append(DIST[source][target])
             list_labels.append(f'{source[0]}->{target[0]}')

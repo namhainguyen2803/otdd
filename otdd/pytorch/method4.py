@@ -20,6 +20,8 @@ import random
 from .utils import load_full_dataset, extract_data_targets, process_device_arg, generate_uniform_unit_sphere_projections, generate_unit_convolution_projections, generate_uniform_unit_sphere_projections_2
 from .wasserstein import Sliced_Wasserstein_Distance, Wasserstein_One_Dimension
 
+import time
+
 
 class NewDatasetDistance():
     """The main class for the new proposed method
@@ -248,7 +250,7 @@ class NewDatasetDistance():
         project X which has shape R^(c, h, w) to a number
         projection_matrix can have 
         """
-        if isinstance(projection_matrix, list):
+        if use_conv:
             for conv in projection_matrix:
                 X = conv(X).detach()
             assert X.shape[-1] == X.shape[-2] == 1, "CAC"
@@ -277,6 +279,7 @@ class NewDatasetDistance():
         # shape == (num_projection, num_examples, num_moments)
 
         avg_moment_X_projection = torch.sum(moment_X_projection, dim=1) / X_projection.shape[0] # shape == (num_projection, num_moments)
+        avg_moment_X_projection = torch.sign(avg_moment_X_projection) * torch.pow(torch.abs(avg_moment_X_projection), 1/k)
 
         return avg_moment_X_projection # shape == (num_projection, num_moments)
 
@@ -287,7 +290,7 @@ class NewDatasetDistance():
         for (cls_id, data) in dict_data.items():
 
             if use_conv is False:
-                data = X_projection.reshape(data.shape[0], -1)
+                data = data.reshape(data.shape[0], -1)
 
             X_projection = self._project_X(X=data, projection_matrix=projection_matrix, use_conv=use_conv) # shape == (num_examples, num_projection)
             avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k)
@@ -312,7 +315,7 @@ class NewDatasetDistance():
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
 
-    def distance(self, maxsamples=None, num_projection=10000, list_moments=None, list_projection_matrix=None, list_projection_matrix_2=None):
+    def distance(self, maxsamples=None, num_projection=10000, list_moments=None, list_projection_matrix=None, list_projection_matrix_2=None, use_conv=True):
         """
         self.X: tensor of features 60000x1x28x28 = 60000x784
         self.Y: tensor of labels corresponding to features to be considered [60000]
@@ -323,21 +326,26 @@ class NewDatasetDistance():
 
         dtype = torch.DoubleTensor if self.precision == 'double' else torch.FloatTensor
 
-        print(self.X1.shape, self.Y1.shape)
-        print(self.X2.shape, self.Y2.shape)
+        # print(self.X1.shape, self.Y1.shape)
+        # print(self.X2.shape, self.Y2.shape)
 
         chunk = 100
         chunk_num_projection = num_projection // chunk
-
-        num_moments = 3
+        num_moments = 5
 
         all_sw = list()
-        print(len(list_projection_matrix), len(list_projection_matrix_2), chunk_num_projection)
+        # print(len(list_projection_matrix), len(list_projection_matrix_2), chunk_num_projection)
         for i in range(chunk_num_projection):
 
-            # moments = torch.randint(1, 6, (chunk, num_moments))
             if list_moments is None:
-                moments = torch.stack([torch.sort(torch.randperm(8)[:num_moments])[0] + 1 for _ in range(chunk)])
+
+                # moments = torch.stack([torch.sort(torch.randperm(8)[:num_moments])[0] + 1 for _ in range(chunk)])
+                # row = torch.tensor([1, 2, 3, 4])
+                # num_moments = len(row)
+                # moments = row.unsqueeze(0).repeat(chunk, 1)
+
+                moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
+                
             else:
                 moments = list_moments[i]
 
@@ -346,20 +354,16 @@ class NewDatasetDistance():
                 for cacc in range(len(moments[cac])):
                     a = moments[cac][cacc].item()
                     if a not in dict_moments:
-                        dict_moments[a] = 0
+                        dict_moments[a] = 1
                     else:
                         dict_moments[a] += 1
-            # row = torch.tensor([1])
-            # num_moments = len(row)
-            # moments = row.unsqueeze(0).repeat(chunk, 1)
-
-            use_conv = True
 
             if list_projection_matrix is None:
                 if use_conv is True:
                     projection_matrix = generate_unit_convolution_projections(image_size=self.X1.shape[2], num_channels=self.X1.shape[1], num_projection=chunk, device=self.device, dtype=dtype)
                 else:
-                    projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[1],num_projection=chunk, device=self.device, dtype=dtype)
+
+                    projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[2],num_projection=chunk, device=self.device, dtype=dtype)
             else:
                 projection_matrix = list_projection_matrix[i]
 
@@ -406,14 +410,14 @@ class NewDatasetDistance():
             all_sw.append(sw)
 
             # print(f"cac {torch.mean(sw)}")
-            a = torch.pow(torch.mean(sw), exponent=1/self.p)
-            print(i, sw.shape, a)
+            # a = torch.pow(torch.mean(sw), exponent=1/self.p)
+            # print(i, sw.shape, a)
 
             print(f"CC: {dict_moments}")
             # print(i, sw.shape)
 
         all_sw = torch.cat(all_sw, dim=0)
-        print(f"Cac: {all_sw.shape}")
+        # print(f"Cac: {all_sw.shape}")
         assert all_sw.shape[0] == chunk_num_projection * chunk
 
         return torch.pow(torch.mean(all_sw), exponent=1/self.p)     
@@ -439,6 +443,31 @@ class NewDatasetDistance():
         return torch.pow(torch.mean(all_sw), exponent=1/self.p)
 
 
+def generate_moments(num_moments, min_moment=1, max_moment=None, gen_type="uniform"):
+    assert gen_type in ("uniform", "poisson", "fixed")
+
+    if gen_type == "fixed":
+        return torch.arange(num_moments) + 1
+
+    elif gen_type == "uniform":
+        return torch.sort(torch.randperm(max_moment)[:num_moments])[0] + min_moment
+
+    elif gen_type == "poisson":
+
+        if max_moment is not None:
+            mean_moment = (max_moment + 3 * min_moment) / 4
+        else:
+            mean_moment = 5
+
+        moment = torch.sort(torch.poisson(torch.ones(num_moments) * mean_moment))[0]
+
+        if max_moment is not None:
+            moment[moment > max_moment] = max_moment
+        moment[moment < min_moment] = min_moment
+
+        return moment
+
+
 def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000, chunk=100, num_moments=3, image_size=28, dimension=None, num_channels=1, device='cpu', dtype=torch.FloatTensor):
 
     res = list()
@@ -456,14 +485,16 @@ def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000
 
     for i in range(chunk_num_projection):
         
-        # moments = torch.randint(1, 6, (chunk, num_moments))
-        # moments = torch.stack([torch.sort(torch.randperm(5)[:num_moments])[0] + 1 for _ in range(chunk)])
-        moments = torch.arange(1, num_moments+1).unsqueeze(0).repeat(chunk, 1)
-        list_moments.append(moments)
+        moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
+
+
+        # moments = torch.arange(1, num_moments+1).unsqueeze(0).repeat(chunk, 1)
 
         # row = torch.tensor([1])
         # num_moments = len(row)
         # moments = row.unsqueeze(0).repeat(chunk, 1)
+
+        list_moments.append(moments)
 
         use_conv = True
 
@@ -476,22 +507,27 @@ def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000
         projection_matrix_2 = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=chunk, device=device, dtype=dtype)
         list_projection_matrix_2.append(projection_matrix_2)
 
+    list_processing_time = list()
     for i in range(len(list_dataset)):
         for j in range(i+1, len(list_dataset)):
 
             D1 = list_dataset[i]
             D2 = list_dataset[j]
 
-            new_dist = NewDatasetDistance(D1, D2, p=2, device='cpu')
-            
+            start_time_new_method = time.time()
+            new_dist = NewDatasetDistance(D1, D2, p=2, device=device)
             new_d = new_dist.distance(maxsamples=maxsamples, 
                                     num_projection=num_projection, 
                                     list_moments=list_moments, 
                                     list_projection_matrix=list_projection_matrix, 
                                     list_projection_matrix_2=list_projection_matrix_2).item()
-            
+            end_time_new_method = time.time()
+            new_method_time_taken = end_time_new_method - start_time_new_method
+            list_processing_time.append(new_method_time_taken)
+
             res[i][j] = new_d
             res[j][i] = new_d
 
-    return res
+    return res, list_processing_time
+
 

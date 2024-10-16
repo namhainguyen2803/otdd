@@ -1,4 +1,6 @@
 import torch
+import torch.optim as optim
+import torch.nn as nn
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import DataLoader, Dataset
@@ -10,15 +12,24 @@ from otdd.pytorch.datasets import load_torchvision_data
 from otdd.pytorch.distance import DatasetDistance
 from torch.utils.data.sampler import SubsetRandomSampler
 import time
-from trainer import train, test
+from trainer import train, test_func, frozen_module
 from models.resnet import *
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import json
 
-save_dir = 'saved/split_cifar100'
+
+save_dir = 'saved/split_cifar100_2'
 os.makedirs(save_dir, exist_ok=True)
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
+
+NUM_EPOCHS_ADAPT = 20
+NUM_EPOCHS_BASELINE = 300
 
 
 class Subset(Dataset):
@@ -95,16 +106,20 @@ for i, subset in enumerate(subsets):
 print(f'Saved {num_splits} subsets in {save_dir}')
 
 
-# loaded_subsets = []
-# for i in range(num_splits):
-#     with open(os.path.join(save_dir, f'{i}/data.pkl'), 'rb') as f:
-#         loaded_subset = pickle.load(f)
-#         loaded_subsets.append(loaded_subset)
+loaded_subsets = []
+for i in range(num_splits):
+    with open(os.path.join(save_dir, f'{i}/data.pkl'), 'rb') as f:
+        loaded_subset = pickle.load(f)
+        loaded_subsets.append(loaded_subset)
 
 
-# Create DataLoaders for the loaded subsets
-# loaded_dataloaders = [DataLoader(subset, batch_size=32, shuffle=True) for subset in loaded_subsets]
-# test_loader = DataLoader(test_dataset, batch_size=32)
+Create DataLoaders for the loaded subsets
+loaded_dataloaders = [DataLoader(subset, batch_size=32, shuffle=True) for subset in loaded_subsets]
+test_loader = DataLoader(test_dataset, batch_size=32)
+
+
+
+
 
 
 # NEW METHOD
@@ -112,7 +127,7 @@ print("Compute new method...")
 start_time_new_method = time.time()
 pairwise_dist = compute_pairwise_distance(list_dataset=dataloaders, 
                                             maxsamples=None, 
-                                            num_projection=1000, 
+                                            num_projection=10000, 
                                             chunk=100, num_moments=4, 
                                             image_size=32, 
                                             dimension=None, 
@@ -125,6 +140,7 @@ print(f"Finish computing new method. Time taken: {new_method_time_taken:.2f} sec
 pairwise_dist = torch.tensor(pairwise_dist)
 print(pairwise_dist)
 torch.save(pairwise_dist, f'{save_dir}/new_method_dist.pt')
+
 
 
 # OTDD
@@ -152,13 +168,17 @@ print(f"Finish computing new method. Time taken: {otdd_time_taken:.2f} seconds")
 torch.save(dict_OTDD, f'{save_dir}/otdd_dist.pt')
 
 
+
 def train_baseline(train_loader, test_loader, num_epochs=300, device=DEVICE):
 
     cifar10_feature_extractor = ResNet34().to(device)
-    cifar10_classifier = nn.Linear(cifar10_feature_extractor.latent_dims, 10).to(device)
+    cifar10_classifier = nn.Linear(cifar10_feature_extractor.latent_dims, 100).to(device)
 
     feature_extractor_optimizer = optim.SGD(cifar10_feature_extractor.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
     classifier_optimizer = optim.SGD(cifar10_classifier.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+
+    list_test_loss = list()
+    list_test_acc = list()
 
     for epoch in range(1, num_epochs + 1):
         train(feature_extractor=cifar10_feature_extractor,
@@ -170,12 +190,14 @@ def train_baseline(train_loader, test_loader, num_epochs=300, device=DEVICE):
             ft_extractor_optimizer=feature_extractor_optimizer,
             classifier_optimizer=classifier_optimizer)
 
-    cifar10_acc_no_adapt = test(cifar10_feature_extractor, cifar10_classifier, device, test_loader)
+        if epoch % 10 == 0:
+            cifar10_acc_no_adapt, test_loss = test_func(cifar10_feature_extractor, cifar10_classifier, device, test_loader)
+            list_test_loss.append(test_loss)
+            list_test_acc.append(cifar10_acc_no_adapt)
+
     print(f"Accuracy when no pretrainng {cifar10_acc_no_adapt}")
 
-    return cifar10_feature_extractor, cifar10_classifier, cifar10_acc_no_adapt
-
-
+    return cifar10_feature_extractor, cifar10_classifier, cifar10_acc_no_adapt, list_test_loss, list_test_acc
 
 
 meta_dict = dict()
@@ -183,10 +205,28 @@ meta_dict = dict()
 for i in range(len(dataloaders)):
     train_loader = dataloaders[i]
 
-    cifar10_feature_extractor, cifar10_classifier, cifar10_acc_no_adapt = train_baseline(train_loader=train_loader, 
-                                                                                        test_loader=test_loader, 
-                                                                                        num_epochs=300, 
-                                                                                        device=DEVICE)
+    cifar10_feature_extractor, cifar10_classifier, cifar10_acc_no_adapt, list_test_loss, list_test_acc = train_baseline(train_loader=train_loader, 
+                                                                                                                        test_loader=test_loader, 
+                                                                                                                        num_epochs=NUM_EPOCHS_BASELINE, 
+                                                                                                                        device=DEVICE)
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(list_test_loss, label=f'Training Loss of {i}', color='blue', linewidth=2)
+    plt.title('Loss Over Iterations', fontsize=20)
+    plt.xlabel('Iteration', fontsize=16)
+    plt.ylabel('Loss', fontsize=16)
+    plt.grid(True)
+    plt.legend()
+    plt.savefig(f'{save_dir}/{i}/loss_baseline.png')
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(list_test_acc, label=f'Training Loss of {i}', color='blue', linewidth=2)
+    plt.title('Accuracy Over Iterations', fontsize=20)
+    plt.xlabel('Iteration', fontsize=16)
+    plt.ylabel('Accuracy', fontsize=16)
+    plt.grid(True)
+    plt.legend()
+    plt.savefig(f'{save_dir}/{i}/loss_baseline.png')
 
     frozen_module(cifar10_feature_extractor)
 
@@ -203,9 +243,10 @@ for i in range(len(dataloaders)):
     }
 
 
-NUM_EPOCHS_ADAPT = 30
+
 acc_adapt_dict = dict()
 for i in range(len(dataloaders)):
+
     for j in range(len(dataloaders)):
         if i == j:
             if i not in acc_adapt_dict:
@@ -219,24 +260,35 @@ for i in range(len(dataloaders)):
             source_ft = ResNet34().to(DEVICE)
             source_ft.load_state_dict(torch.load(source_ft_path))
 
-            source_classifier = nn.Linear(source_ft.latent_dims, 10).to(DEVICE)
+            source_classifier = nn.Linear(source_ft.latent_dims, 100).to(DEVICE)
             source_classifier.load_state_dict(torch.load(source_classifier_path))
 
             classifier_optimizer = optim.SGD(source_classifier.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
 
+            list_test_loss = list()
             for epoch in range(1, NUM_EPOCHS_ADAPT + 1):
                 train(feature_extractor=source_ft,
                     classifier=source_classifier,
-                    device=device,
+                    device=DEVICE,
                     train_loader=dataloaders[j],
                     epoch=epoch,
                     criterion=nn.CrossEntropyLoss(),
                     ft_extractor_optimizer=None,
                     classifier_optimizer=classifier_optimizer)
 
-            cifar10_acc = test(source_ft, source_classifier, device, test_loader)
+                cifar10_acc, test_loss = test_func(source_ft, source_classifier, DEVICE, test_loader)
+                list_test_loss.append(test_loss)
 
             print(f"From {i} to {j}, accuracy: {cifar10_acc}")
+
+            plt.figure(figsize=(10, 6))
+            plt.plot(list_test_loss, label=f'Training Loss of {i}', color='blue', linewidth=2)
+            plt.title('Loss Over Iterations', fontsize=20)
+            plt.xlabel('Iteration', fontsize=16)
+            plt.ylabel('Loss', fontsize=16)
+            plt.grid(True)
+            plt.legend()
+            plt.savefig(f'{save_dir}/{j}/source_{i}.png')
 
             if i not in acc_adapt_dict:
                 acc_adapt_dict[i] = dict()

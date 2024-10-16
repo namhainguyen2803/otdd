@@ -151,7 +151,7 @@ class DatasetDistance():
                  loss='sinkhorn', debiased_loss=True, p=2, entreg=0.1,
                  λ_x=1.0, λ_y=1.0,
                  ## Inner OT (label to label) problem arguments
-                 inner_ot_method = 'gaussian_approx',
+                 inner_ot_method='gaussian_approx',
                  inner_ot_loss='sinkhorn',
                  inner_ot_debiased=False,
                  inner_ot_p=2,
@@ -741,7 +741,6 @@ class DatasetDistance():
             else:
                 idxs_2 = np.s_[:]  # hack to get a full slice
 
-            print(self.X1.shape)
             Z1 = torch.cat((self.X1[idxs_1],
                             self.Y1[idxs_1].type(self.X1.dtype).unsqueeze(1)), -1)
             Z2 = torch.cat((self.X2[idxs_2],

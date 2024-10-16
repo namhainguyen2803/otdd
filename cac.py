@@ -2,7 +2,7 @@ import os
 import json
 
 
-saved_dist_path = "saved/text_cls_new/dist"
+saved_dist_path = "saved/text_cls_new/dist2"
 
 
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
@@ -22,10 +22,10 @@ for filename in os.listdir(saved_dist_path):
         data = json.load(file)
 
         target_dt = filename.split("_text")[0]
-
+        print(target_dt)
         for source_dt in data.keys():
-            dataset_dist[source_dt][target_dt] = data[source_dt][target_dt]
-            dataset_dist[target_dt][source_dt] = data[source_dt][target_dt]
+            dataset_dist[source_dt][target_dt] = data[target_dt][source_dt]
+            dataset_dist[target_dt][source_dt] = data[target_dt][source_dt]
 
 print(dataset_dist)
 

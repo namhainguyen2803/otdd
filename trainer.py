@@ -107,11 +107,14 @@ def train(feature_extractor, classifier, device, train_loader, epoch, criterion=
         if ft_extractor_optimizer is not None:
             ft_extractor_optimizer.step()
         classifier_optimizer.step()
+
+    return loss.item()
         # if batch_idx % 1000 == 0:
         #     print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}'
         #           f' ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
 
-def test(feature_extractor, classifier, device, test_loader):
+
+def test_func(feature_extractor, classifier, device, test_loader):
     feature_extractor.eval()
     classifier.eval()
     test_loss = 0
@@ -132,5 +135,5 @@ def test(feature_extractor, classifier, device, test_loader):
     print(f'Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)}'
           f' ({100. * correct / len(test_loader.dataset):.0f}%)')
     
-    return correct / len(test_loader.dataset)
+    return correct / len(test_loader.dataset), test_loss
 

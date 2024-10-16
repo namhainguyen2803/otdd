@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data
-from otdd.pytorch.method3 import NewDatasetDistance
+from otdd.pytorch.method4 import NewDatasetDistance
 from otdd.pytorch.distance import DatasetDistance
 
 import os
