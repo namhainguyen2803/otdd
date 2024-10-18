@@ -24,7 +24,7 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
     parser.add_argument('--num_splits', type=int, default=2, help='Number of splits for dataset')
-    parser.add_argument('--split_size', type=int, default=8000, help='Size of each dataset split')
+    parser.add_argument('--split_size', type=int, default=200, help='Size of each dataset split')
     parser.add_argument('--num_projections', type=int, default=1000, help='Number of projections for sOTDD')
     parser.add_argument('--num_classes', type=int, default=100, help='Number of classes in the dataset')
 
@@ -95,6 +95,7 @@ def main():
         dataloader = DataLoader(subset, batch_size=32, shuffle=True)
         dataloaders.append(dataloader)
 
+
     # NEW METHOD
     pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
     print("Compute sOTDD...")
@@ -142,31 +143,31 @@ def main():
         file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
 
 
-    # OTDD
-    dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
-    print("Compute OTDD (gaussian_approx)...")
-    start_time_otdd = time.time()
-    for i in range(len(dataloaders)):
-        for j in range(i+1, len(dataloaders)):
-            start_time_otdd = time.time()
-            dist = DatasetDistance(dataloaders[i],
-                                    dataloaders[j],
-                                    inner_ot_method='gaussian_approx',
-                                    debiased_loss=True,
-                                    p=2,
-                                    entreg=1e-1,
-                                    device=DEVICE)
-            d = dist.distance(maxsamples=None).item()
-            dict_OTDD[i][j] = d
-            dict_OTDD[j][i] = d
+    # # OTDD
+    # dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
+    # print("Compute OTDD (gaussian_approx)...")
+    # start_time_otdd = time.time()
+    # for i in range(len(dataloaders)):
+    #     for j in range(i+1, len(dataloaders)):
+    #         start_time_otdd = time.time()
+    #         dist = DatasetDistance(dataloaders[i],
+    #                                 dataloaders[j],
+    #                                 inner_ot_method='gaussian_approx',
+    #                                 debiased_loss=True,
+    #                                 p=2,
+    #                                 entreg=1e-1,
+    #                                 device=DEVICE)
+    #         d = dist.distance(maxsamples=100).item()
+    #         dict_OTDD[i][j] = d
+    #         dict_OTDD[j][i] = d
 
-    end_time_otdd = time.time()
-    otdd_time_taken = end_time_otdd - start_time_otdd
-    print(otdd_time_taken)
+    # end_time_otdd = time.time()
+    # otdd_time_taken = end_time_otdd - start_time_otdd
+    # print(otdd_time_taken)
 
-    torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
-    with open(f'{save_dir}/time_running.txt', 'a') as file:
-        file.write(f"Time proccesing for OTDD (gaussian_approx): {otdd_time_taken} \n")
+    # torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
+    # with open(f'{save_dir}/time_running.txt', 'a') as file:
+    #     file.write(f"Time proccesing for OTDD (gaussian_approx): {otdd_time_taken} \n")
 
 if __name__ == "__main__":
     main()
