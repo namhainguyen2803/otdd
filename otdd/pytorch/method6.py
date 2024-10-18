@@ -17,7 +17,7 @@ from tqdm.autonotebook import tqdm
 import numpy as np
 import random
 
-from .utils import load_full_dataset, extract_data_targets, process_device_arg, generate_uniform_unit_sphere_projections, generate_unit_convolution_projections, generate_uniform_unit_sphere_projections_2, generate_moments, normalizing_moments
+from .utils import load_full_dataset, extract_data_targets, process_device_arg, generate_uniform_unit_sphere_projections, generate_unit_convolution_projections, generate_uniform_unit_sphere_projections_2, generate_moments, normalizing_moments, normalizing_moments_2
 from .wasserstein import Sliced_Wasserstein_Distance, Wasserstein_One_Dimension
 
 import time
@@ -275,21 +275,10 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
 
 
     list_moments = list()
-    list_factorial = list()
     list_theta = list()
     list_psi = list()
     for i in range(chunk_num_projection):
         chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
-
-        unique_chunk_moments = torch.unique(chunk_moments)
-
-        list_factorial = list()
-        for i in range(len(unique_chunk_moments)):
-            list_factorial.append(math.factorial(unique_chunk_moments[i]))
-
-        factorial_chunk_moments = torch.zeros_like(chunk_moments)
-        for i in range(len(unique_chunk_moments)):
-            factorial_chunk_moments[chunk_moments == unique_chunk_moments[i]] = list_factorial[i]
 
         if use_conv is True:
             chunk_theta = generate_unit_convolution_projections(image_size=dimension, num_channels=num_channels, num_projection=chunk, device=device, dtype=dtype)
@@ -320,6 +309,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
 
     duration_periods = dict()
 
+    print("cac")
     for ch in range(chunk_num_projection):
         
         list_chunk_embeddings = list()
@@ -342,13 +332,8 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
         list_w1d.append(list_chunk_w1d)
 
         if evaluate_time is True:
-            if ch % 10 == 0:
-                _ = torch.cat(list_w1d, dim=0)
-                if p != 1:
-                    _ = torch.pow(input=_, exponent=p)
-                _ = torch.pow(torch.mean(_, dim=0), exponent=1/p) 
             period_end_time = time.time()
-            duration_periods[ch] = period_end_time - all_start_time
+            duration_periods[(ch + 1) * chunk] = period_end_time - all_start_time
 
     list_w1d = torch.cat(list_w1d, dim=0)
     if p != 1:
@@ -359,8 +344,9 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
 
     if evaluate_time is True:
         all_end_time = time.time()
-        duration_periods[ch] = all_end_time - all_start_time
+        duration_periods[(ch + 1) * chunk] = all_end_time - all_start_time
         return sw, duration_periods
     else:
         return sw
+
 

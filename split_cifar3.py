@@ -20,7 +20,10 @@ import seaborn as sns
 import json
 
 num_splits = 2
-save_dir = f'saved/compare_time_{num_splits}_cac'
+split_size = 10000
+num_projections = 1000
+num_classes = 100
+save_dir = f'saved_2/time_comparison/CIFAR100/dataset_size/SS{split_size}_NS{num_splits}_NP{num_projections}_2'
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -55,12 +58,10 @@ transform = transforms.Compose([
     transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 ])
 
-
-dataset = CIFAR100(root='data2/CIFAR100', train=True, download=False)
-test_dataset = CIFAR100(root='data2/CIFAR100', train=False, download=False, transform=transform)
+dataset = CIFAR100(root=f'data2/CIFAR{num_classes}', train=True, download=False)
+test_dataset = CIFAR100(root=f'data2/CIFAR{num_classes}', train=False, download=False, transform=transform)
 
 # split_size = len(dataset) // num_splits
-split_size = 500
 print(split_size, len(dataset))
 indices = np.arange(len(dataset))
 
@@ -78,12 +79,14 @@ for i in range(num_splits):
 
     subset_indices = list()
     for cls_id in data_index_cls.keys():
-        num_dataset_cls = len(data_index_cls[cls_id]) // num_splits
+        # num_dataset_cls = len(data_index_cls[cls_id]) // num_splits
+        num_dataset_cls = split_size // num_classes
         start_idx = i * num_dataset_cls
         end_idx = min(start_idx + num_dataset_cls, len(data_index_cls[cls_id]))
         subset_indices.extend(data_index_cls[cls_id][start_idx:end_idx])
 
     np.random.shuffle(subset_indices)
+    print(len(subset_indices))
     sub = Subset(dataset=dataset, original_indices=subset_indices, transform=transform)
     subsets.append(sub)
 
@@ -100,7 +103,7 @@ for subset in subsets:
 pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
 print("Compute sOTDD...")
 print(f"Number of datasets: {len(dataloaders)}")
-list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=100, device='cpu', evaluate_time=True)
+list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=num_projections, device=DEVICE, evaluate_time=True)
 for i in duration_periods.keys():
     print(i, duration_periods[i])
 
@@ -112,6 +115,11 @@ for i in range(len(dataloaders)):
         t += 1
 
 torch.save(pairwise_dist, f'{save_dir}/sotdd_dist.pt')
+with open(f'{save_dir}/time_running.txt', 'a') as file:
+    for i in duration_periods.keys():
+        file.write(f"Time proccesing for sOTDD ({i} projections): {duration_periods[i]} \n") 
+
+
 
 
 # OTDD
@@ -122,26 +130,25 @@ for i in range(len(dataloaders)):
     for j in range(i+1, len(dataloaders)):
         
         start_time_otdd = time.time()
-        dist = DatasetDistance(dataloaders[i], 
+        dist = DatasetDistance(dataloaders[i],
                                 dataloaders[j],
                                 inner_ot_method='exact',
                                 debiased_loss=True,
                                 p=2,
                                 entreg=1e-1,
-                                device='cpu')
-        d = dist.distance(maxsamples=split_size).item()
+                                device=DEVICE)
+        d = dist.distance(maxsamples=None).item()
         dict_OTDD[i][j] = d
         dict_OTDD[j][i] = d
 
 end_time_otdd = time.time()
 otdd_time_taken = end_time_otdd - start_time_otdd
+print(otdd_time_taken)
+
 torch.save(dict_OTDD, f'{save_dir}/otdd_dist.pt')
-
-
 with open(f'{save_dir}/time_running.txt', 'a') as file:
-    for i in duration_periods.keys():
-        file.write(f"Time proccesing for sOTDD ({i} projections): {duration_periods[i]} \n") 
-    file.write(f"Time proccesing for OTDD: {otdd_time_taken} \n")
+    file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
+
 
 
 

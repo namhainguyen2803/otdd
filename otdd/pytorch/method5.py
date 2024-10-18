@@ -311,6 +311,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     list_dict_data = list()
     for D in list_D:
         X, Y, dict_data = embeddings._load_datasets(D=D, labels_kept=None, maxsamples=None, device=device)
+        print(X.shape, Y.shape)
         del X 
         del Y 
         list_dict_data.append(dict_data)
@@ -324,7 +325,6 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
 
     duration_periods = dict()
 
-    print("cac")
     for ch in range(chunk_num_projection):
         
         list_chunk_embeddings = list()
@@ -347,13 +347,8 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
         list_w1d.append(list_chunk_w1d)
 
         if evaluate_time is True:
-            if ch % 10 == 0:
-                _ = torch.cat(list_w1d, dim=0)
-                if p != 1:
-                    _ = torch.pow(input=_, exponent=p)
-                _ = torch.pow(torch.mean(_, dim=0), exponent=1/p) 
             period_end_time = time.time()
-            duration_periods[ch] = period_end_time - all_start_time
+            duration_periods[(ch + 1) * chunk] = period_end_time - all_start_time
 
     list_w1d = torch.cat(list_w1d, dim=0)
     if p != 1:
@@ -363,8 +358,8 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     sw = torch.pow(torch.mean(sw, dim=0), exponent=1/p) 
 
     if evaluate_time is True:
-        all_end_time = time.time()
-        duration_periods[ch] = all_end_time - all_start_time
+        # all_end_time = time.time()
+        # duration_periods[(ch + 1) * chunk] = all_end_time - all_start_time
         return sw, duration_periods
     else:
         return sw
