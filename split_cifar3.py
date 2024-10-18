@@ -21,7 +21,7 @@ import json
 import argparse
 
 
-    def main():
+def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
     parser.add_argument('--num_splits', type=int, default=2, help='Number of splits for dataset')
     parser.add_argument('--split_size', type=int, default=8000, help='Size of each dataset split')
@@ -35,7 +35,7 @@ import argparse
     num_projections = args.num_projections
     num_classes = args.num_classes
 
-    save_dir = f'saved_2/time_comparison/CIFAR100/dataset_size/SS{split_size}_NS{num_splits}_NP{num_projections}'
+    save_dir = f'saved_3/time_comparison/CIFAR100/dataset_size/SS{split_size}_NS{num_splits}_NP{num_projections}'
     os.makedirs(save_dir, exist_ok=True)
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -117,7 +117,7 @@ import argparse
 
     # OTDD
     dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
-    print("Compute OTDD...")
+    print("Compute OTDD (exact)...")
     start_time_otdd = time.time()
     for i in range(len(dataloaders)):
         for j in range(i+1, len(dataloaders)):
@@ -137,9 +137,36 @@ import argparse
     otdd_time_taken = end_time_otdd - start_time_otdd
     print(otdd_time_taken)
 
-    torch.save(dict_OTDD, f'{save_dir}/otdd_dist.pt')
+    torch.save(dict_OTDD, f'{save_dir}/exact_otdd_dist.pt')
     with open(f'{save_dir}/time_running.txt', 'a') as file:
         file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
+
+
+    # OTDD
+    dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
+    print("Compute OTDD (gaussian_approx)...")
+    start_time_otdd = time.time()
+    for i in range(len(dataloaders)):
+        for j in range(i+1, len(dataloaders)):
+            start_time_otdd = time.time()
+            dist = DatasetDistance(dataloaders[i],
+                                    dataloaders[j],
+                                    inner_ot_method='gaussian_approx',
+                                    debiased_loss=True,
+                                    p=2,
+                                    entreg=1e-1,
+                                    device=DEVICE)
+            d = dist.distance(maxsamples=None).item()
+            dict_OTDD[i][j] = d
+            dict_OTDD[j][i] = d
+
+    end_time_otdd = time.time()
+    otdd_time_taken = end_time_otdd - start_time_otdd
+    print(otdd_time_taken)
+
+    torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
+    with open(f'{save_dir}/time_running.txt', 'a') as file:
+        file.write(f"Time proccesing for OTDD (gaussian_approx): {otdd_time_taken} \n")
 
 if __name__ == "__main__":
     main()
