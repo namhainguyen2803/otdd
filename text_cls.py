@@ -143,6 +143,10 @@ def main():
                 if (epoch + 1) % 3 == 0:
                     acc = eval_bert(model=model, classifier=classifier, test_loader=METADATA_DATASET[dataset_name]["test_loader"], device=device)
                     print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}, Accuracy: {acc}')
+                    ft_extractor_path = f'{parent_dir}/{dataset_name}_bert_{epoch}.pth'
+                    torch.save(model.state_dict(), ft_extractor_path)
+                    classifier_path = f'{parent_dir}/{dataset_name}_classifier_{epoch}.pth'
+                    torch.save(classifier.state_dict(), classifier_path)
                 else:
                     print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}')
 
