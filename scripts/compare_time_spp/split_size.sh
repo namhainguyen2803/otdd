@@ -10,6 +10,15 @@
 #SBATCH --mail-type=all
 #SBATCH --mail-user=v.HaiNN14@vinai.io
 
+module purge
+module load python/miniconda3/miniconda3
+
+# Corrected line
+eval "$(conda shell.bash hook)"
+
+conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd
+cd /lustre/scratch/client/vinai/users/hainn14/otdd
+
 python split_cifar3.py --num_splits 2 --split_size 200 --num_projections 10000 --num_classes 100
 python split_cifar3.py --num_splits 2 --split_size 500 --num_projections 10000 --num_classes 100
 python split_cifar3.py --num_splits 2 --split_size 1000 --num_projections 10000 --num_classes 100
