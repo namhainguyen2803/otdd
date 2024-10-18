@@ -23,6 +23,8 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
+    parser.add_argument('--parent_dir', type=str, default="saved", help='Parent directory')
+    parser.add_argument('--exp_type', type=str, default="split_size", help='dataset_size')
     parser.add_argument('--num_splits', type=int, default=2, help='Number of splits for dataset')
     parser.add_argument('--split_size', type=int, default=200, help='Size of each dataset split')
     parser.add_argument('--num_projections', type=int, default=1000, help='Number of projections for sOTDD')
@@ -35,7 +37,7 @@ def main():
     num_projections = args.num_projections
     num_classes = args.num_classes
 
-    save_dir = f'saved_3/time_comparison/CIFAR100/dataset_size/SS{split_size}_NS{num_splits}_NP{num_projections}'
+    save_dir = f'{args.parent_dir}/time_comparison/CIFAR100/{args.exp_type}/SS{split_size}_NS{num_splits}_NP{num_projections}'
     os.makedirs(save_dir, exist_ok=True)
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
