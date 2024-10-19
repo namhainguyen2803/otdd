@@ -2,6 +2,10 @@ import os
 import json
 import re
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 parent_path = "CIFAR100/split_size"
 
@@ -29,6 +33,24 @@ for file_name in os.listdir(parent_path):
                 parts = float(line.split(": ")[-1])
                 otdd_time_dict[split_size] = parts
 
-print(sotdd_time_dict)
+# print(sotdd_time_dict)
 
 print(otdd_time_dict)
+
+
+list_ss = list()
+list_pt = list()
+for ss, pt in otdd_time_dict.items():
+    print(ss, pt)
+    list_ss.append(ss)
+    list_pt.append(pt)
+
+plt.figure(figsize=(10, 8))
+plt.scatter(list_ss, list_pt, s=100, color='blue', label='Data points')
+
+plt.xlabel('Size')
+plt.ylabel('Time')
+plt.title(f'cac')
+
+plt.legend()
+plt.savefig('otdd_split_size.png')
