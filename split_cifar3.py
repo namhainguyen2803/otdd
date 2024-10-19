@@ -40,7 +40,8 @@ def main():
     save_dir = f'{args.parent_dir}/time_comparison/CIFAR100/{args.exp_type}/SS{split_size}_NS{num_splits}_NP{num_projections}'
     os.makedirs(save_dir, exist_ok=True)
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 
     class Subset(Dataset):
@@ -124,13 +125,12 @@ def main():
     start_time_otdd = time.time()
     for i in range(len(dataloaders)):
         for j in range(i+1, len(dataloaders)):
-            start_time_otdd = time.time()
             dist = DatasetDistance(dataloaders[i],
                                     dataloaders[j],
                                     inner_ot_method='exact',
                                     debiased_loss=True,
                                     p=2,
-                                    entreg=1e-1,
+                                    entreg=1e-3,
                                     device=DEVICE)
             d = dist.distance(maxsamples=split_size).item()
             dict_OTDD[i][j] = d
