@@ -1,35 +1,34 @@
 import os
 import json
+import re
 
 
-saved_dist_path = "saved/text_cls_new/dist2"
+parent_path = "CIFAR100/split_size"
 
+sotdd_time_dict = dict()
+otdd_time_dict = dict()
 
-DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
-dataset_dist = dict()
-for source_name in DATASET_NAMES:
-    for target_name in DATASET_NAMES:
-        if source_name not in dataset_dist:
-            dataset_dist[source_name] = dict()
-        dataset_dist[source_name][target_name] = 0
+for file_name in os.listdir(parent_path):
 
-for filename in os.listdir(saved_dist_path):
-    if filename == "text_dist.json":
-        continue
-    print(filename)
-    json_path = saved_dist_path + "/"+ filename
-    with open(json_path, "r") as file:
-        data = json.load(file)
+    parts = file_name.split("_")
+    split_size = int(parts[0][2:])
+    num_split = int(parts[1][2:])
+    num_projections = int(parts[2][2:])
+    print(file_name, split_size, num_split, num_projections)
 
-        target_dt = filename.split("_text")[0]
-        print(target_dt)
-        for source_dt in data.keys():
-            dataset_dist[source_dt][target_dt] = data[target_dt][source_dt]
-            dataset_dist[target_dt][source_dt] = data[target_dt][source_dt]
+    sotdd_time_dict[split_size] = dict()
 
-print(dataset_dist)
+    with open(f"{parent_path}/{file_name}/time_running.txt", "r") as file:
+        for line in file:
+            pattern = r"sOTDD \((\d+) projections\): ([\d.]+)"
+            match = re.search(pattern, line)
 
+            if match:
+                sotdd_time_dict[split_size][int(match.group(1))] = float(match.group(2))
+            else:
+                parts = float(line.split(": ")[-1])
+                otdd_time_dict[split_size] = parts
 
-dist_file_path = f'{saved_dist_path}/text_dist.json'
-with open(dist_file_path, 'w') as json_file:
-    json.dump(dataset_dist, json_file, indent=4)
+print(sotdd_time_dict)
+
+print(otdd_time_dict)
