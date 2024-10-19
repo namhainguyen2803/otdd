@@ -132,7 +132,7 @@ def main():
                                     p=2,
                                     entreg=1e-1,
                                     device=DEVICE)
-            d = dist.distance(maxsamples=None).item()
+            d = dist.distance(maxsamples=split_size).item()
             dict_OTDD[i][j] = d
             dict_OTDD[j][i] = d
 
