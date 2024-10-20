@@ -27,7 +27,7 @@ loaders_mnist  = load_torchvision_data('MNIST', valid_size=0, resize = 28, downl
 loaders_kmnist  = load_torchvision_data('KMNIST', valid_size=0, resize = 28, download=False, maxsize=MAXSIZE)[0]
 loaders_emnist  = load_torchvision_data('EMNIST', valid_size=0, resize = 28, download=True, maxsize=MAXSIZE)[0]
 loaders_fmnist  = load_torchvision_data('FashionMNIST', valid_size=0, resize = 28, download=False, maxsize=MAXSIZE)[0]
-loaders_usps  = load_torchvision_data('USPS',  valid_size=0, resize = 28, download=False, maxsize=MAXSIZE, datadir="data/USPS")[0]
+loaders_usps  = load_torchvision_data('USPS',  valid_size=0, resize = 28, download=False, maxsize=MAXSIZE, datadir="data2/USPS")[0]
 
 
 def compute_distance_dataset(name_src, name_tgt, maxsamples=MAXSIZE, num_projection=1000):
@@ -57,15 +57,15 @@ def compute_distance_dataset(name_src, name_tgt, maxsamples=MAXSIZE, num_project
     else:
         raise("Unknown tgt dataset")
 
-    dist = NewDatasetDistance(loaders_src['train'], loaders_tgt['train'], p=2, device='cpu')
-    d = dist.distance(maxsamples=maxsamples, num_projection=num_projection)
+    # dist = NewDatasetDistance(loaders_src['train'], loaders_tgt['train'], p=2, device='cpu')
+    # d = dist.distance(maxsamples=maxsamples, num_projection=num_projection)
 
-    # dist = DatasetDistance(loaders_src['train'], loaders_tgt['train'],
-    #                         inner_ot_method = 'exact',
-    #                         debiased_loss = True,
-    #                         p = 2, entreg = 1e-1,
-    #                         device='cpu')
-    # d = dist.distance(maxsamples = maxsamples)
+    dist = DatasetDistance(loaders_src['train'], loaders_tgt['train'],
+                            inner_ot_method = 'exact',
+                            debiased_loss = True,
+                            p = 2, entreg = 1e-1,
+                            device='cpu')
+    d = dist.distance(maxsamples = maxsamples)
 
     print(f'DIST({name_src}, {name_tgt})={d:8.2f}')
     return d

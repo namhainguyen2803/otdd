@@ -1,0 +1,3 @@
+Time proccesing for OTDD (exact): 105.19043469429016 
+Time proccesing for OTDD (exact): 266.686075925827 
+Time proccesing for OTDD (exact): 243.4001383781433 

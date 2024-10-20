@@ -155,7 +155,7 @@ class DatasetDistance():
                  inner_ot_loss='sinkhorn',
                  inner_ot_debiased=False,
                  inner_ot_p=2,
-                 inner_ot_entreg=0.1,
+                 inner_ot_entreg=0.001,
                  ## Gaussian Approximation Args
                  diagonal_cov=False,
                  min_labelcount=2,

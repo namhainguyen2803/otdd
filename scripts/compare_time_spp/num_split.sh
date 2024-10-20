@@ -20,7 +20,7 @@ conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd
 cd /lustre/scratch/client/vinai/users/hainn14/otdd
 
 
-parent_dir="saved"
+parent_dir="saved_ss2"
 exp_type="num_split"
 python split_cifar3.py --parent_dir "$parent_dir" --exp_type "$exp_type" --num_splits 2 --split_size 5000 --num_projections 10000 --num_classes 100
 python split_cifar3.py --parent_dir "$parent_dir" --exp_type "$exp_type" --num_splits 3 --split_size 5000 --num_projections 10000 --num_classes 100

@@ -23,7 +23,7 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="caacc", help='Parent directory')
     parser.add_argument('--exp_type', type=str, default="split_size", help='dataset_size')
     parser.add_argument('--num_splits', type=int, default=2, help='Number of splits for dataset')
     parser.add_argument('--split_size', type=int, default=200, help='Size of each dataset split')
@@ -99,26 +99,6 @@ def main():
         dataloaders.append(dataloader)
 
 
-    # NEW METHOD
-    pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
-    print("Compute sOTDD...")
-    print(f"Number of datasets: {len(dataloaders)}")
-    list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=num_projections, device=DEVICE, evaluate_time=True)
-    for i in duration_periods.keys():
-        print(i, duration_periods[i])
-
-    t = 0
-    for i in range(len(dataloaders)):
-        for j in range(i+1, len(dataloaders)):
-            pairwise_dist[i, j] = list_pairwise_dist[t]
-            pairwise_dist[j, i] = list_pairwise_dist[t]
-            t += 1
-
-    torch.save(pairwise_dist, f'{save_dir}/sotdd_dist.pt')
-    with open(f'{save_dir}/time_running.txt', 'a') as file:
-        for i in duration_periods.keys():
-            file.write(f"Time proccesing for sOTDD ({i} projections): {duration_periods[i]} \n")
-
     # OTDD
     dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
     print("Compute OTDD (exact)...")
@@ -129,8 +109,9 @@ def main():
                                     dataloaders[j],
                                     inner_ot_method='exact',
                                     debiased_loss=True,
+                                    inner_ot_loss='sinkhorn',
                                     p=2,
-                                    entreg=1e-7,
+                                    entreg=1e-4,
                                     device=DEVICE)
             d = dist.distance(maxsamples=split_size).item()
             dict_OTDD[i][j] = d
@@ -145,7 +126,7 @@ def main():
         file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
 
 
-    # # OTDD
+    # OTDD
     # dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
     # print("Compute OTDD (gaussian_approx)...")
     # start_time_otdd = time.time()
@@ -155,11 +136,12 @@ def main():
     #         dist = DatasetDistance(dataloaders[i],
     #                                 dataloaders[j],
     #                                 inner_ot_method='gaussian_approx',
+    #                                 inner_ot_loss='wasserstein',
     #                                 debiased_loss=True,
     #                                 p=2,
-    #                                 entreg=1e-1,
+    #                                 entreg=1e-4,
     #                                 device=DEVICE)
-    #         d = dist.distance(maxsamples=100).item()
+    #         d = dist.distance(maxsamples=split_size).item()
     #         dict_OTDD[i][j] = d
     #         dict_OTDD[j][i] = d
 

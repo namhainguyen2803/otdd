@@ -1,0 +1,11 @@
+Time proccesing for sOTDD (1000 projections): 35.67567157745361 
+Time proccesing for sOTDD (2000 projections): 65.0108380317688 
+Time proccesing for sOTDD (3000 projections): 94.33782196044922 
+Time proccesing for sOTDD (4000 projections): 122.53211212158203 
+Time proccesing for sOTDD (5000 projections): 150.67317938804626 
+Time proccesing for sOTDD (6000 projections): 184.38668060302734 
+Time proccesing for sOTDD (7000 projections): 214.7730073928833 
+Time proccesing for sOTDD (8000 projections): 243.69785928726196 
+Time proccesing for sOTDD (9000 projections): 272.48051738739014 
+Time proccesing for sOTDD (10000 projections): 301.69037771224976 
+Time proccesing for OTDD (exact): 2297.0248634815216 

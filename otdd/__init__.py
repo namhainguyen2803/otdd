@@ -4,7 +4,7 @@ import logging
 # Defaults
 ROOT_DIR   = dirname(dirname(abspath(__file__))) # Project Root
 HOME_DIR   = os.getenv("HOME") # User home dir
-DATA_DIR   = os.path.join(ROOT_DIR, 'data')
+DATA_DIR   = os.path.join(ROOT_DIR, 'data2')
 OUTPUT_DIR = os.path.join(ROOT_DIR, 'out')
 MODELS_DIR = os.path.join(ROOT_DIR, 'models')
 from .utils import launch_logger
