@@ -26,17 +26,11 @@ import time
 class Embeddings_sOTDD():
 
     def __init__(self, 
-                list_moments,
-                list_theta,
-                list_psi,
                 min_labelcount=2,
                 p=2,
                 device="cpu",
                 precision="float"):
 
-        self.list_moments = list_moments
-        self.list_theta = list_theta
-        self.list_psi = list_psi
         self.p = p 
         self.device = device
         self.min_labelcount = min_labelcount
@@ -238,37 +232,28 @@ class Embeddings_sOTDD():
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
     
-    def get_embeddings(self, dict_data, maxsamples, num_projections=1000, chunk=100, use_conv=False):
+    def get_embeddings(self, dict_data, maxsamples, theta, psi, moment, num_projections=1000, use_conv=False):
 
-        chunk_num_projection = num_projections // chunk
+        chunk_dataset_embeddings = self._compute_projected_dataset_matrix(dict_data=dict_data,
+                                                                        projection_matrix=theta,
+                                                                        projection_matrix_2=psi,
+                                                                        k=moment,
+                                                                        use_conv=use_conv) 
 
-        dataset_embeddings = list()
-        for i in range(chunk_num_projection):
-            chunk_dataset_embeddings = self._compute_projected_dataset_matrix(dict_data=dict_data,
-                                                                            projection_matrix=self.list_theta[i],
-                                                                            projection_matrix_2=self.list_psi[i],
-                                                                            k=self.list_moments[i],
-                                                                            use_conv=use_conv) 
-            dataset_embeddings.append(chunk_dataset_embeddings)
-        
-        if chunk_num_projection != 1:
-            dataset_embeddings = torch.cat(dataset_embeddings, dim=0)
-            return dataset_embeddings
-        else:
-            return chunk_dataset_embeddings
+        return chunk_dataset_embeddings
 
 
 def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evaluate_time=False):
 
     num_moments = 5
 
-    dimension = 32
-    num_channels = 3
+    dimension = 28
+    num_channels = 1
     use_conv = True
     precision = "float"
     p = 2
 
-    chunk = 100
+    chunk = 1000
     chunk_num_projection = num_projections // chunk
 
     dtype = torch.DoubleTensor if precision == 'double' else torch.FloatTensor
@@ -287,15 +272,16 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
         
         chunk_psi = generate_uniform_unit_sphere_projections(dim=num_moments+1, num_projection=chunk, device=device, dtype=dtype)
 
-    list_moments.append(chunk_moments)
-    list_theta.append(chunk_theta)
-    list_psi.append(chunk_psi)
+        list_moments.append(chunk_moments)
+        list_theta.append(chunk_theta)
+        list_psi.append(chunk_psi)
 
-    embeddings = Embeddings_sOTDD(list_moments=list_moments, list_theta=list_theta, list_psi=list_psi, precision=precision, device=device)
+    embeddings = Embeddings_sOTDD(precision=precision, device=device)
 
     list_dict_data = list()
     for D in list_D:
         X, Y, dict_data = embeddings._load_datasets(D=D, labels_kept=None, maxsamples=None, device=device)
+        print(X.shape, Y.shape)
         del X 
         del Y 
         list_dict_data.append(dict_data)
@@ -309,12 +295,17 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
 
     duration_periods = dict()
 
-    print("cac")
     for ch in range(chunk_num_projection):
         
         list_chunk_embeddings = list()
         for am in range(len(list_dict_data)):
-            chunk_dataset_embeddings = embeddings.get_embeddings(dict_data=list_dict_data[am], maxsamples=None, num_projections=chunk, chunk=chunk, use_conv=use_conv)
+            chunk_dataset_embeddings = embeddings.get_embeddings(dict_data=list_dict_data[am], 
+                                                                maxsamples=None, 
+                                                                theta=list_theta[ch], 
+                                                                psi=list_psi[ch], 
+                                                                moment=list_moments[ch], 
+                                                                num_projections=chunk,
+                                                                use_conv=use_conv)
             list_chunk_embeddings.append(chunk_dataset_embeddings)
 
         list_chunk_w1d = list()
@@ -343,10 +334,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     sw = torch.pow(torch.mean(sw, dim=0), exponent=1/p) 
 
     if evaluate_time is True:
-        all_end_time = time.time()
-        duration_periods[(ch + 1) * chunk] = all_end_time - all_start_time
         return sw, duration_periods
     else:
         return sw
-
 

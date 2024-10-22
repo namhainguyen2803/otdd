@@ -329,22 +329,17 @@ class NewDatasetDistance():
         # print(self.X1.shape, self.Y1.shape)
         # print(self.X2.shape, self.Y2.shape)
 
-        chunk = 100
+        chunk = 1000
         chunk_num_projection = num_projection // chunk
-        num_moments = 5
 
         all_sw = list()
-        # print(len(list_projection_matrix), len(list_projection_matrix_2), chunk_num_projection)
         for i in range(chunk_num_projection):
 
             if list_moments is None:
 
-                # moments = torch.stack([torch.sort(torch.randperm(8)[:num_moments])[0] + 1 for _ in range(chunk)])
-                # row = torch.tensor([1, 2, 3, 4])
-                # num_moments = len(row)
-                # moments = row.unsqueeze(0).repeat(chunk, 1)
-
-                moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
+                row = torch.tensor([1, 2, 3, 4])
+                num_moments = len(row)
+                moments = row.unsqueeze(0).repeat(chunk, 1)
                 
             else:
                 moments = list_moments[i]
@@ -363,7 +358,7 @@ class NewDatasetDistance():
                     projection_matrix = generate_unit_convolution_projections(image_size=self.X1.shape[2], num_channels=self.X1.shape[1], num_projection=chunk, device=self.device, dtype=dtype)
                 else:
 
-                    projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[2],num_projection=chunk, device=self.device, dtype=dtype)
+                    projection_matrix = generate_uniform_unit_sphere_projections(dim=self.X1.shape[2]*self.X1.shape[2],num_projection=chunk, device=self.device, dtype=dtype)
             else:
                 projection_matrix = list_projection_matrix[i]
 
@@ -485,14 +480,14 @@ def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000
 
     for i in range(chunk_num_projection):
         
-        moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
+        # moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
 
 
         # moments = torch.arange(1, num_moments+1).unsqueeze(0).repeat(chunk, 1)
 
-        # row = torch.tensor([1])
-        # num_moments = len(row)
-        # moments = row.unsqueeze(0).repeat(chunk, 1)
+        row = torch.tensor([1])
+        num_moments = len(row)
+        moments = row.unsqueeze(0).repeat(chunk, 1)
 
         list_moments.append(moments)
 

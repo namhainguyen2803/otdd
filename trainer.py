@@ -34,21 +34,25 @@ class FeatureExtractor(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
-class Classifier(nn.Module):
+class FullyConnectedNetwork(nn.Module):
     def __init__(self, feat_dim, num_classes=10):
-        super(Classifier, self).__init__()
-        self.classifier = nn.Sequential(
+        super(FullyConnectedNetwork, self).__init__()
+        self.module = nn.Sequential(
             nn.Linear(feat_dim, 120),
             nn.ReLU(),
             nn.Dropout(),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Dropout(),
-            nn.Linear(84, num_classes)
+            nn.Dropout()
         )
+        self.classifier = nn.Linear(84, num_classes)
 
     def forward(self, x):
+        x = self.module(x)
         return self.classifier(x)
+    
+    def change_head(self, new_num_classes):
+        self.classifier = nn.Linear(84, new_num_classes)
 
 def frozen_module(module):
     for name, param in module.named_parameters():
@@ -69,7 +73,7 @@ def num_flat_features(x):
     return num_features
 
 # Training loop
-def train(feature_extractor, classifier, device, train_loader, epoch, criterion=nn.CrossEntropyLoss(), ft_extractor_optimizer=None, classifier_optimizer=None):
+def train(feature_extractor, classifier, device, train_loader, epoch=None, criterion=nn.CrossEntropyLoss(), ft_extractor_optimizer=None, classifier_optimizer=None):
 
     if criterion is None:
         criterion = nn.CrossEntropyLoss()
