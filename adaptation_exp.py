@@ -37,7 +37,7 @@ os.makedirs(adapt_path, exist_ok=True)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load data
-MAXSIZE_DIST = None
+MAXSIZE_DIST = 7000
 MAXSIZE_TRAINING = None
 
 
@@ -122,8 +122,7 @@ def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=1000):
     
     # all_dist_dict = compute_pairwise_distance(list_dataset, device=DEVICE, num_projections=10000, evaluate_time=False)
 
-    all_dist_dict = compute_pairwise_distance(list_dataset, maxsamples=maxsamples, num_projection=10000, chunk=1000, num_moments=4, image_size=28, dimension=None, num_channels=1, device='cpu', dtype=torch.FloatTensor)
-
+    all_dist_dict, _ = compute_pairwise_distance(list_dataset, maxsamples=maxsamples, num_projection=num_projection, chunk=1000, num_moments=8, image_size=28, dimension=28 * 28, num_channels=1, use_conv=False, device=DEVICE, dtype=torch.FloatTensor)
 
     return all_dist_dict
 
@@ -240,10 +239,9 @@ if __name__ == "__main__":
     #     json.dump(DIST, json_file, indent=4)
     # print(f"DIST: {DIST}")
 
-
-    DIST_list = compute_sotdd_distance()
+    DIST_list = compute_sotdd_distance(num_projection=10000)
     DIST = dict()
-    t = 0
+
     for i in range(len(LIST_DATASETS)):
         target_dataset = LIST_DATASETS[i]
         for j in range(i+1, len(LIST_DATASETS)):
@@ -254,13 +252,10 @@ if __name__ == "__main__":
             if source_dataset not in DIST:
                 DIST[source_dataset] = dict()
 
-            DIST[target_dataset][source_dataset] = DIST_list[t].item()
-            DIST[source_dataset][target_dataset] = DIST_list[t].item()
+            DIST[target_dataset][source_dataset] = DIST_list[i][j]
+            DIST[source_dataset][target_dataset] = DIST_list[j][i]
 
-            t += 1
-
-    print(DIST_list, len(DIST_list))
-    dist_file_path = f'{parent_dir}/sotdd_dist2.json'
+    dist_file_path = f'{parent_dir}/sotdd_dist_no_conv_8_normalizing_moments_3.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST, json_file, indent=4)
     print(f"DIST: {DIST}")

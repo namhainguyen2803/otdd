@@ -17,7 +17,7 @@ from tqdm.autonotebook import tqdm
 import numpy as np
 import random
 
-from .utils import load_full_dataset, extract_data_targets, process_device_arg, generate_uniform_unit_sphere_projections, generate_unit_convolution_projections, generate_uniform_unit_sphere_projections_2
+from .utils import load_full_dataset, extract_data_targets, process_device_arg, generate_uniform_unit_sphere_projections, generate_unit_convolution_projections, generate_uniform_unit_sphere_projections_2, normalizing_moments, normalizing_moments_3
 from .wasserstein import Sliced_Wasserstein_Distance, Wasserstein_One_Dimension
 
 import time
@@ -279,7 +279,8 @@ class NewDatasetDistance():
         # shape == (num_projection, num_examples, num_moments)
 
         avg_moment_X_projection = torch.sum(moment_X_projection, dim=1) / X_projection.shape[0] # shape == (num_projection, num_moments)
-        avg_moment_X_projection = torch.sign(avg_moment_X_projection) * torch.pow(torch.abs(avg_moment_X_projection), 1/k)
+        # avg_moment_X_projection = torch.sign(avg_moment_X_projection) * torch.pow(torch.abs(avg_moment_X_projection), 1/k)
+        avg_moment_X_projection = normalizing_moments_3(avg_moment_X_projection, k)
 
         return avg_moment_X_projection # shape == (num_projection, num_moments)
 
@@ -315,7 +316,7 @@ class NewDatasetDistance():
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
 
-    def distance(self, maxsamples=None, num_projection=10000, list_moments=None, list_projection_matrix=None, list_projection_matrix_2=None, use_conv=True):
+    def distance(self, maxsamples=None, num_projection=10000, list_moments=None, chunk=1000, list_projection_matrix=None, list_projection_matrix_2=None, use_conv=True):
         """
         self.X: tensor of features 60000x1x28x28 = 60000x784
         self.Y: tensor of labels corresponding to features to be considered [60000]
@@ -329,7 +330,6 @@ class NewDatasetDistance():
         # print(self.X1.shape, self.Y1.shape)
         # print(self.X2.shape, self.Y2.shape)
 
-        chunk = 1000
         chunk_num_projection = num_projection // chunk
 
         all_sw = list()
@@ -390,7 +390,7 @@ class NewDatasetDistance():
             w_1d = Wasserstein_One_Dimension(X=proj_proj_matrix_dataset_1,
                                             Y=proj_proj_matrix_dataset_2,
                                             p=self.p,
-                                            device=self.device)  # shape (chunk)
+                                            device="cpu").to(self.device)  # shape (chunk)
 
             del proj_proj_matrix_dataset_1
             del proj_proj_matrix_dataset_2
@@ -463,7 +463,7 @@ def generate_moments(num_moments, min_moment=1, max_moment=None, gen_type="unifo
         return moment
 
 
-def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000, chunk=100, num_moments=3, image_size=28, dimension=None, num_channels=1, device='cpu', dtype=torch.FloatTensor):
+def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000, chunk=1000, num_moments=3, image_size=28, dimension=None, num_channels=1, use_conv=True, device='cpu', dtype=torch.FloatTensor):
 
     res = list()
     for i in range(len(list_dataset)):
@@ -480,18 +480,11 @@ def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000
 
     for i in range(chunk_num_projection):
         
-        # moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
-
-
-        # moments = torch.arange(1, num_moments+1).unsqueeze(0).repeat(chunk, 1)
-
-        row = torch.tensor([1])
+        row = torch.arange(num_moments) + 1
         num_moments = len(row)
         moments = row.unsqueeze(0).repeat(chunk, 1)
 
         list_moments.append(moments)
-
-        use_conv = True
 
         if use_conv is True:
             projection_matrix = generate_unit_convolution_projections(image_size=image_size, num_channels=num_channels, num_projection=chunk, device=device, dtype=dtype)
@@ -513,7 +506,9 @@ def compute_pairwise_distance(list_dataset, maxsamples=None, num_projection=1000
             new_dist = NewDatasetDistance(D1, D2, p=2, device=device)
             new_d = new_dist.distance(maxsamples=maxsamples, 
                                     num_projection=num_projection, 
-                                    list_moments=list_moments, 
+                                    list_moments=list_moments,
+                                    chunk=chunk,
+                                    use_conv=use_conv,
                                     list_projection_matrix=list_projection_matrix, 
                                     list_projection_matrix_2=list_projection_matrix_2).item()
             end_time_new_method = time.time()

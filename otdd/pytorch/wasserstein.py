@@ -434,8 +434,8 @@ def Wasserstein_One_Dimension(X, Y, a=None, b=None, p=2, device="cpu"):
         X_sorted, X_rankings = torch.sort(X, dim=0)
         Y_sorted, Y_rankings = torch.sort(Y, dim=0)
 
-        a = torch.take_along_dim(input=a, indices=X_rankings, dim=0)  # reorder weight measure corresponding to X_sorted
-        b = torch.take_along_dim(input=b, indices=Y_rankings, dim=0)  # reorder weight measure corresponding to Y_sorted
+        a = torch.take_along_dim(input=a.to(device), indices=X_rankings.to(device), dim=0)  # reorder weight measure corresponding to X_sorted
+        b = torch.take_along_dim(input=b.to(device), indices=Y_rankings.to(device), dim=0)  # reorder weight measure corresponding to Y_sorted
 
         a_cum_weights = torch.cumsum(a, dim=0)
         b_cum_weights = torch.cumsum(b, dim=0)

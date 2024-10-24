@@ -14,6 +14,7 @@ from sklearn.cluster import k_means, DBSCAN
 
 import matplotlib.pyplot as plt
 
+import math
 
 from PIL import Image
 import PIL.ImageOps
@@ -624,7 +625,7 @@ def generate_unit_convolution_projections(image_size=32, num_channels=3, num_pro
     
     elif image_size == 28:
 
-        choice = 2
+        choice = 1
 
         if choice == 1:
             list_kernel_size = [5, 5, 5, 5, 3, 3, 3, 3, 3, 2]
@@ -688,6 +689,24 @@ def normalizing_moments(empirical_moments, k):
     # empirical_moments has shape (num_projection, num_moments)
     # k has shape (num_projection, num_moments)
     empirical_moments = torch.sign(empirical_moments) * torch.pow(torch.abs(empirical_moments), 1/k)
+    return empirical_moments
+
+
+def normalizing_moments_3(empirical_moments, k):
+    # empirical_moments has shape (num_projection, num_moments)
+    # k has shape (num_projection, num_moments)
+
+    unique_k = torch.unique(k)
+
+    lookup_factorial = list()
+    for i in range(len(unique_k)):
+        lookup_factorial.append(math.factorial(int(unique_k[i])))
+
+    factorial_k = torch.zeros_like(k)
+    for i in range(len(unique_k)):
+        factorial_k[k == unique_k[i]] = lookup_factorial[i]
+
+    empirical_moments = empirical_moments / factorial_k
     return empirical_moments
 
 

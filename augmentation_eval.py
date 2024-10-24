@@ -17,9 +17,9 @@ list_dist = list()
 list_acc = list()
 
 method = "New method"
-method = "OTDD"
+# method = "OTDD"
 
-display_method = "sOTDD" if method == "New method" else "OTDD"
+display_method = "s-OTDD" if method == "New method" else "OTDD"
 
 
 def compute_rss(observed, predicted):
@@ -59,12 +59,17 @@ list_X = np.array(list_dist).reshape(-1, 1)
 list_y = np.array(list_acc)
 model = LinearRegression().fit(list_X, list_y)
 list_y_pred = model.predict(list_X)
-print(list_X)
-print(list_y)
+
+
+
+x_min, x_max = min(list_dist) - 0.03, max(list_dist) + 0.03
+x_extended = np.linspace(x_min, x_max, 100).reshape(-1, 1)
+y_extended_pred = model.predict(x_extended)
 plt.figure(figsize=(10, 8))
-# sns.regplot(x=x, y=y, ci=95, scatter_kws={'s': 100}, line_kws={'color': 'blue'})
-plt.scatter(list_dist, list_acc, s=100, color='blue', label='Data points')
-plt.plot(list_dist, list_y_pred, color='red', linewidth=2, label='Fitted line')
+plt.scatter(list_dist, list_acc, s=20, color='blue')
+plt.plot(x_extended, y_extended_pred, color='red', linewidth=3)
+
+
 
 rho, p_value = stats.pearsonr(list_dist, list_acc)
 rss = compute_rss(list_y, list_y_pred)
@@ -73,11 +78,10 @@ rss = rss * 1000
 # plt.title(f'{method} corr={rho:.4f}, p_value={p_value:.4f}, rss={rss:.4f}')
 
 FONT_SIZE = 25
-plt.title(f'{display_method} $\\rho={rho:.3f}, p={p_value:.3f}, \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-3}}$', fontsize=FONT_SIZE)  # Increase title size
-plt.xlabel(f'{display_method}', fontsize=FONT_SIZE)  # Increase x-axis label size
-plt.ylabel('Accuracy', fontsize=FONT_SIZE)  # Increase y-axis label size
+plt.title(f'{display_method} $\\rho={rho:.3f}, p={p_value:.3f}, \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-3}}$', fontsize=FONT_SIZE)
+plt.xlabel(f'{display_method} Distance', fontsize=FONT_SIZE)
+plt.ylabel('Accuracy', fontsize=FONT_SIZE)
 
 
-plt.legend()
-plt.savefig(f'aug_{display_method}.pdf')
+plt.savefig(f'aug_{display_method}.png')
 
