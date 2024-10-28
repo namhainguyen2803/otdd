@@ -1,7 +1,7 @@
 #!/bin/bash -e
-#SBATCH --job-name=run56
-#SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/res_run56.out
-#SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/err_run56.err
+#SBATCH --job-name=pretrain56
+#SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/pretrain_run56.out
+#SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/pretrain_run56.err
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --mem-per-gpu=125G
