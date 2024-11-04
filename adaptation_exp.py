@@ -26,7 +26,7 @@ LIST_DATASETS = ["MNIST", "FashionMNIST", "EMNIST", "KMNIST", "USPS"]
 ACC_ADAPT = dict()
 DIST = dict()
 
-parent_dir = f"saved/nist"
+parent_dir = f"saved_nist/nist4"
 pretrained_path = parent_dir + "/pretrained_weights"
 adapt_path = parent_dir + "/finetune_weights"
 
@@ -49,7 +49,7 @@ def create_dataset(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None):
         METADATA_DATASET[dataset_name] = dict()
 
         if dataset_name == "USPS":
-            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data2/USPS", maxsize_for_each_class=maxsize_for_each_class)[0]
+            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data/USPS", maxsize_for_each_class=maxsize_for_each_class)[0]
         else:
             dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, maxsize_for_each_class=maxsize_for_each_class)[0]
 
@@ -239,28 +239,28 @@ if __name__ == "__main__":
     #     json.dump(DIST, json_file, indent=4)
     # print(f"DIST: {DIST}")
 
-    DIST_list = compute_sotdd_distance(num_projection=10000)
-    DIST = dict()
+    # DIST_list = compute_sotdd_distance(num_projection=10000)
+    # DIST = dict()
 
-    for i in range(len(LIST_DATASETS)):
-        target_dataset = LIST_DATASETS[i]
-        for j in range(i+1, len(LIST_DATASETS)):
-            source_dataset = LIST_DATASETS[j]
+    # for i in range(len(LIST_DATASETS)):
+    #     target_dataset = LIST_DATASETS[i]
+    #     for j in range(i+1, len(LIST_DATASETS)):
+    #         source_dataset = LIST_DATASETS[j]
 
-            if target_dataset not in DIST:
-                DIST[target_dataset] = dict()
-            if source_dataset not in DIST:
-                DIST[source_dataset] = dict()
+    #         if target_dataset not in DIST:
+    #             DIST[target_dataset] = dict()
+    #         if source_dataset not in DIST:
+    #             DIST[source_dataset] = dict()
 
-            DIST[target_dataset][source_dataset] = DIST_list[i][j]
-            DIST[source_dataset][target_dataset] = DIST_list[j][i]
+    #         DIST[target_dataset][source_dataset] = DIST_list[i][j]
+    #         DIST[source_dataset][target_dataset] = DIST_list[j][i]
 
-    dist_file_path = f'{parent_dir}/sotdd_dist_no_conv_8_normalizing_moments_3.json'
-    with open(dist_file_path, 'w') as json_file:
-        json.dump(DIST, json_file, indent=4)
-    print(f"DIST: {DIST}")
+    # dist_file_path = f'{parent_dir}/sotdd_dist_no_conv_8_normalizing_moments_3.json'
+    # with open(dist_file_path, 'w') as json_file:
+    #     json.dump(DIST, json_file, indent=4)
+    # print(f"DIST: {DIST}")
 
-    # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
-    # training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
+    train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
+    training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
 
 

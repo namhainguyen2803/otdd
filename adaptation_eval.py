@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from scipy import stats
 import json
 
-method = "sotdd"
+method = "otdd"
 if method == "sotdd":
     display_method = "s-OTDD"
 else:
@@ -16,7 +16,7 @@ else:
 finetune_weights_path = "saved/nist/finetune_weights"
 baseline_weight_path = "saved/nist/pretrained_weights"
 dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
-# dist_path = f"saved/nist/{method}_dist.json"
+dist_path = f"saved/nist/{method}_dist.json"
 
 acc_adapt = dict()
 for target_name in os.listdir(finetune_weights_path):
@@ -65,7 +65,7 @@ for target_name in acc_baseline.keys():
         perf = acc_baseline[target_name] - acc_adapt[target_name][source_name]
         # if perf < 0: 
         #     continue
-        perf_list.append(perf)
+        perf_list.append(perf * 100)
         dist_list.append(dict_dist[source_name][target_name])
 
 
@@ -74,17 +74,14 @@ list_y = np.array(perf_list)
 model = LinearRegression().fit(list_X, list_y)
 list_y_pred = model.predict(list_X)
 
-x_min, x_max = min(dist_list) - 0.1, max(dist_list) + 0.1
+if method == "sotdd":
+    x_min, x_max = min(dist_list) - 0.1, max(dist_list) + 0.1
+else:
+    x_min, x_max = min(dist_list) - 50, max(dist_list) + 50
 x_extended = np.linspace(x_min, x_max, 100).reshape(-1, 1)
 
 # Predict y values for the extended range
 y_extended_pred = model.predict(x_extended)
-
-plt.figure(figsize=(10, 8))
-
-plt.scatter(dist_list, perf_list, s=20, color='blue')
-# plt.plot(dist_list, list_y_pred, color='red', linewidth=4)
-plt.plot(x_extended, y_extended_pred, color='red', linewidth=3)
 
 def compute_rss(observed, predicted):
     if len(observed) != len(predicted):
@@ -92,14 +89,27 @@ def compute_rss(observed, predicted):
     rss = sum((obs - pred) ** 2 for obs, pred in zip(observed, predicted))
     return rss
 
-rss = compute_rss(list_y, list_y_pred) * 1000
+
+rss = compute_rss(list_y, list_y_pred)
 rho, p_value = stats.pearsonr(dist_list, perf_list)
 
 
-FONT_SIZE = 25
-plt.title(f'{display_method} $\\rho={rho:.3f}, p={p_value:.3f}, \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-3}}$', fontsize=FONT_SIZE)
-plt.xlabel(f'{display_method} Distance', fontsize=FONT_SIZE)
-plt.ylabel('Performance Gap', fontsize=FONT_SIZE)
+plt.figure(figsize=(10, 8))
 
-# plt.legend()
+plt.scatter(dist_list, perf_list, s=15, color='blue')
+# plt.plot(x_extended, y_extended_pred, color='red', linewidth=3, label=f'$ \\rho={rho:.3f} \\ p-value={p_value:.3f} \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-3}}$')
+# plt.plot(x_extended, y_extended_pred, color='red', linewidth=3,
+#          label=f'$\\rho={rho:.3f} \n p-value={p_value:.3f} \n \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-3}}$')
+plt.plot(x_extended, y_extended_pred, color='red', linewidth=3,
+         label=(f'$ \\rho={rho:.3f}$\n'
+                f'p-value={p_value:.3f}\n'
+                f'$ \\mathrm{{RSS}}={rss:.2f}$'
+                ))
+
+FONT_SIZE = 20
+plt.title('Transfer Learning: *NIST Datasets', fontsize=FONT_SIZE)
+plt.xlabel(f'{display_method} Distance', fontsize=FONT_SIZE)
+plt.ylabel('Performance Gap (%)', fontsize=FONT_SIZE)
+
+plt.legend(fontsize=15)
 plt.savefig(f'saved/nist/{display_method}_nist.png')
