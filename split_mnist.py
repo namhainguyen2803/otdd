@@ -49,7 +49,7 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved2", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved", help='Parent directory')
     parser.add_argument('--exp_type', type=str, default="split_size", help='dataset_size')
     parser.add_argument('--num_splits', type=int, default=2, help='Number of splits for dataset')
     parser.add_argument('--split_size', type=int, default=200, help='Size of each dataset split')
@@ -148,7 +148,7 @@ def main():
                                     p=2,
                                     entreg=1e-3,
                                     device=DEVICE)
-            d = dist.distance(maxsamples=split_size).item()
+            d = dist.distance(maxsamples=None).item()
             dict_OTDD[i][j] = d
             dict_OTDD[j][i] = d
 
@@ -173,7 +173,7 @@ def main():
                                     inner_ot_method='gaussian_approx',
                                     debiased_loss=True,
                                     p=2,
-                                    sqrt_method='exact',
+                                    sqrt_method='approximate',
                                     nworkers_stats=0,
                                     sqrt_niters=20,
                                     entreg=1e-3,
