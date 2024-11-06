@@ -61,7 +61,7 @@ def main():
     split_size = args.split_size
     num_projections = args.num_projections
 
-    save_dir = f'{args.parent_dir}/time_comparison/MNIST/{args.exp_type}/SS{split_size}_NS{num_splits}_NP{num_projections}'
+    save_dir = f'{args.parent_dir}/time_comparison/{args.exp_type}/SS{split_size}_NS{num_splits}_NP{num_projections}'
     os.makedirs(save_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -76,23 +76,9 @@ def main():
     print(split_size, len(dataset))
     indices = np.arange(len(dataset))
 
-    data_index_cls = dict()
-    classes = torch.unique(torch.tensor(dataset.targets))
-    for cls_id in classes:
-        data_index_cls[cls_id] = indices[torch.tensor(dataset.targets) == cls_id]
-
-    for cls_id in data_index_cls.keys():
-        np.random.shuffle(data_index_cls[cls_id])
-
     subsets = []
     for i in range(num_splits):
-        subset_indices = list()
-        for cls_id in data_index_cls.keys():
-            num_dataset_cls = split_size // num_classes
-            start_idx = i * num_dataset_cls
-            end_idx = min(start_idx + num_dataset_cls, len(data_index_cls[cls_id]))
-            subset_indices.extend(data_index_cls[cls_id][start_idx:end_idx])
-
+        subset_indices = np.random.choice(indices, size=split_size, replace=False)
         np.random.shuffle(subset_indices)
         print(len(subset_indices))
         sub = Subset(dataset=dataset, original_indices=subset_indices, transform=transform)
@@ -112,7 +98,7 @@ def main():
     kwargs = {
         "dimension": 784,
         "num_channels": 1,
-        "num_moments": 8,
+        "num_moments": 4,
         "use_conv": False,
         "precision": "float",
         "p": 2,
@@ -174,7 +160,7 @@ def main():
                                     p=2,
                                     sqrt_method='approximate',
                                     nworkers_stats=0,
-                                    sqrt_niters=10,
+                                    sqrt_niters=20,
                                     entreg=1e-3,
                                     device=DEVICE)
             d = dist.distance(maxsamples=None).item()
@@ -185,7 +171,7 @@ def main():
     otdd_time_taken = end_time_otdd - start_time_otdd
     print(otdd_time_taken)
 
-    torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
+    torch.save(dict_OTDD, f'{save_dir}/gaussian_otdd_dist.pt')
     with open(f'{save_dir}/time_running.txt', 'a') as file:
         file.write(f"Time proccesing for OTDD (gaussian_approx): {otdd_time_taken} \n")
 

@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 from scipy import stats
 
 
-method = "sOTDD"
+method = "OTDD"
 if method == "sOTDD":
     display_method = "s-OTDD"
 else:
@@ -17,7 +17,7 @@ else:
 
 
 parent_dir = "saved/text_cls_new"
-baseline_result_path = f"{parent_dir}/baseline/accuracy.txt"
+baseline_result_path = f"{parent_dir}/baseline_new/accuracy.txt"
 adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
 text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
 
@@ -47,7 +47,7 @@ with open(baseline_result_path, 'r') as file:
         parts = line.strip().split(': ')
         # print(parts)
         source_dataset = parts[1].split(', ')[0]
-        accuracy = float(parts[2])
+        accuracy = float(parts[3])
         baseline_acc[source_dataset] = accuracy
 
 print(baseline_acc)
@@ -64,16 +64,16 @@ for i in range(len(DATASET_NAME)):
     for j in range(len(DATASET_NAME)):
         source = DATASET_NAME[i]
         target = DATASET_NAME[j]
+
         if source == target:
             continue
         if source == "AmazonReviewPolarity" or target == "AmazonReviewPolarity":
             continue
 
         # gaussian_numbers = torch.normal(mean=mean, std=std_dev, size=(1,))
-        perf = ((adapt_acc[source][target]) - (baseline_acc[target]))
+        perf = ((adapt_acc[source][target]) - (baseline_acc[target])) / baseline_acc[target]
         dist = text_dist[source][target]
 
-        # if dist > 0.1:
         perf_list.append(perf)
         dist_list.append(dist)
 

@@ -16,19 +16,19 @@ import argparse
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 2000
+NUM_EXAMPLES = 100
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
-parent_dir = f"saved/text_cls_new3/dist"
+parent_dir = f"saved_text_dist2/text_cls/dist"
 os.makedirs(parent_dir, exist_ok=True)
 
 method = None
 method2 = None
-# method = "OTDD"
-method2 = "sOTDD"
+method = "OTDD"
+# method2 = "sOTDD"
 
 def main():
 
@@ -81,7 +81,7 @@ def main():
                                         inner_ot_method='gaussian_approx',
                                         sqrt_method='approximate',
                                         nworkers_stats=0,
-                                        sqrt_niters=20,
+                                        sqrt_niters=2,
                                         debiased_loss=True,
                                         p=2,
                                         entreg=1e-3,
@@ -96,6 +96,7 @@ def main():
         with open(dist_file_path, 'w') as json_file:
             json.dump(OTDD_DIST, json_file, indent=4)
         print(f"Finish computing OTDD")
+
 
     if method2 == "sOTDD":
         print("Computing s-OTDD...")
