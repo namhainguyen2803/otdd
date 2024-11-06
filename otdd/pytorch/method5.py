@@ -246,11 +246,11 @@ class Embeddings_sOTDD():
 
 def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evaluate_time=False):
 
-    num_moments = 5
+    num_moments = 8
 
-    dimension = 32
-    num_channels = 3
-    use_conv = True
+    dimension = 768
+    num_channels = 1
+    use_conv = False
     precision = "float"
     p = 2
 

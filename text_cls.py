@@ -87,7 +87,7 @@ def main():
     # current_utc = datetime.utcnow()
     # current_vietnam_time = current_utc + time_difference
     # current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
-    parent_dir = f"saved/text_cls_new/pretrained_weights"
+    parent_dir = f"saved/text_cls_new_2/pretrained_weights"
     os.makedirs(parent_dir, exist_ok=True)
 
 

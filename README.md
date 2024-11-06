@@ -29,6 +29,9 @@ conda install .
 
 First install dependencies. Start by install pytorch with desired configuration using the instructions provided in the [pytorch website](https://pytorch.org/get-started/locally/). Then do:
 ```
+
+conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=11.0 -c pytorch
+
 pip install -r requirements.txt
 ```
 Finally, install this package:

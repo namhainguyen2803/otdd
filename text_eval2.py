@@ -9,10 +9,10 @@ from sklearn.linear_model import LinearRegression
 from scipy import stats
 
 display_method = "sOTDD"
-parent_dir = "saved/text_cls_new2/dist"
-baseline_result_path = "saved/text_cls_spp/text_baseline2.txt"
-adapt_result_path = "saved/text_cls_spp/text_adapt.txt"
-text_dist_path = f"{parent_dir}/{display_method}_text_dist3.json"
+parent_dir = "saved/text_cls_new"
+baseline_result_path = f"{parent_dir}/baseline/accuracy.txt"
+adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
+text_dist_path = f"{parent_dir}/dist/{display_method}_text_dist.json"
 
 
 # read text distance
