@@ -16,13 +16,13 @@ import argparse
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 1000
+NUM_EXAMPLES = 2000
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
-parent_dir = f"saved/text_cls_new2/dist"
+parent_dir = f"saved/text_cls_new3/dist"
 os.makedirs(parent_dir, exist_ok=True)
 
 method = None
@@ -78,10 +78,13 @@ def main():
                     continue
                 dist = DatasetDistance(METADATA_DATASET[data_source]["dataloader"], 
                                         METADATA_DATASET[data_target]["dataloader"],
-                                        inner_ot_method = 'gaussian_approx',
-                                        debiased_loss = True,
-                                        p = 2, 
-                                        entreg = 1e-2,
+                                        inner_ot_method='gaussian_approx',
+                                        sqrt_method='approximate',
+                                        nworkers_stats=0,
+                                        sqrt_niters=20,
+                                        debiased_loss=True,
+                                        p=2,
+                                        entreg=1e-3,
                                         device='cpu')
                 d = dist.distance(maxsamples=None)
                 del dist
@@ -108,8 +111,18 @@ def main():
         list_dataset = list()
         for i in range(len(DATASET_NAMES)):
             list_dataset.append(METADATA_DATASET[DATASET_NAMES[i]]["dataloader"])
-        
-        sw_list = compute_pairwise_distance(list_D=list_dataset, device='cpu', num_projections=10000, evaluate_time=False)
+
+        kwargs = {
+            "dimension": 768,
+            "num_channels": 1,
+            "num_moments": 10,
+            "use_conv": False,
+            "precision": "float",
+            "p": 2,
+            "chunk": 1000
+        }
+
+        sw_list = compute_pairwise_distance(list_D=list_dataset, device='cpu', num_projections=10000, evaluate_time=False, **kwargs)
 
         k = 0
         for i in range(len(DATASET_NAMES)):
@@ -122,7 +135,7 @@ def main():
                 sOTDD_DIST[data_source][data_target] = sw_list[k].item()
                 k += 1
         
-        # assert k + 1 == len(sw_list), "k + 1 != len(sw_list)"
+        assert k == len(sw_list), "k != len(sw_list)"
 
         dist_file_path = f'{parent_dir}/{method2}_text_dist.json'
         with open(dist_file_path, 'w') as json_file:

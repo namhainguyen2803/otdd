@@ -244,17 +244,18 @@ class Embeddings_sOTDD():
         return chunk_dataset_embeddings
 
 
-def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evaluate_time=False):
+def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evaluate_time=False, **kwargs):
 
-    num_moments = 8
+    num_moments = kwargs.get('num_moments', 8)
 
-    dimension = 768
-    num_channels = 1
-    use_conv = False
-    precision = "float"
-    p = 2
+    dimension = kwargs.get('dimension', 768)
+    num_channels = kwargs.get('num_channels', 1)
+    use_conv = kwargs.get('use_conv', False)
+    precision = kwargs.get('precision', "float")
+    p = kwargs.get('p', 2)
 
-    chunk = 1000
+    chunk = kwargs.get('chunk', 1000)
+    
     chunk_num_projection = num_projections // chunk
 
     dtype = torch.DoubleTensor if precision == 'double' else torch.FloatTensor
@@ -332,7 +333,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
                                                 device=device)  # shape (chunk)
                 
                 list_chunk_w1d.append(w_1d.reshape(-1, 1))
-        
+         
         list_chunk_w1d = torch.cat(list_chunk_w1d, dim=1)
         # print(f"cac 1: {list_chunk_w1d.shape}") # 100, 1
         list_w1d.append(list_chunk_w1d)
