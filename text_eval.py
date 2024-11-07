@@ -20,8 +20,10 @@ parent_dir = "saved/text_cls_new"
 baseline_result_path = f"{parent_dir}/baseline_new/accuracy.txt"
 adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
 # text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
-# text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
-text_dist_path = "saved_text_dist/text_cls/dist/sOTDD_text_dist.json"
+if method == "OTDD":
+    text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
+else:
+    text_dist_path = "saved_text_dist/text_cls/dist/sOTDD_text_dist.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
@@ -109,15 +111,16 @@ plt.figure(figsize=(10, 8))
 plt.scatter(dist_list, perf_list, s=20, color='blue')
 plt.plot(x_extended, y_extended_pred, color='red', linewidth=3,
          label=(f'$ \\rho={rho:.3f}$\n'
-                f'p-value={p_value:.1f}'
+                f'p-value={p_value:.2f}'
                 ))
 
-FONT_SIZE = 25
-plt.title("Text Classification Experiment", fontsize=FONT_SIZE)
+FONT_SIZE = 20
+plt.title("Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE)
 plt.xlabel(f'{display_method} Distance', fontsize=FONT_SIZE)
 plt.ylabel('Accuracy', fontsize=FONT_SIZE)
 
 plt.legend(fontsize=15)
 plt.savefig(f'text_cls_{display_method}.png')
+plt.savefig(f'text_cls_{display_method}.pdf')
 
 

@@ -27,7 +27,7 @@ os.makedirs(parent_dir, exist_ok=True)
 
 method = None
 method2 = None
-# method = "OTDD"
+method = "OTDD"
 method2 = "sOTDD"
 
 def main():

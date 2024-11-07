@@ -712,6 +712,8 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
                 print('Reading and embedding {} test data...'.format(dataname))
                 test   = SentencesDataset2(reader.get_examples('test.tsv'), rescale_label=0)
         
+        del model 
+        
         train.targets = train.labels
         test.targets = test.labels
         

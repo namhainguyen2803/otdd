@@ -90,18 +90,20 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000):
             source_dataset = LIST_DATASETS[i]
             target_dataset = LIST_DATASETS[j]
 
-            dist = NewDatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], METADATA_DATASET[target_dataset]["train_loader"], p=2, device="cpu")
-            d = dist.distance(maxsamples=maxsamples, num_projection=num_projection, use_conv=False).item()
+            # dist = NewDatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], METADATA_DATASET[target_dataset]["train_loader"], p=2, device="cpu")
+            # d = dist.distance(maxsamples=maxsamples, num_projection=num_projection, use_conv=False).item()
 
-            # dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
-            #                         METADATA_DATASET[target_dataset]["train_loader"],
-            #                         inner_ot_method='gaussian_approx',
-            #                         inner_ot_loss='wasserstein',
-            #                         debiased_loss=True,
-            #                         p=2, 
-            #                         entreg=1e-4,
-            #                         device=DEVICE)
-            # d = dist.distance(maxsamples = maxsamples).item()
+            dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
+                                    METADATA_DATASET[target_dataset]["train_loader"],
+                                    inner_ot_method='gaussian_approx',
+                                    sqrt_method='approximate',
+                                    nworkers_stats=0,
+                                    sqrt_niters=20,
+                                    debiased_loss=True,
+                                    p=2,
+                                    entreg=1e-4,
+                                    device=DEVICE)
+            d = dist.distance(maxsamples = maxsamples).item()
 
             all_dist_dict[source_dataset][target_dataset] = d
             all_dist_dict[target_dataset][source_dataset] = d
@@ -260,7 +262,7 @@ if __name__ == "__main__":
     #     json.dump(DIST, json_file, indent=4)
     # print(f"DIST: {DIST}")
 
-    train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
-    training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
+    # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
+    # training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
 
 
