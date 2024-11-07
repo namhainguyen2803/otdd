@@ -6,16 +6,20 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from scipy import stats
 import json
+from matplotlib.ticker import FormatStrFormatter
 
-method = "otdd"
+method = "sotdd"
 if method == "sotdd":
     display_method = "s-OTDD"
 else:
     display_method = method.upper()
 
 saved_dir = "saved_nist"
-dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
-dist_path = f"saved_nist/dist/{method}_dist.json"
+if method == "sotdd":
+    dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
+    dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
+else:
+    dist_path = f"saved_nist/dist/{method}_dist.json"
 
 with open(dist_path, 'r') as file:
     dict_dist = json.load(file)
@@ -24,6 +28,10 @@ acc_adapt = dict()
 acc_baseline = dict()
 
 for each_run in os.listdir(saved_dir):
+    if "pdf" in each_run:
+        continue
+    if "png" in each_run:
+        continue
     if "nist" in each_run:
 
         finetune_weights_path = f"{saved_dir}/{each_run}/finetune_weights"
@@ -66,6 +74,10 @@ for each_run in os.listdir(saved_dir):
      
 perf_dict = dict()
 for each_run in os.listdir(saved_dir):
+    if "pdf" in each_run:
+        continue
+    if "png" in each_run:
+        continue
     if "nist" in each_run:
         perf_list = list()
         for target_name in acc_baseline[each_run].keys():
@@ -74,9 +86,7 @@ for each_run in os.listdir(saved_dir):
             for source_name in acc_adapt[each_run][target_name].keys():
                 if source_name not in perf_dict[target_name]:
                     perf_dict[target_name][source_name] = list()
-                perf = acc_baseline[each_run][target_name] - acc_adapt[each_run][target_name][source_name]
-                # if perf < 0: 
-                #     continue
+                perf = (acc_baseline[each_run][target_name] - acc_adapt[each_run][target_name][source_name]) / acc_baseline[each_run][target_name]
                 perf_dict[target_name][source_name].append(perf * 100)
 
 
@@ -96,61 +106,6 @@ for target_name, sources in perf_dict.items():
                     "Relative Drop in Test Error (%)": avg_perf,
                     "Error": error
                 })
-
-
-
-
-# # Create DataFrame
-# df = pd.DataFrame(perf_data)
-
-# # Calculate Pearson correlation
-# pearson_corr, p_value = stats.pearsonr(df["OT Dataset Distance"], df["Relative Drop in Test Error (%)"])
-
-# # Plotting
-# plt.figure(figsize=(10, 8))
-# sns.set(style="whitegrid")
-
-# # Scatter plot with regression line and confidence interval
-# sns.regplot(
-#     x="OT Dataset Distance", 
-#     y="Relative Drop in Test Error (%)", 
-#     data=df, 
-#     scatter=True, 
-#     ci=95, 
-#     color="blue", 
-#     scatter_kws={"s": 5}
-# )
-
-# # Add error bars
-# plt.errorbar(
-#     df["OT Dataset Distance"], 
-#     df["Relative Drop in Test Error (%)"], 
-#     yerr=df["Error"], 
-#     fmt='o', 
-#     color='gray', 
-#     capsize=None, 
-#     capthick=None, 
-#     elinewidth=None,
-#     markersize=5
-# )
-
-# # Add data labels to each point
-# for i, row in df.iterrows():
-#     plt.text(row["OT Dataset Distance"], row["Relative Drop in Test Error (%)"], 
-#              row["Source -> Target"], ha='right', fontsize=8)
-
-# # Add Pearson correlation and p-value to the plot
-# corr_text = r'$\rho$: {:.2f}\np-value: {:.2f}'.format(pearson_corr, p_value)
-# plt.legend([corr_text], loc="upper right", frameon=True)
-
-# # Customize title and labels
-# plt.title(f"Distance vs Adaptation: *NIST Datasets", fontsize=14)
-# plt.xlabel("OT Dataset Distance")
-# plt.ylabel("Relative Drop in Test Error (%)")
-
-# # Display plot
-# plt.savefig(f'saved/nist/{display_method}_nist.png')
-
 
 # Create DataFrame
 df = pd.DataFrame(perf_data)
@@ -192,7 +147,10 @@ y = df["Relative Drop in Test Error (%)"].values
 reg = LinearRegression().fit(X, y)
 
 # Generate x values for the extended line
-x_range = np.linspace(df["OT Dataset Distance"].min() - 20, df["OT Dataset Distance"].max() + 20, 500)
+if method == "otdd":
+    x_range = np.linspace(df["OT Dataset Distance"].min() - 20, df["OT Dataset Distance"].max() + 20, 500)
+else:
+    x_range = np.linspace(df["OT Dataset Distance"].min() - 0.05, df["OT Dataset Distance"].max() + 0.05, 500)
 y_pred = reg.predict(x_range.reshape(-1, 1))
 
 # Plot the extended regression line
@@ -207,11 +165,13 @@ for i, row in df.iterrows():
 plt.legend(loc="upper right", frameon=True)
 
 # Customize title and labels
-plt.title(f"Distance vs Adaptation: *NIST Datasets", fontsize=20)
-plt.xlabel("OT Dataset Distance")
-plt.ylabel("Relative Drop in Test Error (%)")
+FONT_SIZE = 20
+plt.title(f"Distance vs Adaptation: *NIST Datasets", fontsize=FONT_SIZE)
+plt.xlabel(f"{display_method} Distance", fontsize=FONT_SIZE)
+plt.ylabel("Performance Gap (%)", fontsize=FONT_SIZE)
+plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 # Display plot
 plt.grid(False)
-plt.savefig(f'saved/nist/{display_method}_nist.png')
-plt.show()
+plt.savefig(f'{saved_dir}/nist_{display_method}.png')
+plt.savefig(f'{saved_dir}/nist_{display_method}.pdf')
