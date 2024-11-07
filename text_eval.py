@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 from scipy import stats
 
 
-method = "OTDD"
+method = "sOTDD"
 if method == "sOTDD":
     display_method = "s-OTDD"
 else:
@@ -20,7 +20,8 @@ parent_dir = "saved/text_cls_new"
 baseline_result_path = f"{parent_dir}/baseline_new/accuracy.txt"
 adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
 # text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
-text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
+# text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
+text_dist_path = "saved_text_dist/text_cls/dist/sOTDD_text_dist.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
@@ -93,26 +94,30 @@ x_extended = np.linspace(x_min, x_max, 100).reshape(-1, 1)
 # Predict y values for the extended range
 y_extended_pred = model.predict(x_extended)
 
-plt.figure(figsize=(10, 8))
-
-plt.scatter(dist_list, perf_list, s=20, color='blue')
-plt.plot(x_extended, y_extended_pred, color='red', linewidth=3)
-
 def compute_rss(observed, predicted):
     if len(observed) != len(predicted):
         raise ValueError("Both lists must have the same length.")
     rss = sum((obs - pred) ** 2 for obs, pred in zip(observed, predicted))
     return rss
-
 rss = compute_rss(list_y, list_y_pred) * 100
 rho, p_value = stats.pearsonr(dist_list, perf_list)
 
 
+
+plt.figure(figsize=(10, 8))
+
+plt.scatter(dist_list, perf_list, s=20, color='blue')
+plt.plot(x_extended, y_extended_pred, color='red', linewidth=3,
+         label=(f'$ \\rho={rho:.3f}$\n'
+                f'p-value={p_value:.1f}'
+                ))
+
 FONT_SIZE = 25
-plt.title(f'{display_method} $\\rho={rho:.3f}, p={p_value:.3f}, \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-2}}$', fontsize=FONT_SIZE)
+plt.title("Text Classification Experiment", fontsize=FONT_SIZE)
 plt.xlabel(f'{display_method} Distance', fontsize=FONT_SIZE)
 plt.ylabel('Accuracy', fontsize=FONT_SIZE)
 
-# plt.legend()
+plt.legend(fontsize=15)
 plt.savefig(f'text_cls_{display_method}.png')
+
 

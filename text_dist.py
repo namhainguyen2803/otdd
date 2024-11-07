@@ -16,7 +16,7 @@ import argparse
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 1000
+NUM_EXAMPLES = 2000
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
