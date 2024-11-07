@@ -100,7 +100,7 @@ def main():
 
     dataloaders = []
     for subset in subsets:
-        dataloader = DataLoader(subset, batch_size=32, shuffle=True)
+        dataloader = DataLoader(subset, batch_size=128, shuffle=True)
         dataloaders.append(dataloader)
 
 
@@ -112,7 +112,7 @@ def main():
     kwargs = {
         "dimension": 784,
         "num_channels": 1,
-        "num_moments": 8,
+        "num_moments": 5,
         "use_conv": False,
         "precision": "float",
         "p": 2,
@@ -160,9 +160,39 @@ def main():
     with open(f'{save_dir}/time_running.txt', 'a') as file:
         file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
 
+
+
+
     # OTDD
     dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
-    print("Compute OTDD (gaussian_approx)...")
+    print("Compute OTDD (gaussian_approx, iter 20)...")
+    start_time_otdd = time.time()
+    for i in range(len(dataloaders)):
+        for j in range(i+1, len(dataloaders)):
+            start_time_otdd = time.time()
+            dist = DatasetDistance(dataloaders[i],
+                                    dataloaders[j],
+                                    inner_ot_method='gaussian_approx',
+                                    debiased_loss=True,
+                                    p=2,
+                                    sqrt_method='approximate',
+                                    nworkers_stats=0,
+                                    sqrt_niters=20,
+                                    entreg=1e-3,
+                                    device=DEVICE)
+            d = dist.distance(maxsamples=None).item()
+            dict_OTDD[i][j] = d
+            dict_OTDD[j][i] = d
+    end_time_otdd = time.time()
+    otdd_time_taken = end_time_otdd - start_time_otdd
+    torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
+    with open(f'{save_dir}/time_running.txt', 'a') as file:
+        file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
+
+
+
+    dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
+    print("Compute OTDD (gaussian_approx, iter 10)...")
     start_time_otdd = time.time()
     for i in range(len(dataloaders)):
         for j in range(i+1, len(dataloaders)):
@@ -180,14 +210,14 @@ def main():
             d = dist.distance(maxsamples=None).item()
             dict_OTDD[i][j] = d
             dict_OTDD[j][i] = d
-
     end_time_otdd = time.time()
     otdd_time_taken = end_time_otdd - start_time_otdd
-    print(otdd_time_taken)
-
     torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
     with open(f'{save_dir}/time_running.txt', 'a') as file:
-        file.write(f"Time proccesing for OTDD (gaussian_approx): {otdd_time_taken} \n")
+        file.write(f"Time proccesing for OTDD (gaussian_approx, iter 10): {otdd_time_taken} \n")
+
+
+
 
 if __name__ == "__main__":
     main()

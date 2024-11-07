@@ -19,8 +19,8 @@ else:
 parent_dir = "saved/text_cls_new"
 baseline_result_path = f"{parent_dir}/baseline_new/accuracy.txt"
 adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
-text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
-
+# text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
+text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
