@@ -26,7 +26,7 @@ LIST_DATASETS = ["MNIST", "FashionMNIST", "EMNIST", "KMNIST", "USPS"]
 ACC_ADAPT = dict()
 DIST = dict()
 
-parent_dir = f"saved_nist/nist4"
+parent_dir = f"saved_nist/dist"
 pretrained_path = parent_dir + "/pretrained_weights"
 adapt_path = parent_dir + "/finetune_weights"
 
@@ -101,7 +101,7 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000):
                                     sqrt_niters=20,
                                     debiased_loss=True,
                                     p=2,
-                                    entreg=1e-4,
+                                    entreg=1e-3,
                                     device=DEVICE)
             d = dist.distance(maxsamples = maxsamples).item()
 
@@ -235,11 +235,10 @@ def training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=D
 if __name__ == "__main__":
 
     
-    # DIST = compute_otdd_distance()
-    # dist_file_path = f'{parent_dir}/sotdd_dist.json'
-    # with open(dist_file_path, 'w') as json_file:
-    #     json.dump(DIST, json_file, indent=4)
-    # print(f"DIST: {DIST}")
+    DIST = compute_otdd_distance()
+    dist_file_path = f'{parent_dir}/otdd_dist.json'
+    with open(dist_file_path, 'w') as json_file:
+        json.dump(DIST, json_file, indent=4)
 
     # DIST_list = compute_sotdd_distance(num_projection=10000)
     # DIST = dict()

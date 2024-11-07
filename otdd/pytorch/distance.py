@@ -188,14 +188,22 @@ class DatasetDistance():
         self.ignore_target_labels = ignore_target_labels
         self.λ_x = λ_x
         self.λ_y = λ_y
+<<<<<<< HEAD
+        
+=======
 
+>>>>>>> 1cab0b31763c9ddec7521c6b5808ae43c9b37153
         ## For inner (label) OT problem - only used if gaussian approx is False
         self.inner_ot_method = inner_ot_method
         self.inner_ot_p = inner_ot_p
         self.inner_ot_entreg = inner_ot_entreg
         self.inner_ot_loss = inner_ot_loss
         self.inner_ot_debiased = inner_ot_debiased
+<<<<<<< HEAD
+
+=======
         
+>>>>>>> 1cab0b31763c9ddec7521c6b5808ae43c9b37153
         self.online_stats = online_stats
         self.coupling_method = coupling_method
         self.min_labelcount = min_labelcount

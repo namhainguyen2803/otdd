@@ -16,7 +16,7 @@ else:
 finetune_weights_path = "saved/nist/finetune_weights"
 baseline_weight_path = "saved/nist/pretrained_weights"
 dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
-dist_path = f"saved/nist/{method}_dist.json"
+dist_path = f"saved_nist/dist/{method}_dist.json"
 
 acc_adapt = dict()
 for target_name in os.listdir(finetune_weights_path):
@@ -102,8 +102,7 @@ plt.scatter(dist_list, perf_list, s=15, color='blue')
 #          label=f'$\\rho={rho:.3f} \n p-value={p_value:.3f} \n \\mathrm{{RSS}}={rss:.3f} \\times 10^{{-3}}$')
 plt.plot(x_extended, y_extended_pred, color='red', linewidth=3,
          label=(f'$ \\rho={rho:.3f}$\n'
-                f'p-value={p_value:.3f}\n'
-                f'$ \\mathrm{{RSS}}={rss:.2f}$'
+                f'p-value={p_value:.2f}'
                 ))
 
 FONT_SIZE = 20
