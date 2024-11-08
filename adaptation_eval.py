@@ -112,4 +112,4 @@ plt.ylabel('Performance Gap (%)', fontsize=FONT_SIZE)
 
 plt.legend(fontsize=15)
 plt.savefig(f'saved/nist/{display_method}_nist.png')
-plt.savefig(f'saved/nist/{display_method}_nist.png')
+plt.savefig(f'saved/nist/{display_method}_nist.pdf')

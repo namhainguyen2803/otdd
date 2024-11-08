@@ -4,7 +4,7 @@ import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data, load_imagenet
 from models.resnet import ResNet18, ResNet50
 from otdd.pytorch.distance import DatasetDistance
-from otdd.pytorch.method5 import NewDatasetDistance
+from otdd.pytorch.method5 import compute_pairwise_distance
 from trainer import *
 import os
 import random
@@ -20,7 +20,7 @@ time_difference = timedelta(hours=7)
 current_utc = datetime.utcnow()
 current_vietnam_time = current_utc + time_difference
 current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
-parent_dir = f"saved/augmentation2/{current_datetime_vn}"
+parent_dir = f"saved/augmentation3/{current_datetime_vn}"
 os.makedirs(parent_dir, exist_ok=True)
 result_file = f"{parent_dir}/result.txt"
 
@@ -37,7 +37,7 @@ with open(result_file, 'a') as file:
     file.write(f"Random: brightness: {brightness}, contrast: {contrast}, saturation: {saturation}, hue: {hue} \n")
 
 
-MAXSIZE = 2000
+MAXSIZE = 1000
 imagenet_loader = load_imagenet(datadir=datadir_tiny_imagenet, 
                                 resize=32, 
                                 tiny=True, 
@@ -45,7 +45,7 @@ imagenet_loader = load_imagenet(datadir=datadir_tiny_imagenet,
                                 brightness=brightness, 
                                 contrast=contrast, 
                                 saturation=saturation, 
-                                maxsize=MAXSIZE,
+                                maxsize=2000,
                                 hue=hue)[0]
 datadir_cifar10 = "data/CIFAR10"
 cifar10_loader  = load_torchvision_data("CIFAR10",

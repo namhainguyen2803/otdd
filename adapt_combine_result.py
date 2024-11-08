@@ -8,7 +8,7 @@ from scipy import stats
 import json
 from matplotlib.ticker import FormatStrFormatter
 
-method = "sotdd"
+method = "otdd"
 if method == "sotdd":
     display_method = "s-OTDD"
 else:
@@ -162,13 +162,13 @@ for i, row in df.iterrows():
              row["Source -> Target"], ha='right', fontsize=10)
 
 # Add Pearson correlation and p-value to the plot as a legend
-plt.legend(loc="upper right", frameon=True)
+plt.legend(loc="upper left", frameon=True)
 
 # Customize title and labels
 FONT_SIZE = 20
-plt.title(f"Distance vs Adaptation: *NIST Datasets", fontsize=FONT_SIZE)
-plt.xlabel(f"{display_method} Distance", fontsize=FONT_SIZE)
-plt.ylabel("Performance Gap (%)", fontsize=FONT_SIZE)
+plt.title(f"Distance vs Adaptation: *NIST Datasets", fontsize=FONT_SIZE, weight='bold')
+plt.xlabel(f"{display_method} Distance", fontsize=FONT_SIZE - 2)
+plt.ylabel("Performance Gap (%)", fontsize=FONT_SIZE - 2)
 plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 # Display plot

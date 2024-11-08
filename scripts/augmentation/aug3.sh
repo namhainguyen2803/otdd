@@ -1,1 +1,2 @@
-CUDA_VISIBLE_DEVICES=2 python3 augmentation_exp.py
+CUDA_VISIBLE_DEVICES=3 python3 augmentation_exp.py
+CUDA_VISIBLE_DEVICES=3 python3 augmentation_exp.py

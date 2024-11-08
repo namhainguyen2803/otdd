@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-parent_path = "split_size"
+parent_path = "saved_mnist/time_comparison/MNIST/split_size"
 # parent_path = "saved_cpu_2/time_comparison/CIFAR100/split_size"
 
 sotdd_time_dict = dict()
@@ -18,7 +18,7 @@ for file_name in os.listdir(parent_path):
 
     parts = file_name.split("_")
     split_size = int(parts[0][2:])
-    if split_size > 10000:
+    if split_size < 2000:
         continue
     num_split = int(parts[1][2:])
     num_projections = int(parts[2][2:])
@@ -39,13 +39,10 @@ for file_name in os.listdir(parent_path):
                     parts = float(line.split(": ")[-1])
                     exact_otdd_time_dict[split_size] = parts
                 elif "gaussian" in line:
-                    print(line)
-                    parts = float(line.split(": ")[-1])
-                    gaussian_otdd_time_dict[split_size] = parts
-
-# print(sotdd_time_dict)
-
-# print(exact_otdd_time_dict)
+                    if "iter 20" in line:
+                        print(line)
+                        parts = float(line.split(": ")[-1])
+                        gaussian_otdd_time_dict[split_size] = parts
 
 
 def make_xy_coordinate(dict_data):
@@ -72,9 +69,9 @@ list_ss8000, list_pt8000 = make_xy_coordinate(sotdd_time_dict[8000])
 list_ss10000, list_pt10000 = make_xy_coordinate(sotdd_time_dict[10000])
 
 
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(8, 8))
 plt.plot(list_ss, list_pt, color='b', label='OTDD (exact)', marker='o', linewidth=2)
-plt.plot(list_gss, list_gpt, color='k', label='OTDD (gaussian approximation)', marker='o', linewidth=2)
+plt.plot(list_gss, list_gpt, color='k', label='OTDD (Gaussian approximation)', marker='o', linewidth=2)
 plt.plot(list_ss1000, list_pt1000, color='y', label='sOTDD (1.000 projections)', marker='o', linewidth=2)
 plt.plot(list_ss3000, list_pt3000, color='m', label='sOTDD (3.000 projections)', marker='o', linewidth=2)
 plt.plot(list_ss5000, list_pt5000, color='c', label='sOTDD (5.000 projections)', marker='o', linewidth=2)
