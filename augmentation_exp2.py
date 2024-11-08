@@ -56,6 +56,8 @@ def main():
                                 hue=hue)
         imagenet_trainset = imagenet[1]["train"]
         imagenet_testset = imagenet[1]["test"]
+        imagenet_trainloader = imagenet[0]["train"]
+        imagenet_testloader = imagenet[0]["test"]
         
         datadir_cifar10 = "data/CIFAR10"
         cifar10 = load_torchvision_data("CIFAR10",
@@ -65,6 +67,8 @@ def main():
                                         datadir=datadir_cifar10)
         cifar10_trainset = cifar10[1]["train"]
         cifar10_testset = cifar10[1]["test"]
+        cifar10_trainloader = cifar10[0]["train"]
+        cifar10_testloader = cifar10[0]["test"]
 
         def save_data(data_set, saved_tensor_path):
             list_images = list()
@@ -85,11 +89,15 @@ def main():
         return {
             "cifar10": {
                     "trainset": cifar10_trainset, 
-                    "testset": cifar10_testset
+                    "testset": cifar10_testset,
+                    "trainloader": cifar10_trainloader, 
+                    "testloader": cifar10_testloader
                     },
             "imagenet": {
                     "trainset": imagenet_trainset,
-                    "testset": imagenet_testset
+                    "testset": imagenet_testset,
+                    "trainloader": imagenet_trainloader, 
+                    "testloader": imagenet_testloader
                     }
         }
 
@@ -107,23 +115,23 @@ def main():
 
 
     # Train model, retrieve accuracy
-    def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, batch_size=64, num_epochs_pretrain=300, num_epochs_adapt=30):
+    def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, batch_size=64, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
 
         # Pretrain ImageNet model
-        imagenet_feature_extractor = ResNet18().to(DEVICE)
-        imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(DEVICE)
+        imagenet_feature_extractor = ResNet18().to(device)
+        imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(device)
         feature_extractor_optimizer = optim.SGD(imagenet_feature_extractor.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
         classifier_optimizer = optim.SGD(imagenet_classifier.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
         for epoch in range(1, num_epochs_pretrain + 1):
             train(feature_extractor=imagenet_feature_extractor,
                 classifier=imagenet_classifier,
-                device=DEVICE,
+                device=device,
                 train_loader=train_imagenet_loader,
                 epoch=epoch,
                 criterion=nn.CrossEntropyLoss(),
                 ft_extractor_optimizer=feature_extractor_optimizer,
                 classifier_optimizer=classifier_optimizer)
-        imagenet_acc_no_adapt = test(imagenet_feature_extractor, imagenet_classifier, DEVICE, test_imagenet_loader)
+        imagenet_acc_no_adapt = test(imagenet_feature_extractor, imagenet_classifier, device, test_imagenet_loader)
         print(f"Accuracy of ImageNet {imagenet_acc_no_adapt}")
         with open(result_file, 'a') as file:
             file.write(f"Accuracy of ImageNet {imagenet_acc_no_adapt} \n")
@@ -133,12 +141,12 @@ def main():
 
 
         # Transfer learning on CIFAR10
-        cifar10_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 10).to(DEVICE)
+        cifar10_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 10).to(device)
         cifar10_classifier_optimizer = optim.SGD(cifar10_classifier.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
         for epoch in range(1, num_epochs_adapt + 1):
             train(feature_extractor=imagenet_feature_extractor,
                 classifier=cifar10_classifier,
-                device=DEVICE,
+                device=device,
                 train_loader=train_cifar10_loader,
                 epoch=epoch,
                 criterion=nn.CrossEntropyLoss(),
@@ -146,7 +154,7 @@ def main():
                 classifier_optimizer=cifar10_classifier_optimizer)
 
 
-        cifar10_acc_adapt = test(imagenet_feature_extractor, cifar10_classifier, DEVICE, test_cifar10_loader)
+        cifar10_acc_adapt = test(imagenet_feature_extractor, cifar10_classifier, device, test_cifar10_loader)
         print(f"Accuracy of CIFAR10: {cifar10_acc_adapt}")
         with open(result_file, 'a') as file:
             file.write(f"Accuracy of CIFAR10: {cifar10_acc_adapt} \n")
@@ -169,6 +177,15 @@ def main():
 
     DATA_DICT = create_data()
 
+    transfer_learning(train_imagenet_loader=DATA_DICT["imagenet"]["trainloader"], 
+                        test_imagenet_loader=DATA_DICT["imagenet"]["testloader"], 
+                        train_cifar10_loader=DATA_DICT["cifar10"]["trainloader"], 
+                        test_cifar10_loader=DATA_DICT["cifar10"]["testloader"], 
+                        batch_size=64, 
+                        num_epochs_pretrain=300, 
+                        num_epochs_adapt=30,
+                        device=DEVICE)
+
     cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
     imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
 
@@ -178,7 +195,7 @@ def main():
     kwargs = {
         "dimension": 32,
         "num_channels": 3,
-        "num_moments": 8,
+        "num_moments": 10,
         "use_conv": True,
         "precision": "float",
         "p": 2,
