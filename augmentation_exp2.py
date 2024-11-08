@@ -54,9 +54,8 @@ def main():
                                 saturation=saturation, 
                                 maxsize=None,
                                 hue=hue)
-        imagenet_dataset = imagenet[1]["train"]
-        imagenet_trainloader = imagenet[0]["train"]
-        imagenet_testloader = imagenet[0]["test"]
+        imagenet_trainset = imagenet[1]["train"]
+        imagenet_testset = imagenet[1]["test"]
         
         datadir_cifar10 = "data/CIFAR10"
         cifar10 = load_torchvision_data("CIFAR10",
@@ -64,37 +63,33 @@ def main():
                                         download=False, 
                                         maxsize=None, 
                                         datadir=datadir_cifar10)
-        cifar10_dataset = cifar10[1]["train"]
-        cifar10_trainloader = cifar10[0]["train"]
-        cifar10_testloader = cifar10[0]["test"]
-        list_imagenet_images = list()
-        list_imagenet_labels = list()
-        for img, label in imagenet_dataset:
-            list_imagenet_images.append(img)
-            list_imagenet_labels.append(label)
-        tensor_imagenet_image = torch.stack(list_imagenet_images)
-        tensor_imagenet_labels = torch.tensor(list_imagenet_labels)
-        torch.save((tensor_imagenet_image, tensor_imagenet_labels), f'{parent_dir}/transformed_imagenet.pt')
-        list_cifar10_images = list()
-        list_cifar10_labels = list()
-        for img, label in cifar10_dataset:
-            list_cifar10_images.append(img)
-            list_cifar10_labels.append(label)
-        tensor_cifar10_images = torch.stack(list_cifar10_images)
-        tensor_cifar10_labels = torch.tensor(list_cifar10_labels)
-        torch.save((tensor_cifar10_images, tensor_cifar10_labels), f'{parent_dir}/transformed_cifar10.pt')
-        print(len(list_imagenet_images), len(list_imagenet_labels))
-        print(len(list_cifar10_images), len(list_cifar10_labels))
+        cifar10_trainset = cifar10[1]["train"]
+        cifar10_testset = cifar10[1]["test"]
+
+        def save_data(data_set, saved_tensor_path):
+            list_images = list()
+            list_labels = list()
+            for img, label in data_set:
+                list_images.append(img)
+                list_labels.append(label)
+            tensor_images = torch.stack(list_images)
+            tensor_labels = torch.tensor(list_labels)
+            torch.save((tensor_images, tensor_labels), saved_tensor_path)
+            print(f"Number of data: {len(list_images)}, Save data into {saved_tensor_path}")
+
+        save_data(data_set=imagenet_trainset, saved_tensor_path=f"{parent_dir}/transformed_train_imagenet.pt")
+        save_data(data_set=imagenet_testset, saved_tensor_path=f"{parent_dir}/transformed_test_imagenet.pt")
+        save_data(data_set=cifar10_trainset, saved_tensor_path=f"{parent_dir}/transformed_train_cifar10.pt")
+        save_data(data_set=cifar10_testset, saved_tensor_path=f"{parent_dir}/transformed_test_cifar10.pt")
+
         return {
             "cifar10": {
-                    "dataset": cifar10_dataset, 
-                    "trainloader": cifar10_trainloader, 
-                    "testloader": cifar10_testloader
+                    "trainset": cifar10_trainset, 
+                    "testset": cifar10_testset
                     },
             "imagenet": {
-                    "dataset": imagenet_dataset, 
-                    "trainloader": imagenet_trainloader, 
-                    "testloader": imagenet_testloader
+                    "trainset": imagenet_trainset,
+                    "testset": imagenet_testset
                     }
         }
 
@@ -174,8 +169,8 @@ def main():
 
     DATA_DICT = create_data()
 
-    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_cifar10.pt', maxsize=1000, batch_size=64)
-    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_imagenet.pt', maxsize=1000, batch_size=64)
+    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
+    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
 
     
     # Compute s-OTDD
@@ -183,7 +178,7 @@ def main():
     kwargs = {
         "dimension": 32,
         "num_channels": 3,
-        "num_moments": 10,
+        "num_moments": 8,
         "use_conv": True,
         "precision": "float",
         "p": 2,
