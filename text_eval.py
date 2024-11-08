@@ -10,10 +10,22 @@ from scipy import stats
 
 
 method = "sOTDD"
+# method = "OTDD"
 if method == "sOTDD":
     display_method = "s-OTDD"
 else:
     display_method = method.upper()
+
+
+dataset_nicknames = {
+"AG_NEWS": "ag",
+"DBpedia": "db",
+"YelpReviewPolarity": "y1+",
+"YelpReviewFull": "y15",
+"YahooAnswers": "yh",
+"AmazonReviewPolarity": "am+",
+"AmazonReviewFull": "am5"
+}
 
 
 parent_dir = "saved/text_cls_new"
@@ -38,9 +50,9 @@ with open(adapt_result_path, 'r') as file:
         target_dataset = parts[1].split(': ')[1]
         accuracy = float(parts[2].split(': ')[1])
 
-        if source_dataset not in adapt_acc:
-            adapt_acc[source_dataset] = {}
-        adapt_acc[source_dataset][target_dataset] = accuracy
+        if target_dataset not in adapt_acc:
+            adapt_acc[target_dataset] = {}
+        adapt_acc[target_dataset][source_dataset] = accuracy
 
 
 # read baseline result
@@ -56,71 +68,95 @@ with open(baseline_result_path, 'r') as file:
 print(baseline_acc)
 
 
-mean = 0.0
-std_dev = 0.001
 
-perf_list = list()
-dist_list = list()
+
 DATASET_NAME = list(baseline_acc.keys())
-print(DATASET_NAME)
+perf_data = []
 for i in range(len(DATASET_NAME)):
     for j in range(len(DATASET_NAME)):
-        source = DATASET_NAME[i]
-        target = DATASET_NAME[j]
-
-        if source == target:
+        source_name = DATASET_NAME[i]
+        target_name = DATASET_NAME[j]
+        if source_name == target_name:
             continue
-        if source == "AmazonReviewPolarity" or target == "AmazonReviewPolarity":
+        # if source_name == "AmazonReviewPolarity" or target_name == "AmazonReviewPolarity":
+        #     continue
+        
+        perf = ((adapt_acc[target_name][source_name]) - (baseline_acc[target_name])) / baseline_acc[target_name]
+        if perf < -0.4:
             continue
+        # error = torch.abs(torch.normal(mean=0.0, std=0.05, size=(1,)))
+        # print(error)
+        dist = text_dist[target_name][source_name]
 
-        # gaussian_numbers = torch.normal(mean=mean, std=std_dev, size=(1,))
-        perf = ((adapt_acc[source][target]) - (baseline_acc[target])) / baseline_acc[target]
-        dist = text_dist[source][target]
-
-        perf_list.append(perf)
-        dist_list.append(dist)
-
-list_X = np.array(dist_list).reshape(-1, 1)
-list_y = np.array(perf_list)
-model = LinearRegression().fit(list_X, list_y)
-list_y_pred = model.predict(list_X)
+        if dist is not None or dist != 0:
+            perf_data.append({
+                "Source -> Target": f"{dataset_nicknames[source_name]}->{dataset_nicknames[target_name]}",
+                "distance": dist,
+                "performance": perf,
+                "Error": 0
+            })
 
 
+# Create DataFrame
+df = pd.DataFrame(perf_data)
+
+# Calculate Pearson correlation
+pearson_corr, p_value = stats.pearsonr(df["distance"], df["performance"])
+
+# Plotting
+plt.figure(figsize=(8, 8))
+sns.set(style="whitegrid")
+
+# Scatter plot with regression line and confidence interval (only over data range)
+sns.regplot(
+    x="distance", 
+    y="performance", 
+    data=df, 
+    scatter=True, 
+    ci=95, 
+    color="c", 
+    scatter_kws={"s": 5, "color": "tab:blue"}  # Set dot color to blue
+)
+
+# Add error bars
+plt.errorbar(
+    df["distance"], 
+    df["performance"], 
+    yerr=df["Error"], 
+    fmt='o', 
+    color='gray', 
+    capsize=1.5, 
+    capthick=0, 
+    elinewidth=1,
+    markersize=0
+)
+
+# Fit linear regression manually to extend line beyond the data range
+X = df["distance"].values.reshape(-1, 1)
+y = df["performance"].values
+reg = LinearRegression().fit(X, y)
+
+# Generate x values for the extended line
 if method == "OTDD":
-    x_min, x_max = min(dist_list) - 50, max(dist_list) + 50
+    x_range = np.linspace(df["distance"].min() - 20, df["distance"].max() + 20, 500)
 else:
-    x_min, x_max = min(dist_list) - 0.01, max(dist_list) + 0.01
+    x_range = np.linspace(df["distance"].min() - 0.01, df["distance"].max() + 0.01, 500)
+y_pred = reg.predict(x_range.reshape(-1, 1))
 
-x_extended = np.linspace(x_min, x_max, 100).reshape(-1, 1)
+# Plot the extended regression line
+plt.plot(x_range, y_pred, linewidth=1.5, color="tab:blue", label=f"$\\rho$: {pearson_corr:.2f}\n p-value: {p_value * 10**5:.2f}$\\times 10^{{-5}}$")
 
-# Predict y values for the extended range
-y_extended_pred = model.predict(x_extended)
+# Add Pearson correlation and p-value to the plot as a legend
+plt.legend(loc="upper right", frameon=True)
 
-def compute_rss(observed, predicted):
-    if len(observed) != len(predicted):
-        raise ValueError("Both lists must have the same length.")
-    rss = sum((obs - pred) ** 2 for obs, pred in zip(observed, predicted))
-    return rss
-rss = compute_rss(list_y, list_y_pred) * 100
-rho, p_value = stats.pearsonr(dist_list, perf_list)
-
-
-
-plt.figure(figsize=(10, 8))
-
-plt.scatter(dist_list, perf_list, s=20, color='blue')
-plt.plot(x_extended, y_extended_pred, color='red', linewidth=3,
-         label=(f'$ \\rho={rho:.3f}$\n'
-                f'p-value={p_value:.2f}'
-                ))
-
-FONT_SIZE = 20
-plt.title("Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE)
+# Customize title and labels
+FONT_SIZE=20
+plt.title(f"Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE, fontweight='bold')
 plt.xlabel(f'{display_method} Distance', fontsize=FONT_SIZE)
 plt.ylabel('Accuracy', fontsize=FONT_SIZE)
 
+# Display plot
 plt.legend(fontsize=15)
-plt.savefig(f'text_cls_{display_method}.png')
-plt.savefig(f'text_cls_{display_method}.pdf')
-
-
+plt.grid(False)
+plt.savefig(f'text_cls_{display_method}.png', dpi=1000)
+plt.savefig(f'text_cls_{display_method}.pdf', dpi=1000)

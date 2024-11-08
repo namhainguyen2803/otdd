@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from scipy import stats
 import json
 
-method = "otdd"
+method = "sotdd"
 if method == "sotdd":
     display_method = "s-OTDD"
 else:
@@ -96,60 +96,6 @@ for target_name, sources in perf_dict.items():
                     "Relative Drop in Test Error (%)": avg_perf,
                     "Error": error
                 })
-
-
-
-
-# # Create DataFrame
-# df = pd.DataFrame(perf_data)
-
-# # Calculate Pearson correlation
-# pearson_corr, p_value = stats.pearsonr(df["OT Dataset Distance"], df["Relative Drop in Test Error (%)"])
-
-# # Plotting
-# plt.figure(figsize=(10, 8))
-# sns.set(style="whitegrid")
-
-# # Scatter plot with regression line and confidence interval
-# sns.regplot(
-#     x="OT Dataset Distance", 
-#     y="Relative Drop in Test Error (%)", 
-#     data=df, 
-#     scatter=True, 
-#     ci=95, 
-#     color="blue", 
-#     scatter_kws={"s": 5}
-# )
-
-# # Add error bars
-# plt.errorbar(
-#     df["OT Dataset Distance"], 
-#     df["Relative Drop in Test Error (%)"], 
-#     yerr=df["Error"], 
-#     fmt='o', 
-#     color='gray', 
-#     capsize=None, 
-#     capthick=None, 
-#     elinewidth=None,
-#     markersize=5
-# )
-
-# # Add data labels to each point
-# for i, row in df.iterrows():
-#     plt.text(row["OT Dataset Distance"], row["Relative Drop in Test Error (%)"], 
-#              row["Source -> Target"], ha='right', fontsize=8)
-
-# # Add Pearson correlation and p-value to the plot
-# corr_text = r'$\rho$: {:.2f}\np-value: {:.2f}'.format(pearson_corr, p_value)
-# plt.legend([corr_text], loc="upper right", frameon=True)
-
-# # Customize title and labels
-# plt.title(f"Distance vs Adaptation: *NIST Datasets", fontsize=14)
-# plt.xlabel("OT Dataset Distance")
-# plt.ylabel("Relative Drop in Test Error (%)")
-
-# # Display plot
-# plt.savefig(f'saved/nist/{display_method}_nist.png')
 
 
 # Create DataFrame

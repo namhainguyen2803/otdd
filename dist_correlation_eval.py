@@ -6,50 +6,76 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from scipy import stats
 import json
-
-otdd_dist_path = f"saved/nist/sotdd_dist_no_conv_8_normalizing_moments_3.json"
-sotdd_dist_path = f"saved/nist/otdd_dist.json"
+import torch
 
 
+saved_path = "saved_mnist/time_comparison/MNIST/split_size"
 
-
-with open(otdd_dist_path, 'r') as file:
-    otdd_dist = json.load(file)
-
-with open(sotdd_dist_path, 'r') as file:
-    sotdd_dist = json.load(file)
-
-
-otdd_list = list()
 sotdd_list = list()
-for target_name in otdd_dist.keys():
-    for source_name in otdd_dist[target_name].keys():
-        otdd_list.append(otdd_dist[target_name][source_name])
-        sotdd_list.append(sotdd_dist[target_name][source_name])
+ga_otdd_list = list()
+exact_otdd_list = list()
+for file_name in os.listdir(saved_path):
+    if "SS" in file_name and "NS" in file_name and "NP" in file_name:
+        parts = file_name.split("_")
+        split_size = int(parts[0][2:])
+        num_split = int(parts[1][2:])
+        num_projections = int(parts[2][2:])
+        print(file_name, split_size, num_split, num_projections)
+        each_run_file_name = f"{saved_path}/{file_name}"
+        sotdd_dist = torch.load(f"{each_run_file_name}/sotdd_dist.pt")[0][1].item()
+        ga_otdd_dist = torch.load(f"{each_run_file_name}/ga_otdd_dist.pt")[0][1].item()
+        exact_otdd_dist = torch.load(f"{each_run_file_name}/exact_otdd_dist.pt")[0][1].item()
+        
+        sotdd_list.append(sotdd_dist)
+        ga_otdd_list.append(ga_otdd_dist)
+        exact_otdd_list.append(exact_otdd_dist)
 
+method = "ga"
+if method == "ga":
+    otdd_list = ga_otdd_list
+else:
+    otdd_list = exact_otdd_list
 
-list_X = np.array(otdd_list).reshape(-1, 1)
-list_y = np.array(sotdd_list)
+list_X = np.array(sotdd_list).reshape(-1, 1)
+list_y = np.array(otdd_list)
 model = LinearRegression().fit(list_X, list_y)
-list_y_pred = model.predict(list_X)
 
-# x_min, x_max = min(dist_list) - 300, max(dist_list) + 300
-# x_extended = np.linspace(x_min, x_max, 100).reshape(-1, 1)
-# y_extended_pred = model.predict(x_extended)
+x_min, x_max = min(sotdd_list) - 0.001, max(sotdd_list) + 0.001
+x_extended = np.linspace(x_min, x_max, 100).reshape(-1, 1)
+y_extended_pred = model.predict(x_extended)
 
-plt.figure(figsize=(10, 8))
-
-plt.scatter(otdd_list, sotdd_list, s=20, color='blue')
-plt.plot(otdd_list, list_y_pred, color='red', linewidth=4)
-# plt.plot(x_extended, y_extended_pred, color='red', linewidth=3)
-
-rho, p_value = stats.pearsonr(otdd_list, sotdd_list)
+rho, p_value = stats.pearsonr(sotdd_list, otdd_list)
+print(p_value)
 
 
-FONT_SIZE = 25
-plt.title(f'$\\rho={rho:.3f}, p={p_value:.3f}$', fontsize=FONT_SIZE)
-plt.xlabel(f'OTDD', fontsize=FONT_SIZE)
-plt.ylabel('s-OTDD', fontsize=FONT_SIZE)
+plt.figure(figsize=(8, 8))
+sns.set(style="whitegrid")
 
-# plt.legend()
-plt.savefig(f'correlation.png')
+if method == "ga":
+    label = f"$\\rho$: {rho:.2f}\np-value: {p_value * 10**17:.2f}$\\times 10^{{-17}}$"
+else:
+    label = f"$\\rho$: {rho:.2f}\np-value: {p_value * 10**18:.2f}$\\times 10^{{-18}}$"
+
+sns.regplot(
+    x=sotdd_list,
+    y=otdd_list,
+    scatter=True, 
+    ci=95, 
+    color="c", 
+    scatter_kws={"s": 10, "color": "tab:blue"},  # Set dot color to blue
+    label=label
+)
+
+FONT_SIZE = 20
+plt.title("Distance Correlation", fontsize=FONT_SIZE, fontweight='bold')
+plt.xlabel(f's-OTDD (10,000 projections)', fontsize=FONT_SIZE - 2)
+
+if method == "ga":
+    plt.ylabel('OTDD (Gaussian approximation)', fontsize=FONT_SIZE - 2)
+else:
+    plt.ylabel('OTDD (Exact)', fontsize=FONT_SIZE - 2)
+
+plt.grid(False)
+plt.legend(loc="upper left", frameon=True, fontsize=15)
+plt.savefig(f'{saved_path}/correlation_dist_{method}.png', dpi=1000)
+plt.savefig(f'{saved_path}/correlation_dist_{method}.pdf', dpi=1000)
