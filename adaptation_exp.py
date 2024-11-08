@@ -2,8 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data
-from otdd.pytorch.method4 import compute_pairwise_distance
-from otdd.pytorch.method4 import NewDatasetDistance
+from otdd.pytorch.method5 import compute_pairwise_distance
 from otdd.pytorch.distance import DatasetDistance
 
 import os
@@ -74,9 +73,10 @@ def create_dataset(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None):
     return METADATA_DATASET
 
 
-def compute_otdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000):
+def compute_otdd_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
 
-    METADATA_DATASET = create_dataset(maxsamples=maxsamples)
+    if METADATA_DATASET is None:
+        METADATA_DATASET = create_dataset(maxsamples=maxsamples)
 
     all_dist_dict = dict()
     for i in range(len(LIST_DATASETS)):
@@ -89,9 +89,6 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000):
             
             source_dataset = LIST_DATASETS[i]
             target_dataset = LIST_DATASETS[j]
-
-            # dist = NewDatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], METADATA_DATASET[target_dataset]["train_loader"], p=2, device="cpu")
-            # d = dist.distance(maxsamples=maxsamples, num_projection=num_projection, use_conv=False).item()
 
             dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
                                     METADATA_DATASET[target_dataset]["train_loader"],
@@ -113,18 +110,46 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000):
     return all_dist_dict
 
 
-def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=1000):
+def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADATA_DATASET=None):
 
-    METADATA_DATASET = create_dataset(maxsamples=maxsamples)
+    if METADATA_DATASET is None:
+        METADATA_DATASET = create_dataset(maxsamples=maxsamples)
 
     list_dataset = list()
     for i in range(len(LIST_DATASETS)):
         dt_name = LIST_DATASETS[i]
         list_dataset.append(METADATA_DATASET[dt_name]["train_loader"])
     
-    # all_dist_dict = compute_pairwise_distance(list_dataset, device=DEVICE, num_projections=10000, evaluate_time=False)
+    kwargs = {
+        "dimension": 28 * 28,
+        "num_channels": 1,
+        "num_moments": 10,
+        "use_conv": False,
+        "precision": "float",
+        "p": 2,
+        "chunk": 1000
+    }
 
-    all_dist_dict, _ = compute_pairwise_distance(list_dataset, maxsamples=maxsamples, num_projection=num_projection, chunk=1000, num_moments=8, image_size=28, dimension=28 * 28, num_channels=1, use_conv=False, device=DEVICE, dtype=torch.FloatTensor)
+    sw_list = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)
+
+    all_dist_dict = dict()
+    for i in range(len(LIST_DATASETS)):
+        all_dist_dict[LIST_DATASETS[i]] = dict()
+        for j in range(len(LIST_DATASETS)):
+            all_dist_dict[LIST_DATASETS[i]][LIST_DATASETS[j]] = 0
+
+    k = 0
+    for i in range(len(LIST_DATASETS)):
+        for j in range(i + 1, len(LIST_DATASETS)):
+
+            source_dataset = LIST_DATASETS[i]
+            target_dataset = LIST_DATASETS[j]
+            all_dist_dict[source_dataset][target_dataset] = sw_list[k].item()
+            all_dist_dict[target_dataset][source_dataset] = sw_list[k].item()
+
+            k += 1
+    
+    assert k == len(sw_list), "k != len(sw_list)"
 
     return all_dist_dict
 
@@ -235,31 +260,15 @@ def training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=D
 if __name__ == "__main__":
 
     
-    DIST = compute_otdd_distance()
-    dist_file_path = f'{parent_dir}/otdd_dist.json'
-    with open(dist_file_path, 'w') as json_file:
-        json.dump(DIST, json_file, indent=4)
-
-    # DIST_list = compute_sotdd_distance(num_projection=10000)
-    # DIST = dict()
-
-    # for i in range(len(LIST_DATASETS)):
-    #     target_dataset = LIST_DATASETS[i]
-    #     for j in range(i+1, len(LIST_DATASETS)):
-    #         source_dataset = LIST_DATASETS[j]
-
-    #         if target_dataset not in DIST:
-    #             DIST[target_dataset] = dict()
-    #         if source_dataset not in DIST:
-    #             DIST[source_dataset] = dict()
-
-    #         DIST[target_dataset][source_dataset] = DIST_list[i][j]
-    #         DIST[source_dataset][target_dataset] = DIST_list[j][i]
-
-    # dist_file_path = f'{parent_dir}/sotdd_dist_no_conv_8_normalizing_moments_3.json'
+    # DIST_otdd = compute_otdd_distance()
+    # dist_file_path = f'{parent_dir}/otdd_dist.json'
     # with open(dist_file_path, 'w') as json_file:
-    #     json.dump(DIST, json_file, indent=4)
-    # print(f"DIST: {DIST}")
+    #     json.dump(DIST_otdd, json_file, indent=4)
+
+    DIST_sotdd = compute_sotdd_distance(num_projection=10000)
+    dist_file_path = f'{parent_dir}/sotdd_dist_use_conv_False_num_moments_10.json'
+    with open(dist_file_path, 'w') as json_file:
+        json.dump(DIST_sotdd, json_file, indent=4)
 
     # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
     # training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
