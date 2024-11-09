@@ -131,14 +131,18 @@ def main():
                 criterion=nn.CrossEntropyLoss(),
                 ft_extractor_optimizer=feature_extractor_optimizer,
                 classifier_optimizer=classifier_optimizer)
-                
+        frozen_module(imagenet_feature_extractor)
+
+        ft_extractor_path = f'{parent_dir}/imagenet_ft_extractor.pth'
+        torch.save(imagenet_feature_extractor.state_dict(), ft_extractor_path)
+
+        classifier_path = f'{parent_dir}/imagenet_classifier.pth'
+        torch.save(imagenet_classifier.state_dict(), classifier_path)
+
         imagenet_acc_no_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=imagenet_classifier, device=device, test_loader=test_imagenet_loader)
         print(f"Accuracy of ImageNet {imagenet_acc_no_adapt}")
         with open(result_file, 'a') as file:
             file.write(f"Accuracy of ImageNet {imagenet_acc_no_adapt} \n")
-        frozen_module(imagenet_feature_extractor)
-        ft_extractor_path = f'{parent_dir}/imagenet_ft_extractor.pth'
-        torch.save(imagenet_feature_extractor.state_dict(), ft_extractor_path)
 
 
         print("Training transfer learning in CIFAR10...")
@@ -154,6 +158,9 @@ def main():
                 criterion=nn.CrossEntropyLoss(),
                 ft_extractor_optimizer=None,
                 classifier_optimizer=cifar10_classifier_optimizer)
+
+        classifier_path = f'{parent_dir}/cifar10_classifier.pth'
+        torch.save(cifar10_classifier.state_dict(), classifier_path)
 
         cifar10_acc_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=cifar10_classifier, device=device, test_loader=test_cifar10_loader)
         print(f"Accuracy of CIFAR10: {cifar10_acc_adapt}")
