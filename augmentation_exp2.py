@@ -116,7 +116,7 @@ def main():
 
     # Train model, retrieve accuracy
     def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, batch_size=64, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
-
+        print("Training backbone in ImageNet...")
         # Pretrain ImageNet model
         imagenet_feature_extractor = ResNet18().to(device)
         imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(device)
@@ -140,6 +140,7 @@ def main():
         torch.save(imagenet_feature_extractor.state_dict(), ft_extractor_path)
 
 
+        print("Training transfer learning in CIFAR10...")
         # Transfer learning on CIFAR10
         cifar10_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 10).to(device)
         cifar10_classifier_optimizer = optim.SGD(cifar10_classifier.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
