@@ -115,7 +115,7 @@ def main():
 
 
     # Train model, retrieve accuracy
-    def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, batch_size=64, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
+    def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
         print("Training backbone in ImageNet...")
         # Pretrain ImageNet model
         imagenet_feature_extractor = ResNet18().to(device)
@@ -176,43 +176,48 @@ def main():
 
 
 
-    DATA_DICT = create_data()
+    # DATA_DICT = create_data()
 
-    print("Finish creating data")
+    # print("Finish creating data")
 
-    # transfer_learning(train_imagenet_loader=DATA_DICT["imagenet"]["trainloader"], 
-    #                     test_imagenet_loader=DATA_DICT["imagenet"]["testloader"], 
-    #                     train_cifar10_loader=DATA_DICT["cifar10"]["trainloader"], 
-    #                     test_cifar10_loader=DATA_DICT["cifar10"]["testloader"], 
-    #                     batch_size=64, 
-    #                     num_epochs_pretrain=300, 
-    #                     num_epochs_adapt=30,
-    #                     device=DEVICE)
+    cifar10_train_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=None, batch_size=256)
+    imagenet_train_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=None, batch_size=256)
 
-    # cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
-    # imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
+    cifar10_test_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_test_cifar10.pt', maxsize=None, batch_size=256)
+    imagenet_test_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_test_imagenet.pt', maxsize=None, batch_size=256)
+
+    transfer_learning(train_imagenet_loader=imagenet_train_dataloader, 
+                        test_imagenet_loader=imagenet_test_dataloader, 
+                        train_cifar10_loader=cifar10_train_dataloader, 
+                        test_cifar10_loader=cifar10_test_dataloader,
+                        num_epochs_pretrain=300, 
+                        num_epochs_adapt=30,
+                        device=DEVICE)
+
+    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
+    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
 
     
-    # # Compute s-OTDD
-    # num_projection = 10000
-    # kwargs = {
-    #     "dimension": 32,
-    #     "num_channels": 3,
-    #     "num_moments": 10,
-    #     "use_conv": True,
-    #     "precision": "float",
-    #     "p": 2,
-    #     "chunk": 1000
-    # }
-    # list_dataset = [cifar10_dataloader, imagenet_dataloader]
-    # start_time = time.time()
-    # sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)[0].item()
-    # end_time = time.time()
-    # time_taken = end_time - start_time
-    # print(sotdd_dist)
+    # Compute s-OTDD
+    num_projection = 10000
+    kwargs = {
+        "dimension": 32,
+        "num_channels": 3,
+        "num_moments": 10,
+        "use_conv": True,
+        "precision": "float",
+        "p": 2,
+        "chunk": 1000
+    }
+    list_dataset = [cifar10_dataloader, imagenet_dataloader]
+    start_time = time.time()
+    sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)[0].item()
+    end_time = time.time()
+    time_taken = end_time - start_time
+    print(sotdd_dist)
 
-    # with open(result_file, 'a') as file:
-    #     file.write(f"s-OTDD, Distance: {sotdd_dist}, time taken: {time_taken} \n")
+    with open(result_file, 'a') as file:
+        file.write(f"s-OTDD, Distance: {sotdd_dist}, time taken: {time_taken} \n")
 
 
 
