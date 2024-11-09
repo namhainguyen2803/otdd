@@ -118,7 +118,7 @@ def main():
     def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
         print("Training backbone in ImageNet...")
         # Pretrain ImageNet model
-        imagenet_feature_extractor = ResNet18().to(device)
+        imagenet_feature_extractor = ResNet50().to(device)
         imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(device)
         feature_extractor_optimizer = optim.SGD(imagenet_feature_extractor.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
         classifier_optimizer = optim.SGD(imagenet_classifier.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
@@ -143,7 +143,6 @@ def main():
         print(f"Accuracy of ImageNet {imagenet_acc_no_adapt}")
         with open(result_file, 'a') as file:
             file.write(f"Accuracy of ImageNet {imagenet_acc_no_adapt} \n")
-
 
         print("Training transfer learning in CIFAR10...")
         # Transfer learning on CIFAR10
@@ -184,7 +183,6 @@ def main():
 
 
     # DATA_DICT = create_data()
-
     # print("Finish creating data")
 
     cifar10_train_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=None, batch_size=256)
