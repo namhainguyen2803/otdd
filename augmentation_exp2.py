@@ -115,8 +115,8 @@ def main():
 
 
     # Train model, retrieve accuracy
-    def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, batch_size=64, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
-
+    def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
+        print("Training backbone in ImageNet...")
         # Pretrain ImageNet model
         imagenet_feature_extractor = ResNet50().to(device)
         imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(device)
@@ -131,15 +131,20 @@ def main():
                 criterion=nn.CrossEntropyLoss(),
                 ft_extractor_optimizer=feature_extractor_optimizer,
                 classifier_optimizer=classifier_optimizer)
-        imagenet_acc_no_adapt = test(imagenet_feature_extractor, imagenet_classifier, device, test_imagenet_loader)
-        print(f"Accuracy of ImageNet {imagenet_acc_no_adapt}")
-        with open(result_file, 'a') as file:
-            file.write(f"Accuracy of ImageNet {imagenet_acc_no_adapt} \n")
         frozen_module(imagenet_feature_extractor)
+
         ft_extractor_path = f'{parent_dir}/imagenet_ft_extractor.pth'
         torch.save(imagenet_feature_extractor.state_dict(), ft_extractor_path)
 
+        classifier_path = f'{parent_dir}/imagenet_classifier.pth'
+        torch.save(imagenet_classifier.state_dict(), classifier_path)
 
+        imagenet_acc_no_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=imagenet_classifier, device=device, test_loader=test_imagenet_loader)
+        print(f"Accuracy of ImageNet {imagenet_acc_no_adapt}")
+        with open(result_file, 'a') as file:
+            file.write(f"Accuracy of ImageNet {imagenet_acc_no_adapt} \n")
+
+        print("Training transfer learning in CIFAR10...")
         # Transfer learning on CIFAR10
         cifar10_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 10).to(device)
         cifar10_classifier_optimizer = optim.SGD(cifar10_classifier.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
@@ -153,8 +158,10 @@ def main():
                 ft_extractor_optimizer=None,
                 classifier_optimizer=cifar10_classifier_optimizer)
 
+        classifier_path = f'{parent_dir}/cifar10_classifier.pth'
+        torch.save(cifar10_classifier.state_dict(), classifier_path)
 
-        cifar10_acc_adapt = test(imagenet_feature_extractor, cifar10_classifier, device, test_cifar10_loader)
+        cifar10_acc_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=cifar10_classifier, device=device, test_loader=test_cifar10_loader)
         print(f"Accuracy of CIFAR10: {cifar10_acc_adapt}")
         with open(result_file, 'a') as file:
             file.write(f"Accuracy of CIFAR10: {cifar10_acc_adapt} \n")
@@ -175,13 +182,19 @@ def main():
 
 
 
-    DATA_DICT = create_data()
+    # DATA_DICT = create_data()
+    # print("Finish creating data")
 
-    transfer_learning(train_imagenet_loader=DATA_DICT["imagenet"]["trainloader"], 
-                        test_imagenet_loader=DATA_DICT["imagenet"]["testloader"], 
-                        train_cifar10_loader=DATA_DICT["cifar10"]["trainloader"], 
-                        test_cifar10_loader=DATA_DICT["cifar10"]["testloader"], 
-                        batch_size=64, 
+    cifar10_train_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=None, batch_size=256)
+    imagenet_train_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=None, batch_size=256)
+
+    cifar10_test_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_test_cifar10.pt', maxsize=None, batch_size=256)
+    imagenet_test_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_test_imagenet.pt', maxsize=None, batch_size=256)
+
+    transfer_learning(train_imagenet_loader=imagenet_train_dataloader, 
+                        test_imagenet_loader=imagenet_test_dataloader, 
+                        train_cifar10_loader=cifar10_train_dataloader, 
+                        test_cifar10_loader=cifar10_test_dataloader,
                         num_epochs_pretrain=300, 
                         num_epochs_adapt=30,
                         device=DEVICE)
