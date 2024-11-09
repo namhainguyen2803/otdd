@@ -5,7 +5,7 @@ from otdd.pytorch.datasets import load_torchvision_data, load_imagenet
 from models.resnet import ResNet18, ResNet50
 from otdd.pytorch.distance import DatasetDistance
 from otdd.pytorch.method5 import compute_pairwise_distance
-from trainer import *
+from trainer import train, test_func
 import os
 import random
 from datetime import datetime, timedelta
@@ -131,7 +131,8 @@ def main():
                 criterion=nn.CrossEntropyLoss(),
                 ft_extractor_optimizer=feature_extractor_optimizer,
                 classifier_optimizer=classifier_optimizer)
-        imagenet_acc_no_adapt = test(imagenet_feature_extractor, imagenet_classifier, device, test_imagenet_loader)
+                
+        imagenet_acc_no_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=imagenet_classifier, device=device, test_loader=test_imagenet_loader)
         print(f"Accuracy of ImageNet {imagenet_acc_no_adapt}")
         with open(result_file, 'a') as file:
             file.write(f"Accuracy of ImageNet {imagenet_acc_no_adapt} \n")
@@ -154,8 +155,7 @@ def main():
                 ft_extractor_optimizer=None,
                 classifier_optimizer=cifar10_classifier_optimizer)
 
-
-        cifar10_acc_adapt = test(imagenet_feature_extractor, cifar10_classifier, device, test_cifar10_loader)
+        cifar10_acc_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=cifar10_classifier, device=device, test_loader=test_cifar10_loader)
         print(f"Accuracy of CIFAR10: {cifar10_acc_adapt}")
         with open(result_file, 'a') as file:
             file.write(f"Accuracy of CIFAR10: {cifar10_acc_adapt} \n")
