@@ -1,7 +1,7 @@
 #!/bin/bash -e
 #SBATCH --job-name=aug
-#SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/aug.out
-#SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/aug.err
+#SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/aug1.out
+#SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/aug1.err
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --mem-per-gpu=125G
