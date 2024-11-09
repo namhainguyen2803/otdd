@@ -118,7 +118,7 @@ def main():
     def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, batch_size=64, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
 
         # Pretrain ImageNet model
-        imagenet_feature_extractor = ResNet18().to(device)
+        imagenet_feature_extractor = ResNet50().to(device)
         imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(device)
         feature_extractor_optimizer = optim.SGD(imagenet_feature_extractor.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
         classifier_optimizer = optim.SGD(imagenet_classifier.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)

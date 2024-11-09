@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=4 python3 augmentation_exp2.py --seed 3
+CUDA_VISIBLE_DEVICES=2 python3 augmentation_exp2.py --seed 3
