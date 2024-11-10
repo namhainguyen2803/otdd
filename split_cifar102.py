@@ -64,7 +64,7 @@ def main():
     dataset = CIFAR10(root=f'data/CIFAR10', train=True, download=False)
     test_dataset = CIFAR10(root=f'data/CIFAR10', train=False, download=False, transform=transform)
 
-    num_classes = len(torch.unique(dataset.targets))
+    num_classes = len(torch.unique(torch.tensor(dataset.targets)))
 
     indices = np.arange(len(dataset))
     shuffled_indices = np.random.permutation(indices)
