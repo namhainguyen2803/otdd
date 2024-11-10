@@ -182,15 +182,36 @@ def main():
 
 
 
-    # DATA_DICT = create_data()
-    # print("Finish creating data")
+    DATA_DICT = create_data()
+    print("Finish creating data")
+
+    imagenet_trainloader = DATA_DICT["imagenet"]["trainloader"]
+    for img, label in imagenet_trainloader:
+        print("ImageNet 1")
+        print(img[0])
+        print(label[0])
+        break
+
+    cifar10_trainloader = DATA_DICT["cifar10"]["trainloader"]
+    for img, label in cifar10_trainloader:
+        print("CIFAR10 1")
+        print(img[0])
+        print(label[0])
+        break
 
     cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
     imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
 
-    for img, label in cifar10_dataloader:
+    for img, label in imagenet_dataloader:
+        print("ImageNet 2")
         print(img[0])
-        print(label)
+        print(label[0])
+        break
+
+    for img, label in cifar10_dataloader:
+        print("CIFAR10 2")
+        print(img[0])
+        print(label[0])
         break
 
     
@@ -206,10 +227,7 @@ def main():
         "chunk": 1000
     }
     list_dataset = [cifar10_dataloader, imagenet_dataloader]
-    start_time = time.time()
     sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)[0].item()
-    end_time = time.time()
-    time_taken = end_time - start_time
     print(sotdd_dist)
 
 
