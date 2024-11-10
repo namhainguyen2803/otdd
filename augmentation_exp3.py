@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data, load_imagenet
-from models.resnet import ResNet18, ResNet50
+from models.resnet import ResNet50
 from otdd.pytorch.distance import DatasetDistance
 from otdd.pytorch.method5 import compute_pairwise_distance
 from trainer import *
@@ -185,22 +185,13 @@ def main():
     # DATA_DICT = create_data()
     # print("Finish creating data")
 
-    cifar10_train_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=None, batch_size=256)
-    imagenet_train_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=None, batch_size=256)
-
-    cifar10_test_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_test_cifar10.pt', maxsize=None, batch_size=256)
-    imagenet_test_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_test_imagenet.pt', maxsize=None, batch_size=256)
-
-    transfer_learning(train_imagenet_loader=imagenet_train_dataloader, 
-                        test_imagenet_loader=imagenet_test_dataloader, 
-                        train_cifar10_loader=cifar10_train_dataloader, 
-                        test_cifar10_loader=cifar10_test_dataloader,
-                        num_epochs_pretrain=300, 
-                        num_epochs_adapt=30,
-                        device=DEVICE)
-
     cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
     imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
+
+    for img, label in cifar10_dataloader:
+        print(img[0])
+        print(label)
+        break
 
     
     # Compute s-OTDD
@@ -220,9 +211,6 @@ def main():
     end_time = time.time()
     time_taken = end_time - start_time
     print(sotdd_dist)
-
-    with open(result_file, 'a') as file:
-        file.write(f"s-OTDD, Distance: {sotdd_dist}, time taken: {time_taken} \n")
 
 
 
