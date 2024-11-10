@@ -120,7 +120,7 @@ def main():
                     t += 1
             torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[-1]} \n")
+                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[proj_id]} \n")
 
 
 

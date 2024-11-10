@@ -54,7 +54,7 @@ def main():
 
     num_projections = args.num_projections
 
-    save_dir = f'{args.parent_dir}/time_comparison/MNIST/'
+    save_dir = f'{args.parent_dir}/time_comparison/CIFAR10/'
     os.makedirs(save_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -119,7 +119,7 @@ def main():
                     t += 1
             torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[-1]} \n")
+                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[proj_id]} \n")
 
 
 
