@@ -139,14 +139,14 @@ def main():
     imagenet_trainloader = DATA_DICT["imagenet"]["trainloader"]
     for img, label in imagenet_trainloader:
         print("ImageNet 1")
-        print(img[0])
+        print(torch.min(img[0]), torch.max(img[0]))
         print(label[0])
         break
 
     cifar10_trainloader = DATA_DICT["cifar10"]["trainloader"]
     for img, label in cifar10_trainloader:
         print("CIFAR10 1")
-        print(img[0])
+        print(torch.min(img[0]), torch.max(img[0]))
         print(label[0])
         break
 
@@ -168,18 +168,23 @@ def main():
 
 
 
-    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=None, batch_size=64)
-    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=None, batch_size=64)
+    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
+    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
+
+    min_val = torch.min(tensor)
+    max_val = torch.max(tensor)
+
+    print(f"Range of numbers in the tensor: {min_val.item()} to {max_val.item()}")
 
     for img, label in imagenet_dataloader:
         print("ImageNet 2")
-        print(img[0])
+        print(torch.min(img[0]), torch.max(img[0]))
         print(label[0])
         break
 
     for img, label in cifar10_dataloader:
         print("CIFAR10 2")
-        print(img[0])
+        print(torch.min(img[0]), torch.max(img[0]))
         print(label[0])
         break
 
