@@ -37,14 +37,13 @@ class Subset(Dataset):
         return len(self.indices)
 
     def __getitem__(self, idx):
-        img = Image.fromarray(self.data[idx].numpy())
-        return self.transform(img), self.targets[idx]
-        # return self.data[idx], self.targets[idx]
+        return self.transform(self.data[idx]), self.targets[idx]
 
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean=(0.1307,), std=(0.3081,))
+    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 ])
+
 
 
 def main():
@@ -62,8 +61,8 @@ def main():
     DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 
-    dataset = MNIST(root='data', train=True, download=False)
-    test_dataset = MNIST(root='data', train=False, download=False, transform=transform)
+    dataset = CIFAR10(root=f'data/CIFAR{num_classes}', train=True, download=False)
+    test_dataset = CIFAR10(root=f'data/CIFAR{num_classes}', train=False, download=False, transform=transform)
 
     num_classes = len(torch.unique(dataset.targets))
 
@@ -72,7 +71,7 @@ def main():
     
     max_dataset_size = len(dataset) // 2
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
-    
+
     pointer_dataset1 = 0
     pointer_dataset2 = max_dataset_size
 
@@ -95,16 +94,16 @@ def main():
 
 
         # NEW METHOD
-        projection_list = [1000, 5000, 10000]
+        projection_list = [1000, 2000, 3000, 4000, 5000, 10000]
         for proj_id in projection_list:
             pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute sOTDD...")
             print(f"Number of datasets: {len(dataloaders)}")
             kwargs = {
-                "dimension": 784,
-                "num_channels": 1,
+                "dimension": 32,
+                "num_channels": 3,
                 "num_moments": 5,
-                "use_conv": False,
+                "use_conv": True,
                 "precision": "float",
                 "p": 2,
                 "chunk": 1000
