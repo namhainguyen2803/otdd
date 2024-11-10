@@ -116,7 +116,7 @@ def main():
 
     def get_dataloader(datadir, maxsize=None, batch_size=64):
         images_tensor, labels_tensor = torch.load(datadir)
-        if maxsize is not None:
+        if maxsize is not None or maxsize < images_tensor.size(0):
             indices = torch.randperm(images_tensor.size(0))[:maxsize]
             selected_images = images_tensor[indices]
             selected_labels = labels_tensor[indices]
@@ -124,7 +124,7 @@ def main():
             dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         else:
             dataset = CustomTensorDataset(images_tensor, labels_tensor)
-            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         return dataloader
 
 
@@ -164,8 +164,8 @@ def main():
 
 
 
-    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
-    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
+    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=None, batch_size=64)
+    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=None, batch_size=64)
 
     for img, label in imagenet_dataloader:
         print("ImageNet 2")
