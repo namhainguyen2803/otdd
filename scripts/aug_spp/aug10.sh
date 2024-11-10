@@ -4,7 +4,7 @@
 #SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/aug10.err
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
-#SBATCH --mem-per-gpu=125G
+#SBATCH --mem-per-gpu=40GB
 #SBATCH --cpus-per-gpu=32
 #SBATCH --partition=research
 #SBATCH --mail-type=all
