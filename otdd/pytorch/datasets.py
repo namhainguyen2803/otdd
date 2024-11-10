@@ -488,8 +488,9 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
 
 
     for k, idxs in fold_idxs.items():
-        if maxsize and maxsize < len(idxs):
+        if maxsize is not None and maxsize < len(idxs):
             fold_idxs[k] = np.sort(np.random.choice(idxs, maxsize, replace = False))
+            print(k, len(fold_idxs[k]), maxsize)
 
     sampler_class = SubsetRandomSampler if shuffle else SubsetSampler
     fold_samplers = {k: sampler_class(idxs) for k,idxs in fold_idxs.items()}
@@ -517,6 +518,7 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
     if hasattr(train, 'data'):
         logger.info('Input Dim: {}'.format(train.data.shape[1:]))
     logger.info('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))))
+    print('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))))
     print(f'Fold Sizes: {flens} ({fnames})')
 
     return fold_loaders, {'train': train, 'test':test}

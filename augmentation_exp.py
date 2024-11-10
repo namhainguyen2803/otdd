@@ -140,7 +140,7 @@ cifar10_loader  = load_torchvision_data("CIFAR10",
 
 num_epochs = 300
 
-imagenet_feature_extractor = ResNet18().to(DEVICE)
+imagenet_feature_extractor = ResNet50().to(DEVICE)
 imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(DEVICE)
 
 feature_extractor_optimizer = optim.SGD(imagenet_feature_extractor.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
