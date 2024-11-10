@@ -52,7 +52,7 @@ def main():
                                 brightness=brightness, 
                                 contrast=contrast, 
                                 saturation=saturation, 
-                                maxsize=None,
+                                maxsize=1000,
                                 hue=hue)
         imagenet_trainset = imagenet[1]["train"]
         imagenet_testset = imagenet[1]["test"]
@@ -63,7 +63,7 @@ def main():
         cifar10 = load_torchvision_data("CIFAR10",
                                         valid_size=0, 
                                         download=False, 
-                                        maxsize=None, 
+                                        maxsize=1000, 
                                         datadir=datadir_cifar10)
         cifar10_trainset = cifar10[1]["train"]
         cifar10_testset = cifar10[1]["test"]
@@ -114,59 +114,6 @@ def main():
             return self.images[idx], self.labels[idx]
 
 
-    # Train model, retrieve accuracy
-    def transfer_learning(train_imagenet_loader, test_imagenet_loader, train_cifar10_loader, test_cifar10_loader, num_epochs_pretrain=300, num_epochs_adapt=30, device=DEVICE):
-        print("Training backbone in ImageNet...")
-        # Pretrain ImageNet model
-        imagenet_feature_extractor = ResNet50().to(device)
-        imagenet_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 200).to(device)
-        feature_extractor_optimizer = optim.SGD(imagenet_feature_extractor.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
-        classifier_optimizer = optim.SGD(imagenet_classifier.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
-        for epoch in range(1, num_epochs_pretrain + 1):
-            train(feature_extractor=imagenet_feature_extractor,
-                classifier=imagenet_classifier,
-                device=device,
-                train_loader=train_imagenet_loader,
-                epoch=epoch,
-                criterion=nn.CrossEntropyLoss(),
-                ft_extractor_optimizer=feature_extractor_optimizer,
-                classifier_optimizer=classifier_optimizer)
-        frozen_module(imagenet_feature_extractor)
-
-        ft_extractor_path = f'{parent_dir}/imagenet_ft_extractor.pth'
-        torch.save(imagenet_feature_extractor.state_dict(), ft_extractor_path)
-
-        classifier_path = f'{parent_dir}/imagenet_classifier.pth'
-        torch.save(imagenet_classifier.state_dict(), classifier_path)
-
-        imagenet_acc_no_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=imagenet_classifier, device=device, test_loader=test_imagenet_loader)
-        print(f"Accuracy of ImageNet {imagenet_acc_no_adapt}")
-        with open(result_file, 'a') as file:
-            file.write(f"Accuracy of ImageNet {imagenet_acc_no_adapt} \n")
-
-        print("Training transfer learning in CIFAR10...")
-        # Transfer learning on CIFAR10
-        cifar10_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 10).to(device)
-        cifar10_classifier_optimizer = optim.SGD(cifar10_classifier.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
-        for epoch in range(1, num_epochs_adapt + 1):
-            train(feature_extractor=imagenet_feature_extractor,
-                classifier=cifar10_classifier,
-                device=device,
-                train_loader=train_cifar10_loader,
-                epoch=epoch,
-                criterion=nn.CrossEntropyLoss(),
-                ft_extractor_optimizer=None,
-                classifier_optimizer=cifar10_classifier_optimizer)
-
-        classifier_path = f'{parent_dir}/cifar10_classifier.pth'
-        torch.save(cifar10_classifier.state_dict(), classifier_path)
-
-        cifar10_acc_adapt = test_func(feature_extractor=imagenet_feature_extractor, classifier=cifar10_classifier, device=device, test_loader=test_cifar10_loader)
-        print(f"Accuracy of CIFAR10: {cifar10_acc_adapt}")
-        with open(result_file, 'a') as file:
-            file.write(f"Accuracy of CIFAR10: {cifar10_acc_adapt} \n")
-
-
     def get_dataloader(datadir, maxsize=None, batch_size=64):
         images_tensor, labels_tensor = torch.load(datadir)
         if maxsize is not None:
@@ -198,6 +145,24 @@ def main():
         print(img[0])
         print(label[0])
         break
+
+
+    # Compute s-OTDD
+    num_projection = 10000
+    kwargs = {
+        "dimension": 32,
+        "num_channels": 3,
+        "num_moments": 10,
+        "use_conv": True,
+        "precision": "float",
+        "p": 2,
+        "chunk": 1000
+    }
+    list_dataset = [imagenet_trainloader, cifar10_trainloader]
+    sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)[0].item()
+    print(sotdd_dist)
+
+
 
     cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
     imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
