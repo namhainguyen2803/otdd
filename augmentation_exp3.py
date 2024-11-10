@@ -171,11 +171,6 @@ def main():
     cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=1000, batch_size=64)
     imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=1000, batch_size=64)
 
-    min_val = torch.min(tensor)
-    max_val = torch.max(tensor)
-
-    print(f"Range of numbers in the tensor: {min_val.item()} to {max_val.item()}")
-
     for img, label in imagenet_dataloader:
         print("ImageNet 2")
         print(torch.min(img[0]), torch.max(img[0]))
