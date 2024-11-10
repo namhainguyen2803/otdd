@@ -73,16 +73,8 @@ def main():
 
     num_classes = len(torch.unique(dataset.targets))
 
-    print(split_size, len(dataset))
     indices = np.arange(len(dataset))
 
-    data_index_cls = dict()
-    classes = torch.unique(torch.tensor(dataset.targets))
-    for cls_id in classes:
-        data_index_cls[cls_id] = indices[torch.tensor(dataset.targets) == cls_id]
-
-    for cls_id in data_index_cls.keys():
-        np.random.shuffle(data_index_cls[cls_id])
 
     subsets = []
     for i in range(num_splits):
@@ -105,35 +97,35 @@ def main():
 
 
     # NEW METHOD
-    pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
-    print("Compute sOTDD...")
-    print(f"Number of datasets: {len(dataloaders)}")
-
-    kwargs = {
-        "dimension": 784,
-        "num_channels": 1,
-        "num_moments": 5,
-        "use_conv": False,
-        "precision": "float",
-        "p": 2,
-        "chunk": 1000
-    }
-
-    list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=num_projections, device=DEVICE, evaluate_time=True, **kwargs)
-    for i in duration_periods.keys():
-        print(i, duration_periods[i])
-
-    t = 0
-    for i in range(len(dataloaders)):
-        for j in range(i+1, len(dataloaders)):
-            pairwise_dist[i, j] = list_pairwise_dist[t]
-            pairwise_dist[j, i] = list_pairwise_dist[t]
-            t += 1
-
-    torch.save(pairwise_dist, f'{save_dir}/sotdd_dist.pt')
-    with open(f'{save_dir}/time_running.txt', 'a') as file:
+    projection_list = [1000, 5000, 10000]
+    for proj_id in range(projection_list):
+        pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
+        print("Compute sOTDD...")
+        print(f"Number of datasets: {len(dataloaders)}")
+        kwargs = {
+            "dimension": 784,
+            "num_channels": 1,
+            "num_moments": 5,
+            "use_conv": False,
+            "precision": "float",
+            "p": 2,
+            "chunk": 1000
+        }
+        list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device=DEVICE, evaluate_time=True, **kwargs)
         for i in duration_periods.keys():
-            file.write(f"Time proccesing for sOTDD ({i} projections): {duration_periods[i]} \n")
+            print(i, duration_periods[i])
+        t = 0
+        for i in range(len(dataloaders)):
+            for j in range(i+1, len(dataloaders)):
+                pairwise_dist[i, j] = list_pairwise_dist[t]
+                pairwise_dist[j, i] = list_pairwise_dist[t]
+                t += 1
+        torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
+        with open(f'{save_dir}/time_running.txt', 'a') as file:
+            file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[-1]} \n")
+
+
+
 
     # OTDD
     dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
