@@ -1,5 +1,5 @@
 #!/bin/bash -e
-#SBATCH --job-name=aug
+#SBATCH --job-name=aug11
 #SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/aug11.out
 #SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/aug11.err
 #SBATCH --nodes=1
