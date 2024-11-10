@@ -48,7 +48,7 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_runtime_mnist", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_runtime_cifar10", help='Parent directory')
     parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
     args = parser.parse_args()
 
