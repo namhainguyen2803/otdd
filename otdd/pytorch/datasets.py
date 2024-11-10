@@ -517,6 +517,7 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
     if hasattr(train, 'data'):
         logger.info('Input Dim: {}'.format(train.data.shape[1:]))
     logger.info('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))))
+    print('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))))
     print(f'Fold Sizes: {flens} ({fnames})')
 
     return fold_loaders, {'train': train, 'test':test}
