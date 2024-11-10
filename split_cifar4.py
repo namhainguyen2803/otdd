@@ -24,12 +24,12 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="caacc", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_runtime_cifar10", help='Parent directory')
     parser.add_argument('--exp_type', type=str, default="split_size", help='dataset_size')
     parser.add_argument('--num_splits', type=int, default=2, help='Number of splits for dataset')
     parser.add_argument('--split_size', type=int, default=200, help='Size of each dataset split')
-    parser.add_argument('--num_projections', type=int, default=1000, help='Number of projections for sOTDD')
-    parser.add_argument('--num_classes', type=int, default=100, help='Number of classes in the dataset')
+    parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
+    parser.add_argument('--num_classes', type=int, default=10, help='Number of classes in the dataset')
 
     args = parser.parse_args()
 
@@ -38,7 +38,7 @@ def main():
     num_projections = args.num_projections
     num_classes = args.num_classes
 
-    save_dir = f'{args.parent_dir}/time_comparison/CIFAR100/{args.exp_type}/SS{split_size}_NS{num_splits}_NP{num_projections}'
+    save_dir = f'{args.parent_dir}/time_comparison/CIFAR10/{args.exp_type}/SS{split_size}_NS{num_splits}_NP{num_projections}'
     os.makedirs(save_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,8 +66,8 @@ def main():
         transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
     ])
 
-    dataset = CIFAR100(root=f'data/CIFAR{num_classes}', train=True, download=False)
-    test_dataset = CIFAR100(root=f'data/CIFAR{num_classes}', train=False, download=False, transform=transform)
+    dataset = CIFAR10(root=f'data/CIFAR{num_classes}', train=True, download=False)
+    test_dataset = CIFAR10(root=f'data/CIFAR{num_classes}', train=False, download=False, transform=transform)
 
     print(split_size, len(dataset))
     indices = np.arange(len(dataset))
@@ -100,6 +100,37 @@ def main():
         dataloaders.append(dataloader)
 
 
+
+    # sOTDD
+    pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
+    print("Compute sOTDD...")
+    print(f"Number of datasets: {len(dataloaders)}")
+    kwargs = {
+        "dimension": 32,
+        "num_channels": 3,
+        "num_moments": 5,
+        "use_conv": True,
+        "precision": "float",
+        "p": 2,
+        "chunk": 1000
+    }
+    list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=num_projections, device=DEVICE, evaluate_time=True, **kwargs)
+    for i in duration_periods.keys():
+        print(i, duration_periods[i])
+    t = 0
+    for i in range(len(dataloaders)):
+        for j in range(i+1, len(dataloaders)):
+            pairwise_dist[i, j] = list_pairwise_dist[t]
+            pairwise_dist[j, i] = list_pairwise_dist[t]
+            t += 1
+    torch.save(pairwise_dist, f'{save_dir}/sotdd_dist.pt')
+    with open(f'{save_dir}/time_running.txt', 'a') as file:
+        for i in duration_periods.keys():
+            file.write(f"Time proccesing for sOTDD ({i} projections): {duration_periods[i]} \n")
+
+
+
+
     # OTDD
     dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
     print("Compute OTDD (exact)...")
@@ -110,21 +141,20 @@ def main():
                                     dataloaders[j],
                                     inner_ot_method='exact',
                                     debiased_loss=True,
-                                    inner_ot_loss='sinkhorn',
                                     p=2,
-                                    entreg=1e-4,
+                                    entreg=1e-3,
                                     device=DEVICE)
             d = dist.distance(maxsamples=split_size).item()
             dict_OTDD[i][j] = d
             dict_OTDD[j][i] = d
-
     end_time_otdd = time.time()
     otdd_time_taken = end_time_otdd - start_time_otdd
     print(otdd_time_taken)
-
     torch.save(dict_OTDD, f'{save_dir}/exact_otdd_dist.pt')
     with open(f'{save_dir}/time_running.txt', 'a') as file:
         file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
+
+
 
 
     # OTDD
@@ -139,7 +169,10 @@ def main():
                                     inner_ot_method='gaussian_approx',
                                     debiased_loss=True,
                                     p=2,
-                                    entreg=1e-4,
+                                    sqrt_method='approximate',
+                                    nworkers_stats=0,
+                                    sqrt_niters=20,
+                                    entreg=1e-3,
                                     device=DEVICE)
             d = dist.distance(maxsamples=split_size).item()
             dict_OTDD[i][j] = d
