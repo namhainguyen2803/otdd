@@ -116,12 +116,16 @@ def main():
 
     def get_dataloader(datadir, maxsize=None, batch_size=64):
         images_tensor, labels_tensor = torch.load(datadir)
-        if maxsize is not None or maxsize < images_tensor.size(0):
-            indices = torch.randperm(images_tensor.size(0))[:maxsize]
-            selected_images = images_tensor[indices]
-            selected_labels = labels_tensor[indices]
-            dataset = CustomTensorDataset(selected_images, selected_labels)
-            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        if maxsize is not None:
+            if maxsize < images_tensor.size(0):
+                indices = torch.randperm(images_tensor.size(0))[:maxsize]
+                selected_images = images_tensor[indices]
+                selected_labels = labels_tensor[indices]
+                dataset = CustomTensorDataset(selected_images, selected_labels)
+                dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+            else:
+                dataset = CustomTensorDataset(images_tensor, labels_tensor)
+                dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         else:
             dataset = CustomTensorDataset(images_tensor, labels_tensor)
             dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
