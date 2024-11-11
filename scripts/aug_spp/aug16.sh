@@ -19,4 +19,4 @@ eval "$(conda shell.bash hook)"
 conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd
 cd /lustre/scratch/client/vinai/users/hainn14/otdd
 
-python3 augmentation_exp2.py --seed 16
+python3 augmentation_exp3.py --seed 16
