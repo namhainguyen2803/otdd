@@ -25,7 +25,6 @@ dataset_fmnist  = load_torchvision_data('FashionMNIST', valid_size=0, resize = 2
 dataset_usps  = load_torchvision_data('USPS',  valid_size=0, resize = 28, download=False, maxsize=MAXSIZE, datadir="data/USPS")
 
 reference = generate_reference(60000, 4, 28, 10)
-
 train_all = [dataset_mnist[1]['train'], dataset_kmnist[1]['train'], dataset_emnist[1]['train'], dataset_fmnist[1]['train'], dataset_usps[1]['train']]
 wtes = WTE(train_all, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=60000)
 wtes = wtes.reshape(wtes.shape[0], -1)

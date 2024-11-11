@@ -21,6 +21,19 @@ import json
 import argparse
 from PIL import Image
 
+from wte.distance import WTE
+from scipy.spatial import distance
+
+
+
+def generate_reference(num, dim_low, dim, attached_dim, seed=0):
+    torch.manual_seed(seed)
+    med = torch.rand(num, dim_low, dim_low).unsqueeze(0)
+    s = dim/dim_low
+    m = nn.Upsample(scale_factor=s, mode='bilinear')
+    attached = torch.randn(num, attached_dim)
+    return torch.cat((m(med).reshape(num, -1), attached), dim=1).float()
+
 
 
 class Subset(Dataset):
@@ -55,8 +68,8 @@ def main():
 
     num_projections = args.num_projections
 
-    save_dir = f'{args.parent_dir}/time_comparison/MNIST'
-    os.makedirs(save_dir, exist_ok=True)
+    parent_dir = f'{args.parent_dir}/time_comparison/MNIST'
+    os.makedirs(parent_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     DEVICE = "cpu"
@@ -81,7 +94,7 @@ def main():
     print(list_dataset_size)
 
     for dataset_size in list_dataset_size:
-        save_dir = f"{save_dir}/size_{dataset_size}"
+        save_dir = f"{parent_dir}/size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
         print(f"Setting dataset to size of {dataset_size}..")
         idx1 = shuffled_indices[pointer_dataset1: pointer_dataset1 + dataset_size]
@@ -90,6 +103,8 @@ def main():
         sub1 = Subset(dataset=dataset, original_indices=idx1, transform=transform)
         sub2 = Subset(dataset=dataset, original_indices=idx2, transform=transform)
 
+        subdatasets = [sub1, sub2]
+
         dataloader1 = DataLoader(sub1, batch_size=128, shuffle=True)
         dataloader2 = DataLoader(sub2, batch_size=128, shuffle=True)
 
@@ -97,7 +112,7 @@ def main():
 
 
         # NEW METHOD
-        projection_list = [1000, 5000, 10000]
+        projection_list = [100, 500, 1000, 5000, 10000]
         for proj_id in projection_list:
             pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute sOTDD...")
@@ -125,8 +140,6 @@ def main():
                 file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[proj_id]} \n")
 
 
-
-
         # OTDD
         dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
         print("Compute OTDD (exact)...")
@@ -151,8 +164,6 @@ def main():
         torch.save(dict_OTDD, f'{save_dir}/exact_otdd_dist.pt')
         with open(f'{save_dir}/time_running.txt', 'a') as file:
             file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
-
-
 
 
         # OTDD
@@ -182,6 +193,19 @@ def main():
         with open(f'{save_dir}/time_running.txt', 'a') as file:
             file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
 
+
+        # WTE
+        start_time_wte = time.time()
+        reference = generate_reference(dataset_size, 4, 28, 10)
+        print(reference.shape)
+        wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=dataset_size)
+        wtes = wtes.reshape(wtes.shape[0], -1)
+        wte_distance = distance.cdist(wtes, wtes, 'euclidean')
+        end_time_wte = time.time()
+        wte_time_taken = end_time_wte - start_time_wte
+        torch.save(wte_distance, f'{save_dir}/wte.pt')
+        with open(f'{save_dir}/time_running.txt', 'a') as file:
+            file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
 
 
 
