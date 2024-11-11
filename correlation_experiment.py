@@ -62,13 +62,13 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_runtime_mnist", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_corr_mnist", help='Parent directory')
     parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
     args = parser.parse_args()
 
     num_projections = args.num_projections
 
-    parent_dir = f'{args.parent_dir}/time_comparison/MNIST'
+    parent_dir = f'{args.parent_dir}/correlation/MNIST'
     os.makedirs(parent_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -89,16 +89,22 @@ def main():
     pointer_dataset1 = 0
     pointer_dataset2 = max_dataset_size
 
-    list_dataset_size = [2000 * (i + 1) for i in range(int(max_dataset_size // 2000))]
+    # list_dataset_size = [2000 * (i + 1) for i in range(int(max_dataset_size // 2000))]
+    list_dataset_size = [10000 for i in range(15)]
 
     print(list_dataset_size)
 
-    for dataset_size in list_dataset_size:
-        save_dir = f"{parent_dir}/size_{dataset_size}"
+    for idx in range(len(list_dataset_size)):
+        dataset_size = list_dataset_size[idx]
+        save_dir = f"{parent_dir}/run_{idx}_size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
+
+        shuffled_indices = np.random.permutation(indices)
         print(f"Setting dataset to size of {dataset_size}..")
-        idx1 = shuffled_indices[pointer_dataset1: pointer_dataset1 + dataset_size]
-        idx2 = shuffled_indices[pointer_dataset2: pointer_dataset2 + dataset_size]
+        idx1 = shuffled_indices[:dataset_size]
+        idx2 = shuffled_indices[dataset_size: dataset_size * 2]
+
+        print(f"len(idx1): {len(idx1)}, len(idx2): {len(idx2)}")
 
         sub1 = Subset(dataset=dataset, original_indices=idx1, transform=transform)
         sub2 = Subset(dataset=dataset, original_indices=idx2, transform=transform)
