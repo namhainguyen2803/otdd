@@ -256,7 +256,11 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
 
     chunk = kwargs.get('chunk', 1000)
     
-    chunk_num_projection = num_projections // chunk
+    if num_projections < chunk:
+        chunk = num_projections
+        chunk_num_projection = 1
+    else:
+        chunk_num_projection = num_projections // chunk
 
     dtype = torch.DoubleTensor if precision == 'double' else torch.FloatTensor
 
