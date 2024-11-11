@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import torchvision.transforms as transforms
-from torchvision.datasets import MNIST
+from torchvision.datasets import MNIST, CIFAR10
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
 import os
@@ -54,17 +54,17 @@ def main():
 
     num_projections = args.num_projections
 
-    save_dir = f'{args.parent_dir}/time_comparison/MNIST/'
+    save_dir = f'{args.parent_dir}/time_comparison/CIFAR10/'
     os.makedirs(save_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 
-    dataset = CIFAR10(root=f'data/CIFAR{num_classes}', train=True, download=False)
-    test_dataset = CIFAR10(root=f'data/CIFAR{num_classes}', train=False, download=False, transform=transform)
+    dataset = CIFAR10(root=f'data/CIFAR10', train=True, download=False)
+    test_dataset = CIFAR10(root=f'data/CIFAR10', train=False, download=False, transform=transform)
 
-    num_classes = len(torch.unique(dataset.targets))
+    num_classes = len(torch.unique(torch.tensor(dataset.targets)))
 
     indices = np.arange(len(dataset))
     shuffled_indices = np.random.permutation(indices)
@@ -119,7 +119,7 @@ def main():
                     t += 1
             torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[-1]} \n")
+                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[proj_id]} \n")
 
 
 
