@@ -55,7 +55,7 @@ def main():
 
     num_projections = args.num_projections
 
-    save_dir = f'{args.parent_dir}/time_comparison/MNIST/'
+    save_dir = f'{args.parent_dir}/time_comparison/MNIST'
     os.makedirs(save_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
