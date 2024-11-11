@@ -80,8 +80,9 @@ def main():
     print(list_dataset_size)
 
     for dataset_size in list_dataset_size:
-        print(f"Setting dataset to size of {dataset_size}..")
         save_dir = f"{save_dir}/size_{dataset_size}"
+        os.makedirs(save_dir, exist_ok=True)
+        print(f"Setting dataset to size of {dataset_size}..")
         idx1 = shuffled_indices[pointer_dataset1: pointer_dataset1 + dataset_size]
         idx2 = shuffled_indices[pointer_dataset2: pointer_dataset2 + dataset_size]
 
