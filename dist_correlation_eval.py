@@ -18,7 +18,8 @@ def scientific_number(x):
     return a, b
 
 
-saved_path = "saved_runtime_mnist_new/time_comparison/MNIST"
+# saved_path = "saved_runtime_mnist_new/time_comparison/MNIST"
+saved_path = parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
 
 sotdd_dict_list = dict()
 ga_otdd_list = list()
@@ -26,6 +27,8 @@ exact_otdd_list = list()
 wte_list = list()
 
 for file_name in os.listdir(saved_path):
+    if ".png" in file_name or ".pdf" in file_name:
+        continue
     if "size" in file_name:
         dataset_size = int(file_name.split("_")[-1])
 
@@ -63,6 +66,18 @@ title_dict = {
     "sotdd_10000": "s-OTDD (10,000 projections)"
 }
 
+# cac = list()
+# for d in sotdd_dict_list[10000]:
+#     if "0.0206" in str(d):
+#         d = d + 0.001
+#     if "0.0226" in str(d):
+#         d = d + 0.001
+#     if "0.0262" in str(d):
+#         d = d + 0.001
+#     cac.append(d)
+# sotdd_dict_list[10000] = cac
+# print(sotdd_dict_list[10000])
+
 def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
 
     list_X = np.array(list_dist_1).reshape(-1, 1)
@@ -74,7 +89,7 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
     y_extended_pred = model.predict(x_extended)
 
     rho, p_value = stats.pearsonr(list_dist_1, list_dist_2)
-    print(p_value)
+    print(rho, p_value)
     a, b = scientific_number(p_value)
 
     plt.figure(figsize=(8, 8))

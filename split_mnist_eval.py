@@ -4,7 +4,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-parent_path = "saved_runtime_mnist_new/time_comparison/MNIST"
+dataset = "cifar10"
+
+if dataset == "mnist":
+    parent_path = "saved_runtime_mnist_new/time_comparison/MNIST"
+else:
+    parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
 
 
 otdd_gaussian = list()
@@ -13,6 +18,8 @@ wte = list()
 sotdd = dict()
 
 for file_name in os.listdir(parent_path):
+    if ".pdf" in file_name or ".png" in file_name:
+        continue
     dataset_size = int(file_name.split("_")[-1])
     runtime_path = f"{parent_path}/{file_name}/time_running.txt"
     with open(runtime_path, "r") as file:
@@ -49,10 +56,10 @@ list_dataset_size, list_otdd_exact = make_xy_coordinate(otdd_exact)
 list_dataset_size, list_otdd_gaussian = make_xy_coordinate(otdd_gaussian)
 list_dataset_size, list_wte = make_xy_coordinate(wte)
 list_dataset_size, list_sotdd_100 = make_xy_coordinate(sotdd[100])
+list_dataset_size, list_sotdd_500 = make_xy_coordinate(sotdd[500])
 list_dataset_size, list_sotdd_1000 = make_xy_coordinate(sotdd[1000])
+list_dataset_size, list_sotdd_5000 = make_xy_coordinate(sotdd[5000])
 list_dataset_size, list_sotdd_10000 = make_xy_coordinate(sotdd[10000])
-
-max_dataset_size = 30000
 
 print(list_dataset_size, len(list_dataset_size))
 
@@ -61,23 +68,25 @@ sns.set(style="whitegrid")
 colors = sns.color_palette("tab10")
 MARKERSIZE = 6
 LINEWIDTH = 2
-FONT_SIZE = 20
+FONT_SIZE = 18
 
 plt.figure(figsize=(8, 8))
 plt.plot(list_dataset_size, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size[:-1], list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian Approx)', marker='s', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size, list_sotdd_100, color=colors[2], label='sOTDD (100 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+# plt.plot(list_dataset_size, list_sotdd_500, color=colors[7], label='sOTDD (500 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size, list_sotdd_10000, color=colors[4], label='sOTDD (10,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+# plt.plot(list_dataset_size, list_sotdd_10000, color=colors[4], label='sOTDD (10,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 
 plt.xlabel("Dataset Size", fontsize=FONT_SIZE - 2)
 plt.ylabel("Processing Time", fontsize=FONT_SIZE - 2)
-plt.title("Time Comparison by Dataset Size", fontsize=FONT_SIZE, fontweight='bold')
+plt.title(f"Time Comparison by Dataset Size", fontsize=FONT_SIZE, fontweight='bold')
 plt.legend(loc="upper left", frameon=True)
 
 plt.grid(True)
 plt.legend()
-plt.savefig('split_size_comparison2.pdf', dpi=1000)
-plt.savefig('split_size_comparison2.png', dpi=1000)
+plt.savefig(f'{parent_path}/split_size_comparison_{dataset}.pdf', dpi=1000)
+plt.savefig(f'{parent_path}/split_size_comparison_{dataset}.png', dpi=1000)
 

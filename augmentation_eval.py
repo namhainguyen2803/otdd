@@ -58,27 +58,17 @@ plt.figure(figsize=(8, 8))
 sns.set(style="whitegrid")
 
 # Scatter plot with regression line and confidence interval (only over data range)
-sns.regplot(
-    x="OT Dataset Distance", 
-    y="Accuracy (%)", 
-    data=df, 
-    scatter=True, 
-    ci=95, 
-    color="c", 
-    scatter_kws={"s": 5, "color": "tab:blue"}  # Set dot color to blue
-)
+# sns.regplot(
+#     x="OT Dataset Distance", 
+#     y="Accuracy (%)", 
+#     data=df, 
+#     scatter=True, 
+#     ci=95, 
+#     color="c", 
+#     scatter_kws={"s": 5, "color": "tab:blue"}  # Set dot color to blue
+# )
 
-# Add error bars
-plt.errorbar(
-    list_dist, 
-    list_acc, 
-    fmt='o', 
-    color='gray', 
-    capsize=1.5, 
-    capthick=0, 
-    elinewidth=1,
-    markersize=0
-)
+plt.scatter(df["OT Dataset Distance"], df["Accuracy (%)"], s=5, color="tab:blue")
 
 # Fit linear regression manually to extend line beyond the data range
 X = np.array(list_dist).reshape(-1, 1)
@@ -97,13 +87,13 @@ plt.legend(loc="upper right", frameon=True)
 
 # Customize title and labels
 FONT_SIZE = 20
-plt.title(f"Distance vs Adaptation: Augmentation", fontsize=FONT_SIZE)
-plt.xlabel(f"{display_method} Distance", fontsize=FONT_SIZE)
-plt.ylabel("Accuracy (%)", fontsize=FONT_SIZE)
-# plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+plt.title(f"Distance vs Adaptation: Augmentation", fontsize=FONT_SIZE, fontweight='bold')
+if 
+plt.xlabel(f"s-OTDD (1,000 projections)", fontsize=FONT_SIZE - 2)
+# plt.xlabel(f"{display_method} Distance", fontsize=FONT_SIZE - 2)
+plt.ylabel("Accuracy (%)", fontsize=FONT_SIZE - 2)
 
-# Display plot
 plt.grid(False)
 os.makedirs(saved_dir, exist_ok=True)
-plt.savefig(f'{saved_dir}/aug_{display_method}.png')
-plt.savefig(f'{saved_dir}/aug_{display_method}.pdf')
+plt.savefig(f'{saved_dir}/aug_{display_method}.png', dpi=1000)
+plt.savefig(f'{saved_dir}/aug_{display_method}.pdf', dpi=1000)

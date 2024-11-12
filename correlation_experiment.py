@@ -90,7 +90,7 @@ def main():
     pointer_dataset2 = max_dataset_size
 
     # list_dataset_size = [2000 * (i + 1) for i in range(int(max_dataset_size // 2000))]
-    list_dataset_size = [10000 for i in range(15)]
+    list_dataset_size = [10000 for i in range(10)]
 
     print(list_dataset_size)
 

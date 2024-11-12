@@ -152,8 +152,12 @@ plt.legend(loc="upper right", frameon=True)
 # Customize title and labels
 FONT_SIZE=20
 plt.title(f"Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE, fontweight='bold')
-plt.xlabel(f'{display_method} Distance', fontsize=FONT_SIZE)
-plt.ylabel('Accuracy', fontsize=FONT_SIZE)
+
+if method == "sOTDD":
+    plt.xlabel(f's-OTDD (10,000 projections)', fontsize=FONT_SIZE - 2)
+else:
+    plt.xlabel(f'OTDD (Gaussian Approximation)', fontsize=FONT_SIZE - 2)
+plt.ylabel('Accuracy', fontsize=FONT_SIZE - 2)
 
 # Display plot
 plt.legend(fontsize=15)
