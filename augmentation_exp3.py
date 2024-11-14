@@ -27,7 +27,7 @@ print(f"Use CUDA or not: {DEVICE}")
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for Augmentation')
-    parser.add_argument('--parent_dir', type=str, default="saved_augmentation", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_augmentation_2", help='Parent directory')
     parser.add_argument('--seed', type=int, default=1, help='Seed')
 
     args = parser.parse_args()
