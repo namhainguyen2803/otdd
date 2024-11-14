@@ -111,14 +111,15 @@ def main():
         feature_extractor_optimizer = optim.SGD(imagenet_feature_extractor.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
         classifier_optimizer = optim.SGD(imagenet_classifier.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
         for epoch in range(1, num_epochs_pretrain + 1):
-            train(feature_extractor=imagenet_feature_extractor,
-                classifier=imagenet_classifier,
-                device=device,
-                train_loader=train_imagenet_loader,
-                epoch=epoch,
-                criterion=nn.CrossEntropyLoss(),
-                ft_extractor_optimizer=feature_extractor_optimizer,
-                classifier_optimizer=classifier_optimizer)
+            train_loss = train(feature_extractor=imagenet_feature_extractor,
+                                classifier=imagenet_classifier,
+                                device=device,
+                                train_loader=train_imagenet_loader,
+                                epoch=epoch,
+                                criterion=nn.CrossEntropyLoss(),
+                                ft_extractor_optimizer=feature_extractor_optimizer,
+                                classifier_optimizer=classifier_optimizer)
+            print(f"In training backbone in ImageNet, epoch {epoch}, training loss: {train_loss}")
         frozen_module(imagenet_feature_extractor)
 
         ft_extractor_path = f'{parent_dir}/imagenet_ft_extractor.pth'
@@ -145,7 +146,7 @@ def main():
                                 criterion=nn.CrossEntropyLoss(),
                                 ft_extractor_optimizer=None,
                                 classifier_optimizer=cifar10_classifier_optimizer)
-            print(f"In epoch {epoch}, training loss: {train_loss}")
+            print(f"In training transfer learning in CIFAR10, epoch {epoch}, training loss: {train_loss}")
 
         classifier_path = f'{parent_dir}/cifar10_classifier.pth'
         torch.save(cifar10_classifier.state_dict(), classifier_path)
