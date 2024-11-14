@@ -1,10 +1,10 @@
 #!/bin/bash -e
-#SBATCH --job-name=aug7
-#SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/aug7.out
-#SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/aug7.err
+#SBATCH --job-name=aug9
+#SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/aug9.out
+#SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/aug9.err
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
-#SBATCH --mem-per-gpu=125G
+#SBATCH --mem-per-gpu=40GB
 #SBATCH --cpus-per-gpu=32
 #SBATCH --partition=research
 #SBATCH --mail-type=all
@@ -18,4 +18,4 @@ eval "$(conda shell.bash hook)"
 conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd
 cd /lustre/scratch/client/vinai/users/hainn14/otdd
 
-python3 augmentation_exp3.py --seed 7
+python3 augmentation_exp3.py --seed 9
