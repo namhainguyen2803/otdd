@@ -137,14 +137,15 @@ def main():
         cifar10_classifier = nn.Linear(imagenet_feature_extractor.latent_dims, 10).to(device)
         cifar10_classifier_optimizer = optim.SGD(cifar10_classifier.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
         for epoch in range(1, num_epochs_adapt + 1):
-            train(feature_extractor=imagenet_feature_extractor,
-                classifier=cifar10_classifier,
-                device=device,
-                train_loader=train_cifar10_loader,
-                epoch=epoch,
-                criterion=nn.CrossEntropyLoss(),
-                ft_extractor_optimizer=None,
-                classifier_optimizer=cifar10_classifier_optimizer)
+            train_loss = train(feature_extractor=imagenet_feature_extractor,
+                                classifier=cifar10_classifier,
+                                device=device,
+                                train_loader=train_cifar10_loader,
+                                epoch=epoch,
+                                criterion=nn.CrossEntropyLoss(),
+                                ft_extractor_optimizer=None,
+                                classifier_optimizer=cifar10_classifier_optimizer)
+            print(f"In epoch {epoch}, training loss: {train_loss}")
 
         classifier_path = f'{parent_dir}/cifar10_classifier.pth'
         torch.save(cifar10_classifier.state_dict(), classifier_path)
@@ -185,7 +186,7 @@ def main():
         return dataloader
 
 
-
+    print("Start creating data")
     DATA_DICT = create_data()
     print("Finish creating data")
 
@@ -203,54 +204,54 @@ def main():
                     device=DEVICE)
 
 
-    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=10000, batch_size=64)
-    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=10000, batch_size=64)
+    # cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=10000, batch_size=64)
+    # imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=10000, batch_size=64)
     
-    # Compute s-OTDD
-    num_projection = 10000
-    kwargs = {
-        "dimension": 32,
-        "num_channels": 3,
-        "num_moments": 5,
-        "use_conv": True,
-        "precision": "float",
-        "p": 2,
-        "chunk": 1000
-    }
-    list_dataset = [cifar10_dataloader, imagenet_dataloader]
-    sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)[0].item()
-    print(sotdd_dist)
+    # # Compute s-OTDD
+    # num_projection = 10000
+    # kwargs = {
+    #     "dimension": 32,
+    #     "num_channels": 3,
+    #     "num_moments": 5,
+    #     "use_conv": True,
+    #     "precision": "float",
+    #     "p": 2,
+    #     "chunk": 1000
+    # }
+    # list_dataset = [cifar10_dataloader, imagenet_dataloader]
+    # sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)[0].item()
+    # print(sotdd_dist)
 
-    cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=5000, batch_size=64)
-    imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=5000, batch_size=64)
+    # cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=5000, batch_size=64)
+    # imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=5000, batch_size=64)
     
 
-    # Compute s-OTDD
-    list_dataset = [cifar10_dataloader, imagenet_dataloader]
-    sotdd_dist, time_taken = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=True, **kwargs)[0].item()
-    print(sotdd_dist)
-    with open(result_file, 'a') as file:
-        file.write(f"sOTDD, Distance: {sotdd_dist}, time taken: {time_taken} \n")
+    # # Compute s-OTDD
+    # list_dataset = [cifar10_dataloader, imagenet_dataloader]
+    # sotdd_dist, time_taken = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=True, **kwargs)[0].item()
+    # print(sotdd_dist)
+    # with open(result_file, 'a') as file:
+    #     file.write(f"sOTDD, Distance: {sotdd_dist}, time taken: {time_taken} \n")
 
 
-    dist = DatasetDistance(cifar10_dataloader, imagenet_dataloader,
-                            inner_ot_method='gaussian_approx',
-                            sqrt_method='approximate',
-                            nworkers_stats=0,
-                            sqrt_niters=20,
-                            debiased_loss=True,
-                            p = 2, 
-                            entreg = 1e-3,
-                            device=DEVICE)
+    # dist = DatasetDistance(cifar10_dataloader, imagenet_dataloader,
+    #                         inner_ot_method='gaussian_approx',
+    #                         sqrt_method='approximate',
+    #                         nworkers_stats=0,
+    #                         sqrt_niters=20,
+    #                         debiased_loss=True,
+    #                         p = 2, 
+    #                         entreg = 1e-3,
+    #                         device=DEVICE)
 
-    start_time = time.time()
-    d = dist.distance(maxsamples=MAXSIZE)
-    end_time = time.time()
-    time_taken = end_time - start_time
-    print(d)
+    # start_time = time.time()
+    # d = dist.distance(maxsamples=MAXSIZE)
+    # end_time = time.time()
+    # time_taken = end_time - start_time
+    # print(d)
 
-    with open(result_file, 'a') as file:
-        file.write(f"OTDD, Distance: {d}, time taken: {time_taken} \n")
+    # with open(result_file, 'a') as file:
+    #     file.write(f"OTDD, Distance: {d}, time taken: {time_taken} \n")
 
 
 if __name__ == "__main__":
