@@ -236,7 +236,7 @@ def main():
             data_X.append(X)
             data_Y.append(labels)
         d_y = data_Y[0].shape[1]
-        manifolds = [Euclidean(28*28, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+        manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
         product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
         d_sw = np.zeros((len(subdatasets), len(subdatasets)))
         for i in range(len(subdatasets)):
