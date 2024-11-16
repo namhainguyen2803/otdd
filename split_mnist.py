@@ -127,6 +127,7 @@ def main():
         # NEW METHOD
         projection_list = [100, 500, 1000, 5000, 10000]
         for proj_id in projection_list:
+
             pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute sOTDD...")
             print(f"Number of datasets: {len(dataloaders)}")
@@ -139,9 +140,7 @@ def main():
                 "p": 2,
                 "chunk": 1000
             }
-            list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device=DEVICE, evaluate_time=True, **kwargs)
-            for i in duration_periods.keys():
-                print(i, duration_periods[i])
+            list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device=DEVICE, evaluate_time=True, **kwargs)
             t = 0
             for i in range(len(dataloaders)):
                 for j in range(i+1, len(dataloaders)):
@@ -150,13 +149,15 @@ def main():
                     t += 1
             torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[proj_id]} \n")
+                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {sotdd_time_taken} \n")
 
 
         # OTDD
         dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
         print("Compute OTDD (exact)...")
-        start_time_otdd = time.time()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
         for i in range(len(dataloaders)):
             for j in range(i+1, len(dataloaders)):
                 dist = DatasetDistance(dataloaders[i],
@@ -169,9 +170,9 @@ def main():
                 d = dist.distance(maxsamples=None).item()
                 dict_OTDD[i][j] = d
                 dict_OTDD[j][i] = d
-
-        end_time_otdd = time.time()
-        otdd_time_taken = end_time_otdd - start_time_otdd
+        end.record()
+        torch.cuda.synchronize()
+        otdd_time_taken = start.elapsed_time(end) / 1000
         print(otdd_time_taken)
 
         torch.save(dict_OTDD, f'{save_dir}/exact_otdd_dist.pt')
@@ -182,10 +183,11 @@ def main():
         # OTDD
         dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
         print("Compute OTDD (gaussian_approx, iter 20)...")
-        start_time_otdd = time.time()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
         for i in range(len(dataloaders)):
             for j in range(i+1, len(dataloaders)):
-                start_time_otdd = time.time()
                 dist = DatasetDistance(dataloaders[i],
                                         dataloaders[j],
                                         inner_ot_method='gaussian_approx',
@@ -199,8 +201,9 @@ def main():
                 d = dist.distance(maxsamples=None).item()
                 dict_OTDD[i][j] = d
                 dict_OTDD[j][i] = d
-        end_time_otdd = time.time()
-        otdd_time_taken = end_time_otdd - start_time_otdd
+        end.record()
+        torch.cuda.synchronize()
+        otdd_time_taken = start.elapsed_time(end) / 1000
         print(otdd_time_taken)
         torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
         with open(f'{save_dir}/time_running.txt', 'a') as file:
@@ -208,14 +211,17 @@ def main():
 
 
         # WTE
-        start_time_wte = time.time()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
         reference = generate_reference(dataset_size, 4, 28, 10)
         print(reference.shape)
         wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=dataset_size)
         wtes = wtes.reshape(wtes.shape[0], -1)
         wte_distance = distance.cdist(wtes, wtes, 'euclidean')
-        end_time_wte = time.time()
-        wte_time_taken = end_time_wte - start_time_wte
+        end.record()
+        torch.cuda.synchronize()
+        wte_time_taken = start.elapsed_time(end) / 1000
         torch.save(wte_distance, f'{save_dir}/wte.pt')
         with open(f'{save_dir}/time_running.txt', 'a') as file:
             file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
@@ -225,7 +231,9 @@ def main():
         n_projs = 500
         scaling = 0.1
         d = 10
-        start_time_hswfs = time.time()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
         emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
         distance_array = emb.dissimilarity_for_all(subdatasets)
         lorentz_geoopt = Lorentz_geoopt()
@@ -251,8 +259,9 @@ def main():
                 sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
                 d_sw[i, j] = sw.item()
                 d_sw[j, i] = sw.item()
-        end_time_hswfs = time.time()
-        hswfs_time_taken = end_time_hswfs - start_time_hswfs
+        end.record()
+        torch.cuda.synchronize()
+        hswfs_time_taken = start.elapsed_time(end) / 1000
         print(d_sw)
         print(hswfs_time_taken)
         torch.save(d_sw, f'{save_dir}/hswfs_otdd.pt')

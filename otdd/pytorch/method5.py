@@ -309,10 +309,10 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     list_w1d = list()
 
     if evaluate_time is True:
-        all_start_time = time.time()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
 
-    duration_periods = dict()
-
+    start.record()
     for ch in range(chunk_num_projection):
         
         list_chunk_embeddings = list()
@@ -342,10 +342,6 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
         # print(f"cac 1: {list_chunk_w1d.shape}") # 100, 1
         list_w1d.append(list_chunk_w1d)
 
-        if evaluate_time is True:
-            period_end_time = time.time()
-            duration_periods[(ch + 1) * chunk] = period_end_time - all_start_time
-
     list_w1d = torch.cat(list_w1d, dim=0)
     # print(f"cac 2: {list_w1d.shape}") # 10000, 1
     if p != 1:
@@ -353,12 +349,12 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     else:
         sw = list_w1d
     sw = torch.pow(torch.mean(sw, dim=0), exponent=1/p) 
-    # print(f"cac 3: {sw.shape}") # 1
 
     if evaluate_time is True:
-        # all_end_time = time.time()
-        # duration_periods[(ch + 1) * chunk] = all_end_time - all_start_time
-        return sw, duration_periods
+        end.record()
+        torch.cuda.synchronize()
+        sotdd_time_taken = start.elapsed_time(end) / 1000
+        return sw, sotdd_time_taken
     else:
         return sw
 
