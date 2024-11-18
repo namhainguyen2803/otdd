@@ -150,6 +150,9 @@ def main():
                 torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
                 with open(f'{save_dir}/time_running.txt', 'a') as file:
                     file.write(f"Time proccesing for sOTDD ({proj_id} projections): {sotdd_time_taken} \n")
+            except:
+                with open(f'{save_dir}/time_running.txt', 'a') as file:
+                    file.write(f"Time proccesing for sOTDD ({proj_id} projections): None \n")
 
         try:
             # OTDD
@@ -181,6 +184,9 @@ def main():
             torch.save(dict_OTDD, f'{save_dir}/exact_otdd_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
                 file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
+        except:
+            with open(f'{save_dir}/time_running.txt', 'a') as file:
+                file.write(f"Time proccesing for OTDD (exact): None \n")
 
         try:
             # OTDD
@@ -214,6 +220,9 @@ def main():
             torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
                 file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
+        except:
+            with open(f'{save_dir}/time_running.txt', 'a') as file:
+                file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): None \n")
 
 
         try:
@@ -235,6 +244,9 @@ def main():
             torch.save(wte_distance, f'{save_dir}/wte.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
                 file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
+        except:
+            with open(f'{save_dir}/time_running.txt', 'a') as file:
+                file.write(f"Time proccesing for WTE: None \n")
 
 
         try:
@@ -281,6 +293,9 @@ def main():
             torch.save(d_sw, f'{save_dir}/hswfs_otdd.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
                 file.write(f"Time proccesing for HSWFS_OTDD: {hswfs_time_taken} \n")
+        except:
+            with open(f'{save_dir}/time_running.txt', 'a') as file:
+                file.write(f"Time proccesing for HSWFS_OTDD: None \n")
 
 
 if __name__ == "__main__":
