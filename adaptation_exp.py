@@ -33,10 +33,11 @@ os.makedirs(parent_dir, exist_ok=True)
 os.makedirs(pretrained_path, exist_ok=True)
 os.makedirs(adapt_path, exist_ok=True)
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cpu"
 
 # Load data
-MAXSIZE_DIST = 7000
+MAXSIZE_DIST = None
 MAXSIZE_TRAINING = None
 
 
@@ -123,7 +124,7 @@ def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADA
     kwargs = {
         "dimension": 28 * 28,
         "num_channels": 1,
-        "num_moments": 10,
+        "num_moments": 5,
         "use_conv": False,
         "precision": "float",
         "p": 2,
@@ -266,7 +267,7 @@ if __name__ == "__main__":
     #     json.dump(DIST_otdd, json_file, indent=4)
 
     DIST_sotdd = compute_sotdd_distance(num_projection=10000)
-    dist_file_path = f'{parent_dir}/sotdd_dist_use_conv_False_num_moments_10.json'
+    dist_file_path = f'{parent_dir}/sotdd_dist_use_conv_False_num_moments_5.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_sotdd, json_file, indent=4)
 

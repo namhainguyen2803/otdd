@@ -23,5 +23,7 @@ opentsne==1.0.1
 watermark==2.4.3
 celluloid==0.2.0
 munkres==1.1.4
+
+geoopt
 git+https://github.com/jeanfeydy/geomloss
 git+https://github.com/rossant/ipycache

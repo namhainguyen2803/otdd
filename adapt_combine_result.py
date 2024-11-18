@@ -114,6 +114,8 @@ df = pd.DataFrame(perf_data)
 # Calculate Pearson correlation
 pearson_corr, p_value = stats.pearsonr(df["OT Dataset Distance"], df["Relative Drop in Test Error (%)"])
 
+label=f"$\\rho$: {pearson_corr:.2f}\np-value: {p_value:.2f}"
+
 # Plotting
 plt.figure(figsize=(8, 8))
 sns.set(style="whitegrid")
@@ -126,7 +128,8 @@ sns.regplot(
     scatter=True, 
     ci=95, 
     color="c", 
-    scatter_kws={"s": 5, "color": "tab:blue"}  # Set dot color to blue
+    scatter_kws={"s": 5, "color": "tab:blue"},  # Set dot color to blue
+    # label=label
 )
 
 # Add error bars
@@ -149,13 +152,13 @@ reg = LinearRegression().fit(X, y)
 
 # Generate x values for the extended line
 if method == "otdd":
-    x_range = np.linspace(df["OT Dataset Distance"].min() - 20, df["OT Dataset Distance"].max() + 20, 500)
+    x_range = np.linspace(df["OT Dataset Distance"].min() - 10, df["OT Dataset Distance"].max() + 10, 500)
 else:
-    x_range = np.linspace(df["OT Dataset Distance"].min() - 0.05, df["OT Dataset Distance"].max() + 0.05, 500)
+    x_range = np.linspace(df["OT Dataset Distance"].min() - 0.01, df["OT Dataset Distance"].max() + 0.01, 500)
 y_pred = reg.predict(x_range.reshape(-1, 1))
 
 # Plot the extended regression line
-plt.plot(x_range, y_pred, linewidth=1.5, color="tab:blue", label=f"$\\rho$: {pearson_corr:.2f}\np-value: {p_value:.2f}")
+plt.plot(x_range, y_pred, linewidth=1.5, color="tab:blue", label=label)
 
 # Add data labels to each point
 for i, row in df.iterrows():

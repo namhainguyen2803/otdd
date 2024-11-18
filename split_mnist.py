@@ -84,7 +84,6 @@ def main():
     parent_dir = f'{args.parent_dir}/time_comparison/MNIST'
     os.makedirs(parent_dir, exist_ok=True)
 
-    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 

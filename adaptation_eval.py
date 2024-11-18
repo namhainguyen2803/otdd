@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from scipy import stats
 import json
 
-method = "otdd"
+method = "sotdd"
 if method == "sotdd":
     display_method = "s-OTDD"
 else:
@@ -17,6 +17,8 @@ finetune_weights_path = "saved/nist/finetune_weights"
 baseline_weight_path = "saved/nist/pretrained_weights"
 dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
 dist_path = f"saved_nist/dist/{method}_dist.json"
+dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
+
 
 acc_adapt = dict()
 for target_name in os.listdir(finetune_weights_path):

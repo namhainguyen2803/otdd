@@ -311,8 +311,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     if evaluate_time is True:
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
-
-    start.record()
+        start.record()
     for ch in range(chunk_num_projection):
         
         list_chunk_embeddings = list()

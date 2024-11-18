@@ -7,7 +7,7 @@ import os
 dataset = "mnist"
 
 if dataset == "mnist":
-    parent_path = "saved_runtime_mnist_new_new/time_comparison/MNIST"
+    parent_path = "saved_runtime_mnist/time_comparison/MNIST"
 else:
     parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
 
@@ -53,7 +53,9 @@ def make_xy_coordinate(lst_data):
     list_y = list()
     exclude = []
     for x, y in lst_data:
-        if x in exclude:
+        # if x in exclude:
+        #     continue
+        if (x // 2000) % 2 == 0:
             continue
         list_x.append(x)
         list_y.append(y)
@@ -80,13 +82,13 @@ FONT_SIZE = 18
 
 plt.figure(figsize=(8, 8))
 plt.plot(list_dataset_size, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size[:-1], list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian Approx)', marker='s', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 # plt.plot(list_dataset_size, list_sotdd_100, color=colors[2], label='sOTDD (100 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-# plt.plot(list_dataset_size, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size, list_sotdd_10000, color=colors[7], label='sOTDD (10,000 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size[:-1], list_hswfs, color=colors[4], label='HSWFS OTDD', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size, list_hswfs, color=colors[4], label='HSWFS OTDD', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 
 plt.xlabel("Dataset Size", fontsize=FONT_SIZE - 2)
 plt.ylabel("Processing Time", fontsize=FONT_SIZE - 2)
