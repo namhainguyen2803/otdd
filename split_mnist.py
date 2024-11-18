@@ -97,9 +97,6 @@ def main():
     
     max_dataset_size = len(dataset) // 2
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
-    
-    pointer_dataset1 = 0
-    pointer_dataset2 = max_dataset_size
 
     list_dataset_size = [5000 * (i + 1) for i in range(int(len(dataset) // 5000))]
 
@@ -109,8 +106,10 @@ def main():
         save_dir = f"{parent_dir}/size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
         print(f"Setting dataset to size of {dataset_size}..")
-        idx1 = shuffled_indices[pointer_dataset1: pointer_dataset1 + dataset_size]
-        idx2 = shuffled_indices[pointer_dataset2: pointer_dataset2 + dataset_size]
+        idx1 = shuffled_indices[:dataset_size]
+        idx2 = shuffled_indices[-dataset_size:]
+
+        assert len(idx1) == len(idx2) == dataset_size, "wrong number of dataset size"
 
         sub1 = Subset(dataset=dataset, original_indices=idx1, transform=transform)
         sub2 = Subset(dataset=dataset, original_indices=idx2, transform=transform)
