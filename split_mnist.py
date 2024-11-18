@@ -191,9 +191,6 @@ def main():
             # OTDD
             dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute OTDD (gaussian_approx, iter 20)...")
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
             start = time.time()
             for i in range(len(dataloaders)):
                 for j in range(i+1, len(dataloaders)):
@@ -210,9 +207,6 @@ def main():
                     d = dist.distance(maxsamples=None).item()
                     dict_OTDD[i][j] = d
                     dict_OTDD[j][i] = d
-            # end.record()
-            # torch.cuda.synchronize()
-            # otdd_time_taken = start.elapsed_time(end) / 1000
             end = time.time()
             otdd_time_taken = end - start
             print(otdd_time_taken)
@@ -226,18 +220,12 @@ def main():
 
         try:
             # WTE
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
             start = time.time()
             reference = generate_reference(dataset_size, 4, 28, 10)
             print(reference.shape)
             wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=dataset_size)
             wtes = wtes.reshape(wtes.shape[0], -1)
             wte_distance = distance.cdist(wtes, wtes, 'euclidean')
-            # end.record()
-            # torch.cuda.synchronize()
-            # wte_time_taken = start.elapsed_time(end) / 1000
             end = time.time()
             wte_time_taken = end - start
             torch.save(wte_distance, f'{save_dir}/wte.pt')
@@ -252,9 +240,6 @@ def main():
             n_projs = 500
             scaling = 0.1
             d = 10
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
             start = time.time()
             emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
             distance_array = emb.dissimilarity_for_all(subdatasets)
@@ -281,9 +266,6 @@ def main():
                     sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
                     d_sw[i, j] = sw.item()
                     d_sw[j, i] = sw.item()
-            # end.record()
-            # torch.cuda.synchronize()
-            # hswfs_time_taken = start.elapsed_time(end) / 1000
             end = time.time()
             hswfs_time_taken = end - start
             print(d_sw)
