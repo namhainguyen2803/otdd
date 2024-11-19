@@ -251,6 +251,7 @@ def main():
 
             plt.plot(np.log(np.array(L)))
             plt.savefig(f"{save_dir}/hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
+            plt.close()
 
             dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
             diff_dist = np.abs(scaling * distance_array - dist_mds)
