@@ -96,15 +96,12 @@ def main():
     num_classes = len(torch.unique(dataset.targets))
 
     indices = np.arange(len(dataset))
-    shuffled_indices = np.random.permutation(indices)
 
     filename = f"{parent_dir}/shuffled_indices.npy"
     if os.path.exists(filename):
         shuffled_indices = np.load(filename)
         print("Loaded shuffled indices from file.")
     else:
-        if seed is not None:
-            np.random.seed(seed)
         shuffled_indices = np.random.permutation(indices)
         np.save(filename, shuffled_indices)
         print("Generated and saved shuffled indices to file.")
