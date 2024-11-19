@@ -252,12 +252,13 @@ def main():
             n_projs = 500
             scaling = 0.1
             d = 10
+            n_epochs = dataset_size * 10
             start = time.time()
             emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
             distance_array = emb.dissimilarity_for_all(subdatasets)
             lorentz_geoopt = Lorentz_geoopt()
             embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=dataset_size * 10, lr=1e-3)
+            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
             dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
             diff_dist = np.abs(scaling * distance_array - dist_mds)
             data_X = [] # data
@@ -284,7 +285,7 @@ def main():
             print(hswfs_time_taken)
             torch.save(d_sw, f'{save_dir}/hswfs_otdd.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for HSWFS_OTDD: {hswfs_time_taken} \n")
+                file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
 
         if args.method == "sotdd":
             sotdd(save_dir=save_dir)
