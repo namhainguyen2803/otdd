@@ -259,6 +259,10 @@ def main():
             lorentz_geoopt = Lorentz_geoopt()
             embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
             mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
+
+            plt.plot(np.log(np.array(L)))
+            plt.savefig(f"hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
+
             dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
             diff_dist = np.abs(scaling * distance_array - dist_mds)
             data_X = [] # data
