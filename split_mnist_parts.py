@@ -252,7 +252,7 @@ def main():
             n_projs = 500
             scaling = 0.1
             d = 10
-            n_epochs = dataset_size * 10
+            n_epochs = dataset_size * 5
             start = time.time()
             emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
             distance_array = emb.dissimilarity_for_all(subdatasets)
