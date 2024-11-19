@@ -7,9 +7,9 @@ import os
 dataset = "mnist"
 
 if dataset == "mnist":
-    parent_path = "saved_runtime_mnist_vietdt11_parts/time_comparison/MNIST"
+    parent_path = "saved_runtime_mnist_vietdt11_parts_2/time_comparison/MNIST"
 else:
-    parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
+    parent_path = "saved_runtime_cifar10_vietdt11/time_comparison/CIFAR10"
 
 
 otdd_gaussian = list()

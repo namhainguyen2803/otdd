@@ -157,9 +157,6 @@ def main():
             # OTDD
             dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute OTDD (exact)...")
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
             start = time.time()
             for i in range(len(dataloaders)):
                 for j in range(i+1, len(dataloaders)):
@@ -173,9 +170,6 @@ def main():
                     d = dist.distance(maxsamples=None).item()
                     dict_OTDD[i][j] = d
                     dict_OTDD[j][i] = d
-            # end.record()
-            # torch.cuda.synchronize()
-            # otdd_time_taken = start.elapsed_time(end) / 1000
             end = time.time()
             otdd_time_taken = end - start
             print(otdd_time_taken)
