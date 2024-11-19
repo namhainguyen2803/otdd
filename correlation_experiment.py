@@ -24,6 +24,18 @@ from PIL import Image
 from wte.distance import WTE
 from scipy.spatial import distance
 
+from geoopt import Lorentz as Lorentz_geoopt
+
+from hswfs_otdd.utils.hmds import HyperMDS
+# from hswfs_otdd.utils.datasets import *
+from hswfs_otdd.utils.bures_wasserstein import LabelsBW
+
+from hswfs_otdd.hswfs.manifold.euclidean import Euclidean
+from hswfs_otdd.hswfs.manifold.product import ProductManifold
+from hswfs_otdd.hswfs.manifold.poincare import Poincare
+from hswfs_otdd.hswfs.manifold.lorentz import Lorentz
+from hswfs_otdd.hswfs.sw import sliced_wasserstein
+
 
 
 def generate_reference(num, dim_low, dim, attached_dim, seed=0):
@@ -89,20 +101,19 @@ def main():
     pointer_dataset1 = 0
     pointer_dataset2 = max_dataset_size
 
-    # list_dataset_size = [2000 * (i + 1) for i in range(int(max_dataset_size // 2000))]
     list_dataset_size = [10000 for i in range(10)]
 
     print(list_dataset_size)
 
     for idx in range(len(list_dataset_size)):
         dataset_size = list_dataset_size[idx]
-        save_dir = f"{parent_dir}/run_{idx}_size_{dataset_size}"
+        save_dir = f"{parent_dir}/seed_{idx}_size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
 
         shuffled_indices = np.random.permutation(indices)
         print(f"Setting dataset to size of {dataset_size}..")
         idx1 = shuffled_indices[:dataset_size]
-        idx2 = shuffled_indices[dataset_size: dataset_size * 2]
+        idx2 = shuffled_indices[-dataset_size:]
 
         print(f"len(idx1): {len(idx1)}, len(idx2): {len(idx2)}")
 
@@ -214,6 +225,48 @@ def main():
             file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
 
 
+        # HSWFS_OTDD
+        n_projs = 500
+        scaling = 0.1
+        d = 10
+        n_epochs = 50000
+        start = time.time()
+        emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
+        distance_array = emb.dissimilarity_for_all(subdatasets)
+        lorentz_geoopt = Lorentz_geoopt()
+        embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
+        mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
+
+        plt.plot(np.log(np.array(L)))
+        plt.savefig(f"{save_dir}/hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
+
+        dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
+        diff_dist = np.abs(scaling * distance_array - dist_mds)
+        data_X = [] # data
+        data_Y = [] # labels
+        for cac_idx, cac_dataset in enumerate(subdatasets):
+            X, Y = emb.preprocess_dataset(cac_dataset)
+            label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
+            labels = torch.stack([torch.from_numpy(label_emb[target])
+                                for target in Y], dim=0).squeeze(1).to(DEVICE)
+            data_X.append(X)
+            data_Y.append(labels)
+        d_y = data_Y[0].shape[1]
+        manifolds = [Euclidean(28*28, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+        product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
+        d_sw = np.zeros((len(subdatasets), len(subdatasets)))
+        for i in range(len(subdatasets)):
+            for j in range(i): 
+                sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
+                d_sw[i, j] = sw.item()
+                d_sw[j, i] = sw.item()
+        end = time.time()
+        hswfs_time_taken = end - start
+        print(d_sw)
+        print(hswfs_time_taken)
+        torch.save(d_sw, f'{save_dir}/hswfs_otdd.pt')
+        with open(f'{save_dir}/time_running.txt', 'a') as file:
+            file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
 
 if __name__ == "__main__":
     main()
