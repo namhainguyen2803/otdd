@@ -7,7 +7,7 @@ import os
 dataset = "mnist"
 
 if dataset == "mnist":
-    parent_path = "saved_runtime_mnist/time_comparison/MNIST"
+    parent_path = "saved_runtime_mnist_vietdt11_parts/time_comparison/MNIST"
 else:
     parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
 
@@ -19,7 +19,7 @@ sotdd = dict()
 hswfs = list()
 
 for file_name in os.listdir(parent_path):
-    if ".pdf" in file_name or ".png" in file_name:
+    if ".pdf" in file_name or ".png" in file_name or "npy" in file_name:
         continue
     dataset_size = int(file_name.split("_")[-1])
     runtime_path = f"{parent_path}/{file_name}/time_running.txt"
@@ -55,23 +55,23 @@ def make_xy_coordinate(lst_data):
     for x, y in lst_data:
         # if x in exclude:
         #     continue
-        if (x // 2000) % 2 == 0:
-            continue
+        # if (x // 2000) % 2 == 0:
+        #     continue
         list_x.append(x)
         list_y.append(y)
     return list_x, list_y
 
-list_dataset_size, list_otdd_exact = make_xy_coordinate(otdd_exact)
-list_dataset_size, list_otdd_gaussian = make_xy_coordinate(otdd_gaussian)
-list_dataset_size, list_wte = make_xy_coordinate(wte)
-list_dataset_size, list_hswfs = make_xy_coordinate(hswfs)
-list_dataset_size, list_sotdd_100 = make_xy_coordinate(sotdd[100])
-list_dataset_size, list_sotdd_500 = make_xy_coordinate(sotdd[500])
-list_dataset_size, list_sotdd_1000 = make_xy_coordinate(sotdd[1000])
-list_dataset_size, list_sotdd_5000 = make_xy_coordinate(sotdd[5000])
-list_dataset_size, list_sotdd_10000 = make_xy_coordinate(sotdd[10000])
+list_dataset_size_otdd_exact, list_otdd_exact = make_xy_coordinate(otdd_exact)
+list_dataset_size_otdd_gaussian, list_otdd_gaussian = make_xy_coordinate(otdd_gaussian)
+list_dataset_size_wte, list_wte = make_xy_coordinate(wte)
+list_dataset_size_hswfs, list_hswfs = make_xy_coordinate(hswfs)
+list_dataset_size_sotdd_100, list_sotdd_100 = make_xy_coordinate(sotdd[100])
+list_dataset_size_sotdd_500, list_sotdd_500 = make_xy_coordinate(sotdd[500])
+list_dataset_size_sotdd_1000, list_sotdd_1000 = make_xy_coordinate(sotdd[1000])
+list_dataset_size_sotdd_5000, list_sotdd_5000 = make_xy_coordinate(sotdd[5000])
+list_dataset_size_sotdd_10000, list_sotdd_10000 = make_xy_coordinate(sotdd[10000])
 
-print(list_dataset_size, len(list_dataset_size))
+# print(list_dataset_size, len(list_dataset_size))
 
 
 sns.set(style="whitegrid")
@@ -81,14 +81,14 @@ LINEWIDTH = 2
 FONT_SIZE = 18
 
 plt.figure(figsize=(8, 8))
-plt.plot(list_dataset_size, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian Approx)', marker='s', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-# plt.plot(list_dataset_size, list_sotdd_100, color=colors[2], label='sOTDD (100 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size, list_sotdd_10000, color=colors[7], label='sOTDD (10,000 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size, list_hswfs, color=colors[4], label='HSWFS OTDD', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_otdd_exact, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_otdd_gaussian, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian Approx)', marker='s', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+# plt.plot(list_dataset_size_sotdd_100, list_sotdd_100, color=colors[2], label='sOTDD (100 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[7], label='sOTDD (10,000 projections)', marker='D', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_hswfs, list_hswfs, color=colors[4], label='HSWFS OTDD (500 projections)', marker='*', linestyle=':', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 
 plt.xlabel("Dataset Size", fontsize=FONT_SIZE - 2)
 plt.ylabel("Processing Time", fontsize=FONT_SIZE - 2)

@@ -257,7 +257,7 @@ def main():
             distance_array = emb.dissimilarity_for_all(subdatasets)
             lorentz_geoopt = Lorentz_geoopt()
             embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=50000, lr=1e-3)
+            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=dataset_size * 10, lr=1e-3)
             dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
             diff_dist = np.abs(scaling * distance_array - dist_mds)
             data_X = [] # data
