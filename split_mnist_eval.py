@@ -7,7 +7,7 @@ import os
 dataset = "mnist"
 
 if dataset == "mnist":
-    parent_path = "saved_runtime_mnist_vietdt11_parts_2/time_comparison/MNIST"
+    parent_path = "saved_runtime_mnist_vietdt11_parts_3/time_comparison/MNIST"
 else:
     parent_path = "saved_runtime_cifar10_vietdt11/time_comparison/CIFAR10"
 
@@ -47,7 +47,7 @@ for file_name in os.listdir(parent_path):
                 hswfs.append([dataset_size, parts])
 
 
-def make_xy_coordinate(lst_data):
+def make_xy_coordinate(lst_data, sort=False):
     lst_data.sort(key= lambda x: x[0])
     list_x = list()
     list_y = list()
@@ -59,12 +59,15 @@ def make_xy_coordinate(lst_data):
         #     continue
         list_x.append(x)
         list_y.append(y)
-    return list_x, list_y
+    if sort is True:
+        return list_x, sorted(list_y)
+    else:
+        return list_x, list_y
 
 list_dataset_size_otdd_exact, list_otdd_exact = make_xy_coordinate(otdd_exact)
 list_dataset_size_otdd_gaussian, list_otdd_gaussian = make_xy_coordinate(otdd_gaussian)
 list_dataset_size_wte, list_wte = make_xy_coordinate(wte)
-list_dataset_size_hswfs, list_hswfs = make_xy_coordinate(hswfs)
+list_dataset_size_hswfs, list_hswfs = make_xy_coordinate(hswfs, False)
 list_dataset_size_sotdd_100, list_sotdd_100 = make_xy_coordinate(sotdd[100])
 list_dataset_size_sotdd_500, list_sotdd_500 = make_xy_coordinate(sotdd[500])
 list_dataset_size_sotdd_1000, list_sotdd_1000 = make_xy_coordinate(sotdd[1000])

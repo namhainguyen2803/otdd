@@ -144,8 +144,6 @@ def main():
                 "chunk": 1000
             }
             list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device=DEVICE, evaluate_time=True, **kwargs)
-            for i in duration_periods.keys():
-                print(i, duration_periods[i])
             t = 0
             for i in range(len(dataloaders)):
                 for j in range(i+1, len(dataloaders)):
@@ -154,7 +152,7 @@ def main():
                     t += 1
             torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods[proj_id]} \n")
+                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods} \n")
 
 
         # OTDD
