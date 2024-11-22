@@ -18,7 +18,7 @@ def scientific_number(x):
     return a, b
 
 
-saved_path = "saved_runtime_mnist_v100/time_comparison/MNIST"
+saved_path = "saved_corr_mnist/correlation/MNIST"
 # saved_path = parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
 
 sotdd_dict_list = dict()
@@ -124,4 +124,4 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
     plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.png', dpi=1000)
     plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.pdf', dpi=1000)
 
-calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=ga_otdd_list, name_2="ga")
+calculate_correlation(list_dist_1=ga_otdd_list, name_1="ga", list_dist_2=wte_list, name_2="wte")

@@ -7,9 +7,9 @@ import os
 dataset = "mnist"
 
 if dataset == "mnist":
-    parent_path = "saved_runtime_mnist_vietdt11_parts_3/time_comparison/MNIST"
+    parent_path = "saved_runtime_mnist_vietdt11_parts_4/time_comparison/MNIST"
 else:
-    parent_path = "saved_runtime_cifar10_vietdt11/time_comparison/CIFAR10"
+    parent_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
 
 
 otdd_gaussian = list()
@@ -47,7 +47,7 @@ for file_name in os.listdir(parent_path):
                 hswfs.append([dataset_size, parts])
 
 
-def make_xy_coordinate(lst_data, sort=False):
+def make_xy_coordinate(lst_data, sort=True):
     lst_data.sort(key= lambda x: x[0])
     list_x = list()
     list_y = list()
@@ -59,10 +59,10 @@ def make_xy_coordinate(lst_data, sort=False):
         #     continue
         list_x.append(x)
         list_y.append(y)
-    if sort is True:
-        return list_x, sorted(list_y)
-    else:
-        return list_x, list_y
+    # if sort is True:
+    #     return list_x, sorted(list_y)
+    # else:
+    return list_x, list_y
 
 list_dataset_size_otdd_exact, list_otdd_exact = make_xy_coordinate(otdd_exact)
 list_dataset_size_otdd_gaussian, list_otdd_gaussian = make_xy_coordinate(otdd_gaussian)
@@ -85,16 +85,16 @@ FONT_SIZE = 18
 
 plt.figure(figsize=(8, 8))
 plt.plot(list_dataset_size_otdd_exact, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_otdd_gaussian, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian Approx)', marker='s', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_hswfs, list_hswfs, color=colors[4], label='HSWFS OTDD (500 projections)', marker='*', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[7], label='sOTDD (10,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_hswfs, list_hswfs, color=colors[4], label='HSWFS OTDD (500 projections)', marker='*', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 
 plt.xlabel("Dataset Size", fontsize=FONT_SIZE - 2)
 plt.ylabel("Processing Time", fontsize=FONT_SIZE - 2)
-plt.title(f"Time Comparison by Dataset Size", fontsize=FONT_SIZE, fontweight='bold')
+plt.title(f"Time Comparison by Dataset Size: {dataset.upper()}", fontsize=FONT_SIZE, fontweight='bold')
 plt.legend(loc="upper left", frameon=True)
 
 plt.grid(True)
