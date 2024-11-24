@@ -19,7 +19,8 @@ def scientific_number(x):
 
 
 saved_path = "saved_corr_mnist/correlation/MNIST"
-# saved_path = parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
+# saved_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
+saved_path = "saved_corr_cifar10_v100/correlation/CIFAR10"
 
 sotdd_dict_list = dict()
 ga_otdd_list = list()
@@ -50,6 +51,7 @@ for file_name in os.listdir(saved_path):
                     if proj_id not in sotdd_dict_list:
                         sotdd_dict_list[proj_id] = list()
                     sotdd_dist = torch.load(f"{each_run_file_name}/sotdd_{proj_id}_dist.pt")[0][1].item()
+                    print(dataset_size, sotdd_dist)
                     sotdd_dict_list[proj_id].append(sotdd_dist)
                 elif "wte" in each_file_name:
                     wte_dist = torch.load(f"{each_run_file_name}/wte.pt")[0][1].item()
@@ -124,4 +126,6 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
     plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.png', dpi=1000)
     plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.pdf', dpi=1000)
 
-calculate_correlation(list_dist_1=ga_otdd_list, name_1="ga", list_dist_2=wte_list, name_2="wte")
+
+print(sotdd_dict_list[10000])
+calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=sotdd_dict_list[10000], name_2="sotdd_10000")

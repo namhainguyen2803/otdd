@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-dataset = "mnist"
+dataset = "cifar10"
 
 if dataset == "mnist":
     parent_path = "saved_runtime_mnist_vietdt11_parts_4/time_comparison/MNIST"
@@ -87,7 +87,7 @@ plt.figure(figsize=(8, 8))
 plt.plot(list_dataset_size_otdd_exact, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_otdd_gaussian, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian Approx)', marker='s', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_hswfs, list_hswfs, color=colors[4], label='HSWFS OTDD (500 projections)', marker='*', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+# plt.plot(list_dataset_size_hswfs, list_hswfs, color=colors[4], label='HSWFS OTDD (500 projections)', marker='*', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[7], label='sOTDD (10,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)

@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import torchvision.transforms as transforms
-from torchvision.datasets import MNIST
+from torchvision.datasets import MNIST, CIFAR10
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
 import os
@@ -24,10 +24,10 @@ from PIL import Image
 from wte.distance import WTE
 from scipy.spatial import distance
 
+
 from geoopt import Lorentz as Lorentz_geoopt
 
 from hswfs_otdd.utils.hmds import HyperMDS
-# from hswfs_otdd.utils.datasets import *
 from hswfs_otdd.utils.bures_wasserstein import LabelsBW
 
 from hswfs_otdd.hswfs.manifold.euclidean import Euclidean
@@ -37,14 +37,14 @@ from hswfs_otdd.hswfs.manifold.lorentz import Lorentz
 from hswfs_otdd.hswfs.sw import sliced_wasserstein
 
 
-
 def generate_reference(num, dim_low, dim, attached_dim, seed=0):
     torch.manual_seed(seed)
-    med = torch.rand(num, dim_low, dim_low).unsqueeze(0)
-    s = dim/dim_low
+    med = torch.rand(num, 3, dim_low, dim_low)
+    s = dim / dim_low
     m = nn.Upsample(scale_factor=s, mode='bilinear')
+    upsampled = m(med).reshape(num, -1)
     attached = torch.randn(num, attached_dim)
-    return torch.cat((m(med).reshape(num, -1), attached), dim=1).float()
+    return torch.cat((upsampled, attached), dim=1).float()
 
 
 
@@ -62,60 +62,57 @@ class Subset(Dataset):
         return len(self.indices)
 
     def __getitem__(self, idx):
-        img = Image.fromarray(self.data[idx].numpy())
-        return self.transform(img), self.targets[idx]
-        # return self.data[idx], self.targets[idx]
+        return self.transform(self.data[idx]), self.targets[idx]
 
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean=(0.1307,), std=(0.3081,))
+    transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.247, 0.243, 0.261))
 ])
 
+# (0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_corr_mnist", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_corr_cifar10_v100", help='Parent directory')
     parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
     args = parser.parse_args()
 
     num_projections = args.num_projections
 
-    parent_dir = f'{args.parent_dir}/correlation/MNIST'
+    parent_dir = f'{args.parent_dir}/correlation/CIFAR10'
     os.makedirs(parent_dir, exist_ok=True)
 
     # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 
-    dataset = MNIST(root='data', train=True, download=False)
-    test_dataset = MNIST(root='data', train=False, download=False, transform=transform)
+    dataset = CIFAR10(root=f'data/CIFAR10', train=True, download=False)
+    test_dataset = CIFAR10(root=f'data/CIFAR10', train=False, download=False, transform=transform)
 
-    num_classes = len(torch.unique(dataset.targets))
+    num_classes = len(torch.unique(torch.tensor(dataset.targets)))
 
     indices = np.arange(len(dataset))
     shuffled_indices = np.random.permutation(indices)
     
     max_dataset_size = len(dataset) // 2
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
-    
-    pointer_dataset1 = 0
-    pointer_dataset2 = max_dataset_size
 
-    list_dataset_size = [10000 for i in range(10)]
+    pointer_dataset1 = 0
+    pointer_dataset2 = 10000
+
+    # list_dataset_size = [2000 * (i + 1) for i in range(int(max_dataset_size // 2000))]
+    list_dataset_size = [i * 1000 for i in range(1, 11)]
 
     print(list_dataset_size)
 
-    for idx in range(len(list_dataset_size)):
-        dataset_size = list_dataset_size[idx]
-        save_dir = f"{parent_dir}/seed_{idx}_size_{dataset_size}"
+    for dataset_size in list_dataset_size:
+        save_dir = f"{parent_dir}/size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
-
-        shuffled_indices = np.random.permutation(indices)
         print(f"Setting dataset to size of {dataset_size}..")
         idx1 = shuffled_indices[:dataset_size]
         idx2 = shuffled_indices[-dataset_size:]
 
-        print(f"len(idx1): {len(idx1)}, len(idx2): {len(idx2)}")
+        assert len(idx1) == len(idx2) == dataset_size, "wrong number of dataset size"
 
         sub1 = Subset(dataset=dataset, original_indices=idx1, transform=transform)
         sub2 = Subset(dataset=dataset, original_indices=idx2, transform=transform)
@@ -129,21 +126,22 @@ def main():
 
 
         # NEW METHOD
-        projection_list = [100, 500, 1000, 5000, 10000]
+        projection_list = [10000]
         for proj_id in projection_list:
+
             pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute sOTDD...")
             print(f"Number of datasets: {len(dataloaders)}")
             kwargs = {
-                "dimension": 784,
-                "num_channels": 1,
+                "dimension": 32,
+                "num_channels": 3,
                 "num_moments": 5,
-                "use_conv": False,
+                "use_conv": True,
                 "precision": "float",
                 "p": 2,
                 "chunk": 1000
             }
-            list_pairwise_dist, duration_periods = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device=DEVICE, evaluate_time=True, **kwargs)
+            list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device=DEVICE, evaluate_time=True, **kwargs)
             t = 0
             for i in range(len(dataloaders)):
                 for j in range(i+1, len(dataloaders)):
@@ -152,13 +150,13 @@ def main():
                     t += 1
             torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
             with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {duration_periods} \n")
+                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {sotdd_time_taken} \n")
 
 
         # OTDD
         dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
         print("Compute OTDD (exact)...")
-        start_time_otdd = time.time()
+        start = time.time()
         for i in range(len(dataloaders)):
             for j in range(i+1, len(dataloaders)):
                 dist = DatasetDistance(dataloaders[i],
@@ -171,9 +169,8 @@ def main():
                 d = dist.distance(maxsamples=None).item()
                 dict_OTDD[i][j] = d
                 dict_OTDD[j][i] = d
-
-        end_time_otdd = time.time()
-        otdd_time_taken = end_time_otdd - start_time_otdd
+        end = time.time()
+        otdd_time_taken = end - start
         print(otdd_time_taken)
 
         torch.save(dict_OTDD, f'{save_dir}/exact_otdd_dist.pt')
@@ -184,10 +181,9 @@ def main():
         # OTDD
         dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
         print("Compute OTDD (gaussian_approx, iter 20)...")
-        start_time_otdd = time.time()
+        start = time.time()
         for i in range(len(dataloaders)):
             for j in range(i+1, len(dataloaders)):
-                start_time_otdd = time.time()
                 dist = DatasetDistance(dataloaders[i],
                                         dataloaders[j],
                                         inner_ot_method='gaussian_approx',
@@ -201,23 +197,22 @@ def main():
                 d = dist.distance(maxsamples=None).item()
                 dict_OTDD[i][j] = d
                 dict_OTDD[j][i] = d
-        end_time_otdd = time.time()
-        otdd_time_taken = end_time_otdd - start_time_otdd
+        end = time.time()
+        otdd_time_taken = end - start
         print(otdd_time_taken)
         torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
         with open(f'{save_dir}/time_running.txt', 'a') as file:
             file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
 
 
-        # WTE
-        start_time_wte = time.time()
-        reference = generate_reference(dataset_size, 4, 28, 10)
+        start = time.time()
+        reference = generate_reference(dataset_size, 4, 32, 10)
         print(reference.shape)
         wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=dataset_size)
         wtes = wtes.reshape(wtes.shape[0], -1)
         wte_distance = distance.cdist(wtes, wtes, 'euclidean')
-        end_time_wte = time.time()
-        wte_time_taken = end_time_wte - start_time_wte
+        end = time.time()
+        wte_time_taken = end - start
         torch.save(wte_distance, f'{save_dir}/wte.pt')
         with open(f'{save_dir}/time_running.txt', 'a') as file:
             file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
@@ -227,17 +222,12 @@ def main():
         n_projs = 500
         scaling = 0.1
         d = 10
-        n_epochs = 50000
         start = time.time()
         emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
         distance_array = emb.dissimilarity_for_all(subdatasets)
         lorentz_geoopt = Lorentz_geoopt()
         embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-        mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
-
-        plt.plot(np.log(np.array(L)))
-        plt.savefig(f"{save_dir}/hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
-
+        mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=50000, lr=1e-3)
         dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
         diff_dist = np.abs(scaling * distance_array - dist_mds)
         data_X = [] # data
@@ -250,7 +240,7 @@ def main():
             data_X.append(X)
             data_Y.append(labels)
         d_y = data_Y[0].shape[1]
-        manifolds = [Euclidean(28*28, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+        manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
         product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
         d_sw = np.zeros((len(subdatasets), len(subdatasets)))
         for i in range(len(subdatasets)):
@@ -264,7 +254,8 @@ def main():
         print(hswfs_time_taken)
         torch.save(d_sw, f'{save_dir}/hswfs_otdd.pt')
         with open(f'{save_dir}/time_running.txt', 'a') as file:
-            file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
+            file.write(f"Time proccesing for HSWFS_OTDD: {hswfs_time_taken} \n")
+
 
 if __name__ == "__main__":
     main()
