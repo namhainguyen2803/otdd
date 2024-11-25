@@ -103,8 +103,8 @@ for seed_file_name in os.listdir(saved_path):
 
 
                 # OTDD (Exact)
-                cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=1000, batch_size=64)
-                imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=1000, batch_size=64)
+                cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=3000, batch_size=64)
+                imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=3000, batch_size=64)
                 dist = DatasetDistance(cifar10_dataloader,
                                         imagenet_dataloader,
                                         inner_ot_method='exact',
