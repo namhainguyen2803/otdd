@@ -14,9 +14,10 @@ import argparse
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 2000
+NUM_EXAMPLES = 5000
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
@@ -27,7 +28,7 @@ os.makedirs(parent_dir, exist_ok=True)
 
 method = None
 method2 = None
-method = "OTDD"
+# method = "OTDD"
 method2 = "sOTDD"
 
 def main():
@@ -123,7 +124,7 @@ def main():
             "chunk": 1000
         }
 
-        sw_list = compute_pairwise_distance(list_D=list_dataset, device='cpu', num_projections=10000, evaluate_time=False, **kwargs)
+        sw_list = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=10000, evaluate_time=False, **kwargs)
 
         k = 0
         for i in range(len(DATASET_NAMES)):
@@ -146,4 +147,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -17,12 +17,12 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-dataset = "cifar10"
+dataset = "mnist"
 if dataset == "mnist":
-    saved_path = "saved_corr_mnist_v100/correlation/MNIST"
+    saved_path = "saved_corr_mnist_v100_2/correlation/MNIST"
 # saved_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
 else:
-    saved_path = "saved_corr_cifar10_v100/correlation/CIFAR10"
+    saved_path = "saved_corr_cifar10_v100_2/correlation/CIFAR10"
 
 sotdd_dict_list = dict()
 ga_otdd_list = list()
@@ -130,4 +130,4 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
 
 
 print(sotdd_dict_list[10000])
-calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=sotdd_dict_list[5000], name_2="sotdd_5000")
+calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=sotdd_dict_list[10000], name_2="sotdd_10000")

@@ -59,8 +59,8 @@ def get_dataloader(datadir, maxsize=None, batch_size=64):
 
 saved_path = 'saved_augmentation_2'
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# DEVICE = "cpu"
+# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cpu"
 
 
 list_information = list()
@@ -83,8 +83,8 @@ for seed_file_name in os.listdir(saved_path):
                 train_imagenet_path = f"{seed_path}/transformed_train_imagenet.pt"
                 train_cifar10_path = f"{seed_path}/transformed_train_cifar10.pt"
 
-                cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=None, batch_size=64)
-                imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=None, batch_size=64)
+                cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=50000, batch_size=64)
+                imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=50000, batch_size=64)
                 dataloaders = [cifar10_dataloader, imagenet_dataloader]
 
                 # sOTDD
@@ -99,6 +99,7 @@ for seed_file_name in os.listdir(saved_path):
                 }
                 list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
                 sotdd_dist = list_pairwise_dist[0]
+                print(f"sOTDD distance: {sotdd_dist}")
 
 
                 # OTDD (Exact)
@@ -112,6 +113,7 @@ for seed_file_name in os.listdir(saved_path):
                                         entreg=1e-3,
                                         device=DEVICE)
                 otdd_exact_dist = dist.distance(maxsamples=None).item()
+                print(f"OTDD (Exact): {otdd_exact_dist}")
 
 
                 # OTDD (Gaussian)
@@ -128,6 +130,7 @@ for seed_file_name in os.listdir(saved_path):
                                         entreg=1e-3,
                                         device=DEVICE)
                 otdd_ga_dist = dist.distance(maxsamples=None).item()
+                print(f"OTDD (Gaussian): {otdd_ga_dist}")
 
                 list_information.append([acc, sotdd_dist, otdd_exact_dist, otdd_ga_dist])
 

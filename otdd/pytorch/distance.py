@@ -158,7 +158,7 @@ class DatasetDistance():
                  inner_ot_entreg=0.001,
                  ## Gaussian Approximation Args
                  diagonal_cov=False,
-                 min_labelcount=2,
+                 min_labelcount=1,
                  online_stats=True,
                  sqrt_method='spectral',
                  sqrt_niters=20,
