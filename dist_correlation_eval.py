@@ -17,10 +17,12 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-
-saved_path = "saved_corr_mnist/correlation/MNIST"
+dataset = "cifar10"
+if dataset == "mnist":
+    saved_path = "saved_corr_mnist_v100/correlation/MNIST"
 # saved_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
-saved_path = "saved_corr_cifar10_v100/correlation/CIFAR10"
+else:
+    saved_path = "saved_corr_cifar10_v100/correlation/CIFAR10"
 
 sotdd_dict_list = dict()
 ga_otdd_list = list()
@@ -117,15 +119,15 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
     )
 
     FONT_SIZE = 20
-    plt.title("Distance Correlation", fontsize=FONT_SIZE, fontweight='bold')
+    plt.title(f"Distance Correlation: {dataset.upper()}", fontsize=FONT_SIZE, fontweight='bold')
     plt.xlabel(title_dict[name_1], fontsize=FONT_SIZE - 2)
     plt.ylabel(title_dict[name_2], fontsize=FONT_SIZE - 2)
 
     plt.grid(False)
     plt.legend(loc="upper left", frameon=True, fontsize=15)
-    plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.png', dpi=1000)
-    plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.pdf', dpi=1000)
+    plt.savefig(f'{saved_path}/correlation_dist_{dataset}_{name_1}_{name_2}.png', dpi=1000)
+    plt.savefig(f'{saved_path}/correlation_dist_{dataset}_{name_1}_{name_2}.pdf', dpi=1000)
 
 
 print(sotdd_dict_list[10000])
-calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=sotdd_dict_list[10000], name_2="sotdd_10000")
+calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=sotdd_dict_list[5000], name_2="sotdd_5000")

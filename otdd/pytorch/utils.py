@@ -186,9 +186,9 @@ def extract_dataloader_targets(dl):
 def extract_data_targets(d):
     """ Wrapper around extract_dataloader_targets and extract_dataset_targets,
     for convenience """
-    if isinstance(d, torch.utils.data.dataloader.DataLoader):
+    if isinstance(d, torch.utils.data.DataLoader):
         return extract_dataloader_targets(d)
-    elif isinstance(d, torch.utils.data.dataset.Dataset):
+    elif isinstance(d, torch.utils.data.Dataset):
         return extract_dataset_targets(d)
     else:
         raise  ValueError("Incompatible data object")
@@ -581,7 +581,7 @@ def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="c
     # projection_matrix[:, 0] = max_vals
     # projection_matrix[range(num_projection), max_indices] = tmp
 
-    return projection_matrix.to(device).type(dtype)
+    return projection_matrix.type(dtype).to(device)
 
 
 def generate_uniform_unit_sphere_projections_2(num_projection_1=1000, num_projection_2=1000, dim=1024, device="cpu", dtype=torch.FloatTensor):
@@ -593,7 +593,7 @@ def generate_uniform_unit_sphere_projections_2(num_projection_1=1000, num_projec
     """
     projection_matrix = torch.randn((num_projection_1, num_projection_2, dim), device=device)
     projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=2, keepdim=True))
-    return projection_matrix.to(device).type(dtype)
+    return projection_matrix.type(dtype).to(device)
 
 
 def generate_unit_convolution_projections(image_size=32, num_channels=3, num_projection=1000, device='cpu', dtype=torch.FloatTensor):
@@ -655,6 +655,7 @@ def generate_unit_convolution_projections(image_size=32, num_channels=3, num_pro
         U.weight.data = torch.randn(U.weight.shape, device=device).type(dtype)
         U.weight.data = U.weight / torch.sqrt(torch.sum(U.weight ** 2,dim=[1,2,3],keepdim=True))
         U.requires_grad = False
+        U = U.to(device)
 
     return U_list
 

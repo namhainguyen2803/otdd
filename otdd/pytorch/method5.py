@@ -53,8 +53,7 @@ class Embeddings_sOTDD():
 
     def _load_datasets(self, D, labels_kept=None, maxsamples=None, device='cpu'):
         logger.info('Concatenating feature vectors...')
-        ## We probably don't ever want to store the full datasets in GPU
-        device = 'cpu'
+        # device = 'cpu'
         dtype = torch.DoubleTensor if self.precision == 'double' else torch.FloatTensor
         X, Y, dict_data = self.load_full_dataset(D, 
                                                 labels_keep=labels_kept,
@@ -138,7 +137,7 @@ class Embeddings_sOTDD():
                 x = x.type(dtype).to(device)
 
             # X.append(x.squeeze().view(x.shape[0], -1))
-            X.append(x)
+            X.append(x.to(device))
             Y.append(y.to(device).squeeze())
 
         X = torch.cat(X)
@@ -293,7 +292,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     for i in range(chunk_num_projection):
         # chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=5, gen_type="poisson") for lz in range(chunk)])
 
-        chunk_moments = torch.stack([torch.arange(num_moments) + 1 for lz in range(chunk)])
+        chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
 
         unique_chunk_moments = torch.unique(chunk_moments)
 

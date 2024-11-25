@@ -73,7 +73,7 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_corr_cifar10_v100", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_corr_cifar10_v100_2", help='Parent directory')
     parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
     args = parser.parse_args()
 
@@ -82,8 +82,8 @@ def main():
     parent_dir = f'{args.parent_dir}/correlation/CIFAR10'
     os.makedirs(parent_dir, exist_ok=True)
 
-    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    DEVICE = "cpu"
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 
     dataset = CIFAR10(root=f'data/CIFAR10', train=True, download=False)
@@ -101,13 +101,16 @@ def main():
     pointer_dataset2 = 10000
 
     # list_dataset_size = [2000 * (i + 1) for i in range(int(max_dataset_size // 2000))]
-    list_dataset_size = [i * 1000 for i in range(1, 11)]
+    list_dataset_size = [5000 for i in range(1, 11)]
 
     print(list_dataset_size)
 
-    for dataset_size in list_dataset_size:
-        save_dir = f"{parent_dir}/size_{dataset_size}"
+    for idx in range(len(list_dataset_size)):
+        dataset_size = list_dataset_size[idx]
+        save_dir = f"{parent_dir}/seed_{idx}_size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
+
+        shuffled_indices = np.random.permutation(indices)
         print(f"Setting dataset to size of {dataset_size}..")
         idx1 = shuffled_indices[:dataset_size]
         idx2 = shuffled_indices[-dataset_size:]
@@ -126,7 +129,7 @@ def main():
 
 
         # NEW METHOD
-        projection_list = [10000]
+        projection_list = [100, 500, 1000, 5000, 10000]
         for proj_id in projection_list:
 
             pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
