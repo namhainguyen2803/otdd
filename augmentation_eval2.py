@@ -60,9 +60,8 @@ def get_dataloader(datadir, maxsize=None, batch_size=64):
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--maxsize_sotdd', type=int, default=50000, help='Parent directory')
-    parser.add_argument('--maxsize_otdd_exact', type=int, default=1000, help='Number of projections for sOTDD')
-    parser.add_argument('--maxsize_otdd_ga', type=int, default=1000, help='Name of method')
+    parser.add_argument('--method', type=str, default="sotdd", help="Method name")
+    parser.add_argument('--maxsize', type=int, default=50000, help='Parent directory')
     args = parser.parse_args()
 
     saved_path = 'saved_augmentation_2'
@@ -91,60 +90,62 @@ def main():
                     train_imagenet_path = f"{seed_path}/transformed_train_imagenet.pt"
                     train_cifar10_path = f"{seed_path}/transformed_train_cifar10.pt"
 
-                    cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize_sotdd, batch_size=64)
-                    imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize_sotdd, batch_size=64)
+                    cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)
+                    imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize, batch_size=64)
                     dataloaders = [cifar10_dataloader, imagenet_dataloader]
 
-                    # sOTDD
-                    kwargs = {
-                        "dimension": 32,
-                        "num_channels": 3,
-                        "num_moments": 4,
-                        "use_conv": True,
-                        "precision": "float",
-                        "p": 2,
-                        "chunk": 1000
-                    }
-                    list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
-                    sotdd_dist = list_pairwise_dist[0]
-                    print(f"sOTDD distance: {sotdd_dist}")
+                    if args.method == "sotdd":
+                        # sOTDD
+                        kwargs = {
+                            "dimension": 32,
+                            "num_channels": 3,
+                            "num_moments": 4,
+                            "use_conv": True,
+                            "precision": "float",
+                            "p": 2,
+                            "chunk": 1000
+                        }
+                        list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
+                        sotdd_dist = list_pairwise_dist[0]
+                        print(f"sOTDD distance: {sotdd_dist}")
+                        dist = sotdd_dist
 
+                    elif args.method == "otdd_exact":
+                        # OTDD (Exact)
+                        cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)
+                        imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize, batch_size=64)
+                        otdd_dist = DatasetDistance(cifar10_dataloader,
+                                                    imagenet_dataloader,
+                                                    inner_ot_method='exact',
+                                                    debiased_loss=True,
+                                                    p=2,
+                                                    entreg=1e-3,
+                                                    device=DEVICE)
+                        otdd_exact_dist = otdd_dist.distance(maxsamples=None).item()
+                        print(f"OTDD (Exact): {otdd_exact_dist}")
+                        dist = otdd_exact_dist
 
-                    # OTDD (Exact)
-                    cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize_otdd_exact, batch_size=64)
-                    imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize_otdd_exact, batch_size=64)
-                    dist = DatasetDistance(cifar10_dataloader,
-                                            imagenet_dataloader,
-                                            inner_ot_method='exact',
-                                            debiased_loss=True,
-                                            p=2,
-                                            entreg=1e-3,
-                                            device=DEVICE)
-                    otdd_exact_dist = dist.distance(maxsamples=None).item()
-                    print(f"OTDD (Exact): {otdd_exact_dist}")
+                    elif args.method == "otdd_ga":
+                        # OTDD (Gaussian)
+                        cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)
+                        imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize, batch_size=64)
+                        otdd_dist = DatasetDistance(cifar10_dataloader,
+                                                    imagenet_dataloader,
+                                                    inner_ot_method='gaussian_approx',
+                                                    debiased_loss=True,
+                                                    p=2,
+                                                    sqrt_method='approximate',
+                                                    nworkers_stats=0,
+                                                    sqrt_niters=20,
+                                                    entreg=1e-3,
+                                                    device=DEVICE)
+                        otdd_ga_dist = otdd_dist.distance(maxsamples=None).item()
+                        print(f"OTDD (Gaussian): {otdd_ga_dist}")
+                        dist = otdd_ga_dist
 
+                    list_information.append([acc, dist])
 
-                    # OTDD (Gaussian)
-                    if args.maxsize_otdd_exact != args.maxsize_otdd_ga:
-                        cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize_otdd_ga, batch_size=64)
-                        imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize_otdd_ga, batch_size=64)
-                    dist = DatasetDistance(cifar10_dataloader,
-                                            imagenet_dataloader,
-                                            inner_ot_method='gaussian_approx',
-                                            debiased_loss=True,
-                                            p=2,
-                                            sqrt_method='approximate',
-                                            nworkers_stats=0,
-                                            sqrt_niters=20,
-                                            entreg=1e-3,
-                                            device=DEVICE)
-                    otdd_ga_dist = dist.distance(maxsamples=None).item()
-                    print(f"OTDD (Gaussian): {otdd_ga_dist}")
-
-                    list_information.append([acc, sotdd_dist, otdd_exact_dist, otdd_ga_dist])
-
-
-    with open(f'{saved_path}/list_information_exact{args.maxsize_otdd_exact}_ga{args.maxsize_otdd_ga}.csv', 'w') as file:
+    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.csv', 'w') as file:
         json.dump(list_information, file)
 
 if __name__ == "__main__":
