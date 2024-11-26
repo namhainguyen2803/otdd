@@ -70,7 +70,8 @@ def main():
     DEVICE = "cpu"
 
 
-    list_information = list()
+    result = dict()
+    result_list = list()
 
 
     for seed_file_name in os.listdir(saved_path):
@@ -143,13 +144,15 @@ def main():
                         print(f"OTDD (Gaussian): {otdd_ga_dist}")
                         dist = otdd_ga_dist
 
-                    list_information.append([acc, dist])
+                    result[seed_id] = [acc, dist]
+                    result_list.append([acc, dist])
     
-    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.csv', 'w') as file:
-        json.dump(list_information, file)
+    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.txt', 'w') as file:
+        for seed_id, list_acc_dist in result.items():
+            file.write(f"seed id: {seed_id}, accuracy: {list_acc_dist[0]}, distance: {list_acc_dist[1]}")
     
-    tensor_in4 = torch.tensor(list_information)
-    torch.save(tensor_in4, f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.pt')
+    result_list = torch.tensor(result_list)
+    torch.save(result_list, f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.pt')
 
 if __name__ == "__main__":
     main()
