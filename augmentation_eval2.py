@@ -149,7 +149,7 @@ def main():
     
     with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.txt', 'w') as file:
         for seed_id, list_acc_dist in result.items():
-            file.write(f"seed id: {seed_id}, accuracy: {list_acc_dist[0]}, distance: {list_acc_dist[1]}")
+            file.write(f"seed id: {seed_id}, accuracy: {list_acc_dist[0]}, distance: {list_acc_dist[1]} \n")
     
     result_list = torch.tensor(result_list)
     torch.save(result_list, f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.pt')
