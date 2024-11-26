@@ -57,83 +57,91 @@ def get_dataloader(datadir, maxsize=None, batch_size=64):
     return dataloader
 
 
-saved_path = 'saved_augmentation_2'
+def main():
+    parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
+    parser.add_argument('--maxsize_sotdd', type=int, default=50000, help='Parent directory')
+    parser.add_argument('--maxsize_otdd_exact', type=int, default=1000, help='Number of projections for sOTDD')
+    parser.add_argument('--maxsize_otdd_ga', type=int, default=1000, help='Name of method')
+    args = parser.parse_args()
 
-# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEVICE = "cpu"
+    saved_path = 'saved_augmentation_2'
 
-
-list_information = list()
-
-
-for seed_file_name in os.listdir(saved_path):
-    if "png" in seed_file_name or "pdf" in seed_file_name or "csv" in seed_file_name:
-        continue
-    else:
-
-        seed_id = int(seed_file_name.split("_")[-1])
-        seed_path = f"{saved_path}/{seed_file_name}"
-        log_file = f"{seed_path}/log_seed_{seed_id}.log"
-        with open(log_file, 'r') as file:
-            lines = file.readlines()
-        for line in lines:
-            if "CIFAR10 Test Accuracy after Adaptation:" in line:
-                acc = str(line.split("(")[-1].split(",")[0])
-                
-                train_imagenet_path = f"{seed_path}/transformed_train_imagenet.pt"
-                train_cifar10_path = f"{seed_path}/transformed_train_cifar10.pt"
-
-                cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=50000, batch_size=64)
-                imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=50000, batch_size=64)
-                dataloaders = [cifar10_dataloader, imagenet_dataloader]
-
-                # sOTDD
-                kwargs = {
-                    "dimension": 32,
-                    "num_channels": 3,
-                    "num_moments": 4,
-                    "use_conv": True,
-                    "precision": "float",
-                    "p": 2,
-                    "chunk": 1000
-                }
-                list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
-                sotdd_dist = list_pairwise_dist[0]
-                print(f"sOTDD distance: {sotdd_dist}")
+    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    DEVICE = "cpu"
 
 
-                # OTDD (Exact)
-                cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=3000, batch_size=64)
-                imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=3000, batch_size=64)
-                dist = DatasetDistance(cifar10_dataloader,
-                                        imagenet_dataloader,
-                                        inner_ot_method='exact',
-                                        debiased_loss=True,
-                                        p=2,
-                                        entreg=1e-3,
-                                        device=DEVICE)
-                otdd_exact_dist = dist.distance(maxsamples=None).item()
-                print(f"OTDD (Exact): {otdd_exact_dist}")
+    list_information = list()
 
 
-                # OTDD (Gaussian)
-                # cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=5000, batch_size=64)
-                # imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=5000, batch_size=64)
-                dist = DatasetDistance(cifar10_dataloader,
-                                        imagenet_dataloader,
-                                        inner_ot_method='gaussian_approx',
-                                        debiased_loss=True,
-                                        p=2,
-                                        sqrt_method='approximate',
-                                        nworkers_stats=0,
-                                        sqrt_niters=20,
-                                        entreg=1e-3,
-                                        device=DEVICE)
-                otdd_ga_dist = dist.distance(maxsamples=None).item()
-                print(f"OTDD (Gaussian): {otdd_ga_dist}")
+    for seed_file_name in os.listdir(saved_path):
+        if "png" in seed_file_name or "pdf" in seed_file_name or "csv" in seed_file_name:
+            continue
+        else:
 
-                list_information.append([acc, sotdd_dist, otdd_exact_dist, otdd_ga_dist])
+            seed_id = int(seed_file_name.split("_")[-1])
+            seed_path = f"{saved_path}/{seed_file_name}"
+            log_file = f"{seed_path}/log_seed_{seed_id}.log"
+            with open(log_file, 'r') as file:
+                lines = file.readlines()
+            for line in lines:
+                if "CIFAR10 Test Accuracy after Adaptation:" in line:
+                    acc = str(line.split("(")[-1].split(",")[0])
+                    
+                    train_imagenet_path = f"{seed_path}/transformed_train_imagenet.pt"
+                    train_cifar10_path = f"{seed_path}/transformed_train_cifar10.pt"
+
+                    cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize_sotdd, batch_size=64)
+                    imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize_sotdd, batch_size=64)
+                    dataloaders = [cifar10_dataloader, imagenet_dataloader]
+
+                    # sOTDD
+                    kwargs = {
+                        "dimension": 32,
+                        "num_channels": 3,
+                        "num_moments": 4,
+                        "use_conv": True,
+                        "precision": "float",
+                        "p": 2,
+                        "chunk": 1000
+                    }
+                    list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
+                    sotdd_dist = list_pairwise_dist[0]
+                    print(f"sOTDD distance: {sotdd_dist}")
 
 
-with open(f'{saved_path}/list_information.csv', 'w') as file:
-    json.dump(list_information, file)
+                    # OTDD (Exact)
+                    cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize_otdd_exact, batch_size=64)
+                    imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize_otdd_exact, batch_size=64)
+                    dist = DatasetDistance(cifar10_dataloader,
+                                            imagenet_dataloader,
+                                            inner_ot_method='exact',
+                                            debiased_loss=True,
+                                            p=2,
+                                            entreg=1e-3,
+                                            device=DEVICE)
+                    otdd_exact_dist = dist.distance(maxsamples=None).item()
+                    print(f"OTDD (Exact): {otdd_exact_dist}")
+
+
+                    # OTDD (Gaussian)
+                    if args.maxsize_otdd_exact != args.maxsize_otdd_ga:
+                        cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize_otdd_ga, batch_size=64)
+                        imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize_otdd_ga, batch_size=64)
+                    dist = DatasetDistance(cifar10_dataloader,
+                                            imagenet_dataloader,
+                                            inner_ot_method='gaussian_approx',
+                                            debiased_loss=True,
+                                            p=2,
+                                            sqrt_method='approximate',
+                                            nworkers_stats=0,
+                                            sqrt_niters=20,
+                                            entreg=1e-3,
+                                            device=DEVICE)
+                    otdd_ga_dist = dist.distance(maxsamples=None).item()
+                    print(f"OTDD (Gaussian): {otdd_ga_dist}")
+
+                    list_information.append([acc, sotdd_dist, otdd_exact_dist, otdd_ga_dist])
+
+
+    with open(f'{saved_path}/list_information_exact{args.maxsize_otdd_exact}_ga{args.maxsize_otdd_ga}.csv', 'w') as file:
+        json.dump(list_information, file)
