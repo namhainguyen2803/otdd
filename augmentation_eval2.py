@@ -145,3 +145,6 @@ def main():
 
     with open(f'{saved_path}/list_information_exact{args.maxsize_otdd_exact}_ga{args.maxsize_otdd_ga}.csv', 'w') as file:
         json.dump(list_information, file)
+
+if __name__ == "__main__":
+    main()
