@@ -66,8 +66,8 @@ def main():
 
     saved_path = 'saved_augmentation_2'
 
-    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    DEVICE = "cpu"
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # DEVICE = "cpu"
 
 
     result = dict()

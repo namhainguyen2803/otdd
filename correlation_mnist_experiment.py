@@ -84,7 +84,7 @@ def main():
     os.makedirs(parent_dir, exist_ok=True)
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # DEVICE = "cpu"
+    DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 
     dataset = MNIST(root='data', train=True, download=False)
@@ -101,7 +101,8 @@ def main():
     pointer_dataset1 = 0
     pointer_dataset2 = max_dataset_size
 
-    list_dataset_size = [10000 for i in range(1, 11)]
+    # list_dataset_size = [10000 for i in range(1, 11)]
+    list_dataset_size = [1000 * (i + 1) for i in range(int(max_dataset_size // 1000))]
 
     print(list_dataset_size)
 
