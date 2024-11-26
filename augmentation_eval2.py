@@ -85,7 +85,7 @@ def main():
                 lines = file.readlines()
             for line in lines:
                 if "CIFAR10 Test Accuracy after Adaptation:" in line:
-                    acc = str(line.split("(")[-1].split(",")[0])
+                    acc = float(line.split("(")[-1].split(",")[0])
                     
                     train_imagenet_path = f"{seed_path}/transformed_train_imagenet.pt"
                     train_cifar10_path = f"{seed_path}/transformed_train_cifar10.pt"
@@ -144,9 +144,12 @@ def main():
                         dist = otdd_ga_dist
 
                     list_information.append([acc, dist])
-
+    
     with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.csv', 'w') as file:
         json.dump(list_information, file)
+    
+    tensor_in4 = torch.tensor(list_information)
+    torch.save(tensor_in4, f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.pt')
 
 if __name__ == "__main__":
     main()
