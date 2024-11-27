@@ -17,7 +17,7 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-dataset = "mnist"
+dataset = "cifar10"
 if dataset == "mnist":
     saved_path = "saved_corr_mnist_v100_2/correlation/MNIST"
 # saved_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
@@ -53,7 +53,6 @@ for file_name in os.listdir(saved_path):
                     if proj_id not in sotdd_dict_list:
                         sotdd_dict_list[proj_id] = list()
                     sotdd_dist = torch.load(f"{each_run_file_name}/sotdd_{proj_id}_dist.pt")[0][1].item()
-                    print(dataset_size, sotdd_dist)
                     sotdd_dict_list[proj_id].append(sotdd_dist)
                 elif "wte" in each_file_name:
                     wte_dist = torch.load(f"{each_run_file_name}/wte.pt")[0][1].item()
@@ -130,4 +129,4 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
 
 
 print(sotdd_dict_list[10000])
-calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=sotdd_dict_list[10000], name_2="sotdd_10000")
+calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=wte_list, name_2="wte")
