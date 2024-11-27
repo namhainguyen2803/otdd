@@ -9,6 +9,6 @@ for i in "${!datasets[@]}"; do
         source="${datasets[i]}"
         target="${datasets[j]}"
         echo "Running for Source: $source, Target: $target"
-        python3 text_dist2.py --saved_path saved_text_dist2 --source "$source" --target "$target" --method otdd --num_examples 5000
+        python3 text_dist2.py --saved_path saved_text_dist2 --source "$source" --target "$target" --method sotdd --num_examples 10000
     done
 done
