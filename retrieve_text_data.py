@@ -44,7 +44,7 @@ def save_data(data_set, saved_tensor_path):
         list_images.append(img.squeeze(1))
         list_labels.append(label)
     tensor_images = torch.cat(list_images, dim=0)
-    tensor_labels = torch.tensor(list_labels)
+    tensor_labels = torch.cat(list_labels, dim=0)
     torch.save((tensor_images, tensor_labels), saved_tensor_path)
     print(f"Number of data: {len(list_images)}, data shape: {tensor_images.shape, tensor_labels.shape}. Save data into {saved_tensor_path}")
 
