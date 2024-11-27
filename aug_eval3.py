@@ -10,6 +10,7 @@ from scipy import stats
 import json
 import torch
 import math
+from matplotlib.ticker import FormatStrFormatter
 
 
 def scientific_number(x):
@@ -21,9 +22,9 @@ def scientific_number(x):
 
 parent_path = "saved_augmentation_2"
 
-# method = "sotdd"
-# maxsize = 50000
-# displayed_method = "s-OTDD (10,000 projections)"
+method = "sotdd"
+maxsize = 50000
+displayed_method = "s-OTDD (10,000 projections)"
 method = "otdd_exact"
 maxsize = 5000
 displayed_method = "OTDD (Exact)"
@@ -39,7 +40,7 @@ with open(file_path, 'r') as file:
         parts = line.strip().split(', ')
         print(parts)
         seed_id = int(parts[0].split(': ')[1])
-        accuracy = float(parts[1].split(': ')[1])
+        accuracy = float(parts[1].split(': ')[1]) * 100
         distance = float(parts[2].split(': ')[1])
         list_acc.append(accuracy)
         list_dist.append(distance)
@@ -71,10 +72,12 @@ def calculate_correlation(list_dist_1, list_dist_2):
         scatter_kws={"s": 10, "color": "tab:blue"},
         label=label
     )
-    FONT_SIZE = 20
-    plt.title(f"Distance Adaptation: ImageNet$\\rightarrow$CIFAR10", fontsize=FONT_SIZE, fontweight='bold')
+    FONT_SIZE = 18
+    plt.title(f"Distance vs Adaptation: ImageNet$\\rightarrow$CIFAR10", fontsize=FONT_SIZE, fontweight='bold')
     plt.xlabel(f"{displayed_method} Distance", fontsize=FONT_SIZE - 2)
-    plt.ylabel("Accuracy", fontsize=FONT_SIZE - 2)
+    plt.ylabel("Accuracy (%)", fontsize=FONT_SIZE - 2)
+    plt.ylim(86, 87.8)
+    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     plt.grid(False)
     plt.legend(loc="upper left", frameon=True, fontsize=15)
     plt.savefig(f'{parent_path}/aug_{method}_{maxsize}.png', dpi=1000)

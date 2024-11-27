@@ -33,11 +33,11 @@ os.makedirs(parent_dir, exist_ok=True)
 os.makedirs(pretrained_path, exist_ok=True)
 os.makedirs(adapt_path, exist_ok=True)
 
-# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEVICE = "cpu"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# DEVICE = "cpu"
 
 # Load data
-MAXSIZE_DIST = None
+MAXSIZE_DIST = 5000
 MAXSIZE_TRAINING = None
 
 
@@ -91,16 +91,25 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
             source_dataset = LIST_DATASETS[i]
             target_dataset = LIST_DATASETS[j]
 
+            # dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
+            #                         METADATA_DATASET[target_dataset]["train_loader"],
+            #                         inner_ot_method='gaussian_approx',
+            #                         sqrt_method='approximate',
+            #                         nworkers_stats=0,
+            #                         sqrt_niters=20,
+            #                         debiased_loss=True,
+            #                         p=2,
+            #                         entreg=1e-3,
+            #                         device=DEVICE)
+
             dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
                                     METADATA_DATASET[target_dataset]["train_loader"],
-                                    inner_ot_method='gaussian_approx',
-                                    sqrt_method='approximate',
-                                    nworkers_stats=0,
-                                    sqrt_niters=20,
+                                    inner_ot_method='exact',
                                     debiased_loss=True,
                                     p=2,
                                     entreg=1e-3,
                                     device=DEVICE)
+
             d = dist.distance(maxsamples = maxsamples).item()
 
             all_dist_dict[source_dataset][target_dataset] = d
@@ -261,15 +270,15 @@ def training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=D
 if __name__ == "__main__":
 
     
-    # DIST_otdd = compute_otdd_distance()
-    # dist_file_path = f'{parent_dir}/otdd_dist.json'
-    # with open(dist_file_path, 'w') as json_file:
-    #     json.dump(DIST_otdd, json_file, indent=4)
-
-    DIST_sotdd = compute_sotdd_distance(num_projection=10000)
-    dist_file_path = f'{parent_dir}/sotdd_dist_use_conv_False_num_moments_5.json'
+    DIST_otdd = compute_otdd_distance()
+    dist_file_path = f'{parent_dir}/otdd_dist_exact.json'
     with open(dist_file_path, 'w') as json_file:
-        json.dump(DIST_sotdd, json_file, indent=4)
+        json.dump(DIST_otdd, json_file, indent=4)
+
+    # DIST_sotdd = compute_sotdd_distance(num_projection=10000)
+    # dist_file_path = f'{parent_dir}/sotdd_dist_use_conv_False_num_moments_5.json'
+    # with open(dist_file_path, 'w') as json_file:
+    #     json.dump(DIST_sotdd, json_file, indent=4)
 
     # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
     # training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)

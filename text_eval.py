@@ -138,9 +138,9 @@ reg = LinearRegression().fit(X, y)
 
 # Generate x values for the extended line
 if method == "OTDD":
-    x_range = np.linspace(df["distance"].min() - 20, df["distance"].max() + 20, 500)
+    x_range = np.linspace(df["distance"].min(), df["distance"].max(), 500)
 else:
-    x_range = np.linspace(df["distance"].min() - 0.01, df["distance"].max() + 0.01, 500)
+    x_range = np.linspace(df["distance"].min(), df["distance"].max(), 500)
 y_pred = reg.predict(x_range.reshape(-1, 1))
 
 # Plot the extended regression line

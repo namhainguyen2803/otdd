@@ -14,22 +14,22 @@ import argparse
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEVICE = "cpu"
+# DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 5000
+NUM_EXAMPLES = 1000
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
-parent_dir = f"saved_text_dist/text_cls/dist"
+parent_dir = f"saved_text_dist/text_cls/otdd_dist"
 os.makedirs(parent_dir, exist_ok=True)
 
 method = None
 method2 = None
-# method = "OTDD"
-method2 = "sOTDD"
+method = "OTDD"
+# method2 = "sOTDD"
 
 def main():
 
@@ -77,12 +77,19 @@ def main():
                 data_target = DATASET_NAMES[j]
                 if data_source == data_target:
                     continue
+                # dist = DatasetDistance(METADATA_DATASET[data_source]["dataloader"], 
+                #                         METADATA_DATASET[data_target]["dataloader"],
+                #                         inner_ot_method='gaussian_approx',
+                #                         sqrt_method='approximate',
+                #                         nworkers_stats=0,
+                #                         sqrt_niters=20,
+                #                         debiased_loss=True,
+                #                         p=2,
+                #                         entreg=1e-3,
+                #                         device=DEVICE)
                 dist = DatasetDistance(METADATA_DATASET[data_source]["dataloader"], 
                                         METADATA_DATASET[data_target]["dataloader"],
-                                        inner_ot_method='gaussian_approx',
-                                        sqrt_method='approximate',
-                                        nworkers_stats=0,
-                                        sqrt_niters=20,
+                                        inner_ot_method='exact',
                                         debiased_loss=True,
                                         p=2,
                                         entreg=1e-3,
@@ -93,7 +100,7 @@ def main():
                 OTDD_DIST[data_source][data_target] = d.item()
                 print(f"Data source: {data_source}, Data target: {data_target}, Distance: {d}")
 
-        dist_file_path = f'{parent_dir}/{method}_20_text_dist.json'
+        dist_file_path = f'{parent_dir}/otdd_exact_text_dist.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(OTDD_DIST, json_file, indent=4)
         print(f"Finish computing OTDD")
@@ -117,7 +124,7 @@ def main():
         kwargs = {
             "dimension": 768,
             "num_channels": 1,
-            "num_moments": 10,
+            "num_moments": 5,
             "use_conv": False,
             "precision": "float",
             "p": 2,
@@ -139,7 +146,7 @@ def main():
         
         assert k == len(sw_list), "k != len(sw_list)"
 
-        dist_file_path = f'{parent_dir}/{method2}_text_dist.json'
+        dist_file_path = f'{parent_dir}/sotdd_text_dist.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(sOTDD_DIST, json_file, indent=4)
         print(f"Finish computing s-OTDD")
