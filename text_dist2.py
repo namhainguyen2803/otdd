@@ -90,7 +90,7 @@ def main():
             file.write(f"Data source: {args.source}, Data target: {args.target}, Distance: {d} \n")
 
 
-    if method2 == "sotdd":
+    if args.method == "sotdd":
         print("Computing s-OTDD...")
         NUM_MOMENTS = 5
         PROJ = 10000
