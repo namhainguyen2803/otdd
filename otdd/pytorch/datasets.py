@@ -603,7 +603,7 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
             random_seed=None, num_workers = 0, preembed_sentences=False,
             loading_method='sentence_transformers', device='cpu',
             embedding_model=None,
-            batch_size = 1000, valid_size=0.0, maxsize=None, print_stats = True, load_tensor=False, maxsize_for_each_class=None):
+            batch_size = 128, valid_size=0.0, maxsize=None, print_stats = True, load_tensor=False, maxsize_for_each_class=None):
     """ Load torchtext datasets.
 
     Note: torchtext's TextClassification datasets are a bit different from the others:
