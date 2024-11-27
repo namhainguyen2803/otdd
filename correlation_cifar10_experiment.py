@@ -83,8 +83,8 @@ def main():
     parent_dir = f'{args.parent_dir}/correlation/CIFAR10'
     os.makedirs(parent_dir, exist_ok=True)
 
-    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    DEVICE = "cpu"
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # DEVICE = "cpu"
     print(f"Use CUDA or not: {DEVICE}")
 
     dataset = CIFAR10(root=f'data/CIFAR10', train=True, download=False)
@@ -102,7 +102,7 @@ def main():
     pointer_dataset2 = 10000
 
     # list_dataset_size = [1000 * (i + 1) for i in range(int(max_dataset_size // 1000))]
-    list_dataset_size = [random.randint(5, 15) * 1000 for i in range(1, 11)]
+    list_dataset_size = [random.randint(5, 15) * 1000 for i in range(1, 15)]
 
     print(list_dataset_size)
 
