@@ -75,7 +75,7 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_corr_mnist_v100_3", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_corr_mnist_a100_2", help='Parent directory')
     parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
     args = parser.parse_args()
 
@@ -102,7 +102,7 @@ def main():
     pointer_dataset1 = 0
     pointer_dataset2 = max_dataset_size
 
-    list_dataset_size = [random.randint(5, 10) * 1000 for i in range(1, 11)]
+    list_dataset_size = [random.randint(8, 15) * 1000 for i in range(1, 11)]
     # list_dataset_size = [1000 * (i + 1) for i in range(int(max_dataset_size // 1000))]
 
     print(list_dataset_size)
