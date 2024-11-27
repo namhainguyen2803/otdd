@@ -612,8 +612,6 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
 
     """
 
-
-
     def batch_processor_tt(batch, TEXT=None, sentemb=None, return_lengths=True, device=None):
         """ For torchtext data/models """
         labels, texts = zip(*batch)

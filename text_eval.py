@@ -34,8 +34,10 @@ adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
 # text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
 if method == "OTDD":
     text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
+    text_dist_path = "saved/text_cls_new2/dist/OTDD_text_dist.json"
 else:
     text_dist_path = "saved_text_dist/text_cls/dist/sOTDD_text_dist.json"
+    text_dist_path = "saved/text_cls_new2/dist/sOTDD_text_dist3.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
