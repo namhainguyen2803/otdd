@@ -95,7 +95,7 @@ def main():
         NUM_MOMENTS = 5
         PROJ = 10000
 
-        list_dataset.append([METADATA_DATASET[args.source]["dataloader"], METADATA_DATASET[args.target]["dataloader"]])
+        list_dataset = [METADATA_DATASET[args.source]["dataloader"], METADATA_DATASET[args.target]["dataloader"]]
         kwargs = {
             "dimension": 768,
             "num_channels": 1,
