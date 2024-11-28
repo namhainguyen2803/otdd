@@ -7,7 +7,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from scipy import stats
+import math
+from matplotlib.ticker import FormatStrFormatter
 
+
+def scientific_number(x):
+    if x == 0:
+        return 0, 0
+    b = int(math.floor(math.log10(abs(x))))
+    a = x / (10 ** b)
+    return a, b
 
 method = "sOTDD"
 # method = "OTDD"
@@ -101,13 +110,15 @@ for i in range(len(DATASET_NAME)):
 df = pd.DataFrame(perf_data)
 
 # Calculate Pearson correlation
-pearson_corr, p_value = stats.pearsonr(df["distance"], df["performance"])
+rho, p_value = stats.pearsonr(df["distance"], df["performance"])
 
 # Plotting
 plt.figure(figsize=(8, 8))
 sns.set(style="whitegrid")
 
-# Scatter plot with regression line and confidence interval (only over data range)
+
+a, b = scientific_number(p_value)
+label = f"$\\rho$: {rho:.2f}\np-value: {a:.2f}$\\times 10^{{{b}}}$"
 sns.regplot(
     x="distance", 
     y="performance", 
@@ -115,7 +126,8 @@ sns.regplot(
     scatter=True, 
     ci=95, 
     color="c", 
-    scatter_kws={"s": 5, "color": "tab:blue"}  # Set dot color to blue
+    scatter_kws={"s": 10, "color": "tab:blue"},
+    label=label
 )
 
 # Add error bars
@@ -136,31 +148,26 @@ X = df["distance"].values.reshape(-1, 1)
 y = df["performance"].values
 reg = LinearRegression().fit(X, y)
 
-# Generate x values for the extended line
-if method == "OTDD":
-    x_range = np.linspace(df["distance"].min() - 20, df["distance"].max() + 20, 500)
-else:
-    x_range = np.linspace(df["distance"].min() - 0.01, df["distance"].max() + 0.01, 500)
+x_range = np.linspace(df["distance"].min() - 0.01, df["distance"].max() + 0.01, 500)
 y_pred = reg.predict(x_range.reshape(-1, 1))
 
-# Plot the extended regression line
-plt.plot(x_range, y_pred, linewidth=1.5, color="tab:blue", label=f"$\\rho$: {pearson_corr:.2f}\n p-value: {p_value * 10**5:.2f}$\\times 10^{{-5}}$")
 
-# Add Pearson correlation and p-value to the plot as a legend
 plt.legend(loc="upper right", frameon=True)
 
 # Customize title and labels
-FONT_SIZE=20
+FONT_SIZE = 18
 plt.title(f"Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE, fontweight='bold')
 
 if method == "sOTDD":
     plt.xlabel(f's-OTDD (10,000 projections)', fontsize=FONT_SIZE - 2)
 else:
-    plt.xlabel(f'OTDD (Gaussian Approximation)', fontsize=FONT_SIZE - 2)
+    plt.xlabel(f'OTDD (Exact)', fontsize=FONT_SIZE - 2)
 plt.ylabel('Accuracy', fontsize=FONT_SIZE - 2)
+plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 # Display plot
 plt.legend(fontsize=15)
 plt.grid(False)
 plt.savefig(f'text_cls_{display_method}.png', dpi=1000)
 plt.savefig(f'text_cls_{display_method}.pdf', dpi=1000)
+

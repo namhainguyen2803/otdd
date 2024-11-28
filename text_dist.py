@@ -27,7 +27,7 @@ os.makedirs(parent_dir, exist_ok=True)
 
 method = None
 method2 = None
-method = "OTDD"
+# method = "OTDD"
 method2 = "sOTDD"
 
 def main():
@@ -116,7 +116,7 @@ def main():
         kwargs = {
             "dimension": 768,
             "num_channels": 1,
-            "num_moments": 10,
+            "num_moments": 5,
             "use_conv": False,
             "precision": "float",
             "p": 2,
