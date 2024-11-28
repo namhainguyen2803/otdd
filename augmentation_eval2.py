@@ -66,13 +66,14 @@ def main():
 
     saved_path = 'saved_augmentation_2'
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # DEVICE = "cpu"
+    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    DEVICE = "cpu"
 
 
     result = dict()
     result_list = list()
 
+    total_processing_time = 0
 
     for seed_file_name in os.listdir(saved_path):
         if "png" in seed_file_name or "pdf" in seed_file_name or "csv" in seed_file_name:
@@ -100,7 +101,7 @@ def main():
                         kwargs = {
                             "dimension": 32,
                             "num_channels": 3,
-                            "num_moments": 4,
+                            "num_moments": 5,
                             "use_conv": True,
                             "precision": "float",
                             "p": 2,
@@ -108,6 +109,7 @@ def main():
                         }
                         list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
                         sotdd_dist = list_pairwise_dist[0]
+                        total_processing_time += sotdd_time_taken
                         print(f"sOTDD distance: {sotdd_dist}")
                         dist = sotdd_dist
 
@@ -115,6 +117,7 @@ def main():
                         # OTDD (Exact)
                         cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)
                         imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize, batch_size=64)
+                        start = time.time()
                         otdd_dist = DatasetDistance(cifar10_dataloader,
                                                     imagenet_dataloader,
                                                     inner_ot_method='exact',
@@ -123,6 +126,9 @@ def main():
                                                     entreg=1e-3,
                                                     device=DEVICE)
                         otdd_exact_dist = otdd_dist.distance(maxsamples=None).item()
+                        end = time.time()
+                        time_taken = end - start
+                        total_processing_time += time_taken
                         print(f"OTDD (Exact): {otdd_exact_dist}")
                         dist = otdd_exact_dist
 
@@ -130,6 +136,7 @@ def main():
                         # OTDD (Gaussian)
                         cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)
                         imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize, batch_size=64)
+                        start = time.time()
                         otdd_dist = DatasetDistance(cifar10_dataloader,
                                                     imagenet_dataloader,
                                                     inner_ot_method='gaussian_approx',
@@ -141,12 +148,17 @@ def main():
                                                     entreg=1e-3,
                                                     device=DEVICE)
                         otdd_ga_dist = otdd_dist.distance(maxsamples=None).item()
+                        end = time.time()
+                        time_taken = end - start
+                        total_processing_time += time_taken
                         print(f"OTDD (Gaussian): {otdd_ga_dist}")
                         dist = otdd_ga_dist
 
                     result[seed_id] = [acc, dist]
                     result_list.append([acc, dist])
     
+    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.txt', 'w') as file:
+        file.write(f"Method: {args.method}, total time processing: {total_processing_time} \n")
     with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.txt', 'w') as file:
         for seed_id, list_acc_dist in result.items():
             file.write(f"seed id: {seed_id}, accuracy: {list_acc_dist[0]}, distance: {list_acc_dist[1]} \n")

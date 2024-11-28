@@ -44,9 +44,11 @@ adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
 if method == "OTDD":
     text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
     text_dist_path = "saved/text_cls_new2/dist/OTDD_text_dist.json"
+    text_dist_path = "saved_text_dist/text_cls/otdd_dist/otdd_exact_text_dist.json"
 else:
     text_dist_path = "saved_text_dist/text_cls/dist/sOTDD_text_dist.json"
-    text_dist_path = "saved/text_cls_new2/dist/sOTDD_text_dist3.json"
+    # text_dist_path = "saved/text_cls_new2/dist/sOTDD_text_dist3.json"
+    # text_dist_path = "saved_text_dist/text_cls/otdd_dist/sotdd_text_dist_num_moments_5_num_examples_2000.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
@@ -76,7 +78,7 @@ with open(baseline_result_path, 'r') as file:
         accuracy = float(parts[3])
         baseline_acc[source_dataset] = accuracy
 
-print(baseline_acc)
+# print(baseline_acc)
 
 
 
@@ -92,9 +94,9 @@ for i in range(len(DATASET_NAME)):
         # if source_name == "AmazonReviewPolarity" or target_name == "AmazonReviewPolarity":
         #     continue
         
-        perf = ((adapt_acc[target_name][source_name]) - (baseline_acc[target_name])) / baseline_acc[target_name]
-        if perf < -0.4:
-            continue
+        perf = ((baseline_acc[target_name]) - (adapt_acc[target_name][source_name]))
+        # if perf > 0.4:
+        #     continue
         # error = torch.abs(torch.normal(mean=0.0, std=0.05, size=(1,)))
         # print(error)
         dist = text_dist[target_name][source_name]
@@ -103,7 +105,7 @@ for i in range(len(DATASET_NAME)):
             perf_data.append({
                 "Source -> Target": f"{dataset_nicknames[source_name]}->{dataset_nicknames[target_name]}",
                 "distance": dist,
-                "performance": perf,
+                "performance": perf * 100,
                 "Error": 0
             })
 
@@ -113,7 +115,7 @@ df = pd.DataFrame(perf_data)
 
 # Calculate Pearson correlation
 rho, p_value = stats.pearsonr(df["distance"], df["performance"])
-
+print(f"rho: {rho}, p_value: {p_value}")
 # Plotting
 plt.figure(figsize=(8, 8))
 sns.set(style="whitegrid")
@@ -161,11 +163,15 @@ plt.legend(loc="upper right", frameon=True)
 FONT_SIZE = 18
 plt.title(f"Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE, fontweight='bold')
 
+# for i, row in df.iterrows():
+#     plt.text(perf_data[i]["distance"], perf_data[i]["performance"], 
+#              perf_data[i]["Source -> Target"], ha='right', fontsize=10)
+
 if method == "sOTDD":
-    plt.xlabel(f's-OTDD (10,000 projections)', fontsize=FONT_SIZE - 2)
+    plt.xlabel(f's-OTDD (10,000 projections) Distance', fontsize=FONT_SIZE - 2)
 else:
-    plt.xlabel(f'OTDD (Exact)', fontsize=FONT_SIZE - 2)
-plt.ylabel('Accuracy', fontsize=FONT_SIZE - 2)
+    plt.xlabel(f'OTDD (Exact) Distance', fontsize=FONT_SIZE - 2)
+plt.ylabel('Performance Gap (%)', fontsize=FONT_SIZE - 2)
 plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 # Display plot

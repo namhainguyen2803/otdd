@@ -17,7 +17,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 100
+NUM_EXAMPLES = 2000
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
@@ -126,7 +126,7 @@ def main():
         kwargs = {
             "dimension": 768,
             "num_channels": 1,
-            "num_moments": 5,
+            "num_moments": 10,
             "use_conv": False,
             "precision": "float",
             "p": 2,
@@ -148,7 +148,7 @@ def main():
         
         assert k == len(sw_list), "k != len(sw_list)"
 
-        dist_file_path = f'{parent_dir}/sotdd_text_dist.json'
+        dist_file_path = f'{parent_dir}/sotdd_text_dist_num_moments_10_num_examples_2000.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(sOTDD_DIST, json_file, indent=4)
         print(f"Finish computing s-OTDD")
