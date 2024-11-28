@@ -1,5 +1,5 @@
 #!/bin/bash -e
-#SBATCH --job-name=aug
+#SBATCH --job-name=aug1
 #SBATCH --output=/lustre/scratch/client/vinai/users/hainn14/otdd/aug1.out
 #SBATCH --error=/lustre/scratch/client/vinai/users/hainn14/otdd/aug1.err
 #SBATCH --nodes=1
@@ -13,10 +13,9 @@
 module purge
 module load python/miniconda3/miniconda3
 
-# Corrected line
 eval "$(conda shell.bash hook)"
 
 conda activate /lustre/scratch/client/vinai/users/hainn14/envs/otdd
 cd /lustre/scratch/client/vinai/users/hainn14/otdd
 
-python3 augmentation_exp2.py --seed 1
+python3 augmentation_exp3.py --seed 1

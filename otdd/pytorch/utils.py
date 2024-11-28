@@ -186,9 +186,9 @@ def extract_dataloader_targets(dl):
 def extract_data_targets(d):
     """ Wrapper around extract_dataloader_targets and extract_dataset_targets,
     for convenience """
-    if isinstance(d, torch.utils.data.dataloader.DataLoader):
+    if isinstance(d, torch.utils.data.DataLoader):
         return extract_dataloader_targets(d)
-    elif isinstance(d, torch.utils.data.dataset.Dataset):
+    elif isinstance(d, torch.utils.data.Dataset):
         return extract_dataset_targets(d)
     else:
         raise  ValueError("Incompatible data object")
@@ -581,7 +581,7 @@ def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="c
     # projection_matrix[:, 0] = max_vals
     # projection_matrix[range(num_projection), max_indices] = tmp
 
-    return projection_matrix.to(device).type(dtype)
+    return projection_matrix.type(dtype).to(device)
 
 
 def generate_uniform_unit_sphere_projections_2(num_projection_1=1000, num_projection_2=1000, dim=1024, device="cpu", dtype=torch.FloatTensor):
@@ -593,7 +593,7 @@ def generate_uniform_unit_sphere_projections_2(num_projection_1=1000, num_projec
     """
     projection_matrix = torch.randn((num_projection_1, num_projection_2, dim), device=device)
     projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=2, keepdim=True))
-    return projection_matrix.to(device).type(dtype)
+    return projection_matrix.type(dtype).to(device)
 
 
 def generate_unit_convolution_projections(image_size=32, num_channels=3, num_projection=1000, device='cpu', dtype=torch.FloatTensor):
@@ -602,7 +602,7 @@ def generate_unit_convolution_projections(image_size=32, num_channels=3, num_pro
     :return: projection matrix \in \mathbb R^(num_projection, dim)
     """
     if image_size == 32:
-        choice = 1
+        choice = 3
 
         if choice == 1:
             U1 = nn.Conv2d(num_channels, num_projection, kernel_size=5, stride=1, padding=0, bias=False)
@@ -622,6 +622,13 @@ def generate_unit_convolution_projections(image_size=32, num_channels=3, num_pro
             for ker_size in list_kernel_size[1:]:
                 u = nn.Conv2d(num_projection, num_projection, kernel_size=ker_size, stride=1, padding=0, bias=False, groups=num_projection)
                 U_list.append(u)
+        
+        elif choice == 3:
+            U1 = nn.Conv2d(num_channels, num_projection, kernel_size=5, stride=2, padding=0, bias=False)
+            U2 = nn.Conv2d(num_projection, num_projection, kernel_size=5, stride=2, padding=0, bias=False, groups=num_projection)
+            U3 = nn.Conv2d(num_projection, num_projection, kernel_size=3, stride=2, padding=0, bias=False, groups=num_projection)
+            U4 = nn.Conv2d(num_projection, num_projection, kernel_size=2, stride=1, padding=0, bias=False, groups=num_projection)
+            U_list = [U1, U2, U3, U4]
     
     elif image_size == 28:
 
@@ -648,6 +655,7 @@ def generate_unit_convolution_projections(image_size=32, num_channels=3, num_pro
         U.weight.data = torch.randn(U.weight.shape, device=device).type(dtype)
         U.weight.data = U.weight / torch.sqrt(torch.sum(U.weight ** 2,dim=[1,2,3],keepdim=True))
         U.requires_grad = False
+        U = U.to(device)
 
     return U_list
 
@@ -714,3 +722,16 @@ def normalizing_moments_2(empirical_moments, k, normalizing_moments_2):
     empirical_moments = empirical_moments / normalizing_moments_2
     return empirical_moments
 
+
+def generate_and_plot_data(data, plot_file="plot.png"):
+    pixel_values = data.flatten()
+    plt.figure()
+    plt.hist(pixel_values.detach().numpy(), bins=50, alpha=0.7, color='blue', edgecolor='black')
+    plt.title("Pixel Value Distribution")
+    plt.xlabel("Pixel Value")
+    plt.ylabel("Frequency")
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.savefig(plot_file)
+    print(f"Plot saved as {plot_file}")
+    plt.close()
+    return data

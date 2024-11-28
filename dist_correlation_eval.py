@@ -17,14 +17,18 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-
-# saved_path = "saved_runtime_mnist_new/time_comparison/MNIST"
-saved_path = parent_path = "saved_runtime_cifar10_new/time_comparison/CIFAR10"
+dataset = "cifar10"
+if dataset == "mnist":
+    saved_path = "saved_corr_mnist_v100_2/correlation/MNIST"
+# saved_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
+else:
+    saved_path = "saved_corr_cifar10_v100_2/correlation/CIFAR10"
 
 sotdd_dict_list = dict()
 ga_otdd_list = list()
 exact_otdd_list = list()
 wte_list = list()
+hswfs_list = list()
 
 for file_name in os.listdir(saved_path):
     if ".png" in file_name or ".pdf" in file_name:
@@ -53,12 +57,16 @@ for file_name in os.listdir(saved_path):
                 elif "wte" in each_file_name:
                     wte_dist = torch.load(f"{each_run_file_name}/wte.pt")[0][1].item()
                     wte_list.append(wte_dist)
+                elif "hswfs" in each_file_name:
+                    hswfs_dist = torch.load(f"{each_run_file_name}/hswfs_otdd.pt")[0][1].item()
+                    hswfs_list.append(hswfs_dist)
 
 
 title_dict = {
     "ga": "OTDD (Gaussian Approx)",
     "exact": "OTDD (Exact)",
     "wte": "WTE",
+    "hswfs": "HSWFS OTDD",
     "sotdd_100": "s-OTDD (100 projections)",
     "sotdd_500": "s-OTDD (500 projections)",
     "sotdd_1000": "s-OTDD (1,000 projections)",
@@ -110,13 +118,15 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
     )
 
     FONT_SIZE = 20
-    plt.title("Distance Correlation", fontsize=FONT_SIZE, fontweight='bold')
+    plt.title(f"Distance Correlation: {dataset.upper()}", fontsize=FONT_SIZE, fontweight='bold')
     plt.xlabel(title_dict[name_1], fontsize=FONT_SIZE - 2)
     plt.ylabel(title_dict[name_2], fontsize=FONT_SIZE - 2)
 
     plt.grid(False)
     plt.legend(loc="upper left", frameon=True, fontsize=15)
-    plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.png', dpi=1000)
-    plt.savefig(f'{saved_path}/correlation_dist_{name_1}_{name_2}.pdf', dpi=1000)
+    plt.savefig(f'{saved_path}/correlation_dist_{dataset}_{name_1}_{name_2}.png', dpi=1000)
+    plt.savefig(f'{saved_path}/correlation_dist_{dataset}_{name_1}_{name_2}.pdf', dpi=1000)
 
-calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=sotdd_dict_list[10000], name_2="sotdd_10000")
+
+print(sotdd_dict_list[10000])
+calculate_correlation(list_dist_1=exact_otdd_list, name_1="exact", list_dist_2=wte_list, name_2="wte")

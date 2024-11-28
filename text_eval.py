@@ -43,8 +43,10 @@ adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
 # text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
 if method == "OTDD":
     text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
+    text_dist_path = "saved/text_cls_new2/dist/OTDD_text_dist.json"
 else:
     text_dist_path = "saved_text_dist/text_cls/dist/sOTDD_text_dist.json"
+    text_dist_path = "saved/text_cls_new2/dist/sOTDD_text_dist3.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
@@ -148,7 +150,8 @@ X = df["distance"].values.reshape(-1, 1)
 y = df["performance"].values
 reg = LinearRegression().fit(X, y)
 
-x_range = np.linspace(df["distance"].min() - 0.01, df["distance"].max() + 0.01, 500)
+
+x_range = np.linspace(df["distance"].min(), df["distance"].max(), 500)
 y_pred = reg.predict(x_range.reshape(-1, 1))
 
 

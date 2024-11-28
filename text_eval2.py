@@ -48,53 +48,6 @@ dist_list = list()
 DATASET_NAME = list(baseline_acc.keys())
 print(DATASET_NAME)
 
-# for i in range(len(DATASET_NAME)):
-
-#     perf_list = list()
-#     dist_list = list()
-
-#     for j in range(len(DATASET_NAME)):
-
-#         target = DATASET_NAME[i]
-#         source = DATASET_NAME[j]
-
-#         if source == target:
-#             continue
-#         if source == "AmazonReviewPolarity" or target == "AmazonReviewPolarity":
-#             continue
-
-#         perf = ((adapt_acc[source][target]) - (baseline_acc[target]))
-#         dist = text_dist[source][target]
-
-#         perf_list.append(perf)
-#         dist_list.append(dist)
-
-#     list_X = np.array(dist_list).reshape(-1, 1)
-#     list_y = np.array(perf_list)
-#     model = LinearRegression().fit(list_X, list_y)
-#     list_y_pred = model.predict(list_X)
-#     plt.figure(figsize=(10, 8))
-
-#     plt.scatter(dist_list, perf_list, s=100, color='blue', label='Data points')
-#     plt.plot(dist_list, list_y_pred, color='red', linewidth=2, label='Fitted line')
-
-#     rho, p_value = stats.pearsonr(dist_list, perf_list)
-#     print(f"rho: {rho}, p value: {p_value}")
-
-#     display_method = "OTDD"
-
-#     FONT_SIZE = 25
-#     plt.title(f'{display_method} $\\rho={rho:.3f}, p={p_value:.3f}$', fontsize=FONT_SIZE)  # Increase title size
-#     plt.xlabel(f'{display_method}', fontsize=FONT_SIZE)  # Increase x-axis label size
-#     plt.ylabel('Accuracy', fontsize=FONT_SIZE)  # Increase y-axis label size
-
-
-#     plt.legend()
-#     plt.savefig(f'{parent_dir}/{target}_text_{display_method}.png')
-
-
-
-
 
 # Initialize global min and max values for dist_list
 global_min = float('inf')

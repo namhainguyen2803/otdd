@@ -448,7 +448,7 @@ def Wasserstein_One_Dimension(X, Y, a=None, b=None, p=2, device="cpu"):
         Y_quantiles = quantile_function(qs, b_cum_weights, Y_sorted)
         diff_quantiles = torch.abs(X_quantiles - Y_quantiles)
 
-        zeros = torch.zeros((1, qs.shape[1]))
+        zeros = torch.zeros((1, qs.shape[1])).to(device)
         qs = torch.cat((zeros, qs), dim=0)
 
         delta = qs[1:, ...] - qs[:-1, ...]
