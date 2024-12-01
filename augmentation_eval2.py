@@ -76,7 +76,7 @@ def main():
     total_processing_time = 0
 
     for seed_file_name in os.listdir(saved_path):
-        if "png" in seed_file_name or "pdf" in seed_file_name or "csv" in seed_file_name:
+        if "." in seed_file_name:
             continue
         else:
 
