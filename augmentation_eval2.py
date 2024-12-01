@@ -110,7 +110,7 @@ def main():
                         list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
                         sotdd_dist = list_pairwise_dist[0]
                         total_processing_time += sotdd_time_taken
-                        print(f"sOTDD distance: {sotdd_dist}")
+                        print(f"sOTDD distance: {sotdd_dist}, time taken: {sotdd_time_taken}")
                         dist = sotdd_dist
 
                     elif args.method == "otdd_exact":
@@ -129,7 +129,7 @@ def main():
                         end = time.time()
                         time_taken = end - start
                         total_processing_time += time_taken
-                        print(f"OTDD (Exact): {otdd_exact_dist}")
+                        print(f"OTDD (Exact): {otdd_exact_dist}, time taken: {time_taken}")
                         dist = otdd_exact_dist
 
                     elif args.method == "otdd_ga":
@@ -151,7 +151,7 @@ def main():
                         end = time.time()
                         time_taken = end - start
                         total_processing_time += time_taken
-                        print(f"OTDD (Gaussian): {otdd_ga_dist}")
+                        print(f"OTDD (Gaussian): {otdd_ga_dist}, time taken: {time_taken}")
                         dist = otdd_ga_dist
 
                     result[seed_id] = [acc, dist]
