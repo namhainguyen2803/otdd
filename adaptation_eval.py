@@ -17,7 +17,8 @@ else:
 saved_dir = "saved_nist"
 if method == "sotdd":
     # dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
-    dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
+    # dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
+    dist_path = f"saved_nist/dist/sotdd_gaussian_dist.json"
 else:
     dist_path = f"saved_nist/dist/{method}_dist_exact.json"
 
@@ -170,5 +171,5 @@ plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 # Display plot
 plt.grid(False)
-plt.savefig(f'{saved_dir}/nist_{display_method}.png')
-plt.savefig(f'{saved_dir}/nist_{display_method}.pdf')
+plt.savefig(f'{saved_dir}/nist_{display_method}_gauss.png')
+plt.savefig(f'{saved_dir}/nist_{display_method}_gauss.pdf')

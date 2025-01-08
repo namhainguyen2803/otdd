@@ -2,7 +2,8 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data
-from otdd.pytorch.method5 import compute_pairwise_distance
+import otdd.pytorch.method5 as method5
+import otdd.pytorch.method_gaussian as method_gaussian
 from otdd.pytorch.distance import DatasetDistance
 
 import os
@@ -33,8 +34,8 @@ os.makedirs(parent_dir, exist_ok=True)
 os.makedirs(pretrained_path, exist_ok=True)
 os.makedirs(adapt_path, exist_ok=True)
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# DEVICE = "cpu"
+# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cpu"
 
 # Load data
 MAXSIZE_DIST = 5000
@@ -120,6 +121,48 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
     return all_dist_dict
 
 
+def compute_sotdd_gaussian_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADATA_DATASET=None):
+
+    if METADATA_DATASET is None:
+        METADATA_DATASET = create_dataset(maxsamples=maxsamples)
+
+    list_dataset = list()
+    for i in range(len(LIST_DATASETS)):
+        dt_name = LIST_DATASETS[i]
+        list_dataset.append(METADATA_DATASET[dt_name]["train_loader"])
+    
+    kwargs = {
+        "dimension": 28 * 28,
+        "num_channels": 1,
+        "precision": "float",
+        "p": 2,
+        "chunk": 100
+    }
+
+    sw_list = method_gaussian.compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)
+
+    all_dist_dict = dict()
+    for i in range(len(LIST_DATASETS)):
+        all_dist_dict[LIST_DATASETS[i]] = dict()
+        for j in range(len(LIST_DATASETS)):
+            all_dist_dict[LIST_DATASETS[i]][LIST_DATASETS[j]] = 0
+
+    k = 0
+    for i in range(len(LIST_DATASETS)):
+        for j in range(i + 1, len(LIST_DATASETS)):
+
+            source_dataset = LIST_DATASETS[i]
+            target_dataset = LIST_DATASETS[j]
+            all_dist_dict[source_dataset][target_dataset] = sw_list[k].item()
+            all_dist_dict[target_dataset][source_dataset] = sw_list[k].item()
+
+            k += 1
+    
+    assert k == len(sw_list), "k != len(sw_list)"
+
+    return all_dist_dict
+
+
 def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADATA_DATASET=None):
 
     if METADATA_DATASET is None:
@@ -140,7 +183,7 @@ def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADA
         "chunk": 1000
     }
 
-    sw_list = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)
+    sw_list = method5.compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)
 
     all_dist_dict = dict()
     for i in range(len(LIST_DATASETS)):
@@ -269,16 +312,24 @@ def training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=D
 
 if __name__ == "__main__":
 
+    METADATA_DATASET = create_dataset(maxsamples=MAXSIZE_DIST)
     
-    DIST_otdd = compute_otdd_distance()
-    dist_file_path = f'{parent_dir}/otdd_dist_exact.json'
-    with open(dist_file_path, 'w') as json_file:
-        json.dump(DIST_otdd, json_file, indent=4)
+    # DIST_otdd = compute_otdd_distance()
+    # dist_file_path = f'{parent_dir}/otdd_dist_exact.json'
+    # with open(dist_file_path, 'w') as json_file:
+    #     json.dump(DIST_otdd, json_file, indent=4)
 
-    # DIST_sotdd = compute_sotdd_distance(num_projection=10000)
-    # dist_file_path = f'{parent_dir}/sotdd_dist_use_conv_False_num_moments_5.json'
+    # DIST_sotdd = compute_sotdd_distance(num_projection=10000, METADATA_DATASET=METADATA_DATASET)
+    # dist_file_path = f'{parent_dir}/sotdd_arbitrary_dist.json'
     # with open(dist_file_path, 'w') as json_file:
     #     json.dump(DIST_sotdd, json_file, indent=4)
+
+    
+
+    DIST_sotdd_gaussian = compute_sotdd_gaussian_distance(num_projection=10000, METADATA_DATASET=METADATA_DATASET)
+    dist_file_path = f'{parent_dir}/sotdd_gaussian_dist.json'
+    with open(dist_file_path, 'w') as json_file:
+        json.dump(DIST_sotdd_gaussian, json_file, indent=4)
 
     # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
     # training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)

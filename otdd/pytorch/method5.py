@@ -290,9 +290,9 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     list_theta = list()
     list_psi = list()
     for i in range(chunk_num_projection):
-        # chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=5, gen_type="poisson") for lz in range(chunk)])
+        chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=5, gen_type="poisson") for lz in range(chunk)])
 
-        chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
+        # chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
 
         unique_chunk_moments = torch.unique(chunk_moments)
 
@@ -300,11 +300,9 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
         for i in range(len(unique_chunk_moments)):
             lookup_factorial.append(math.factorial(int(unique_chunk_moments[i])))
 
-
         factorial_chunk_moments = torch.zeros_like(chunk_moments)
         for i in range(len(unique_chunk_moments)):
             factorial_chunk_moments[chunk_moments == unique_chunk_moments[i]] = lookup_factorial[i]
-            # factorial_chunk_moments[chunk_moments == unique_chunk_moments[i]] = 1
 
         if use_conv is True:
             chunk_theta = generate_unit_convolution_projections(image_size=dimension, num_channels=num_channels, num_projection=chunk, device=device, dtype=dtype)

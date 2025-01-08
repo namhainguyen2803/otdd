@@ -251,7 +251,7 @@ def _single_label_stats(data, i, c, label_indices, M=None, S=None, batch_size=25
 
 def compute_label_stats(data, targets=None,indices=None,classnames=None,
                         online=True, batch_size=100, to_tensor=True,
-                        eigen_correction=False,
+                        eigen_correction=None,
                         eigen_correction_scale=1.0,
                         nworkers=0, diagonal_cov = False,
                         embedding=None,
@@ -322,7 +322,7 @@ def compute_label_stats(data, targets=None,indices=None,classnames=None,
         S = torch.stack([Σ.to(device) for i,Σ in sorted(S.items()) if Σ is not None], dim=0)
 
     ### Shift the Covariance matrix's diagonal to ensure PSD'ness
-    if eigen_correction:
+    if eigen_correction is not None:
         logger.warning('Applying eigenvalue correction to Covariance Matrix')
         λ = eigen_correction_scale
         for i in range(S.shape[0]):
