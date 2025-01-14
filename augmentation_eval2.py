@@ -132,6 +132,22 @@ def main():
                         print(f"OTDD (Exact): {otdd_exact_dist}, time taken: {time_taken}")
                         dist = otdd_exact_dist
 
+                    elif args.method == "wte":
+                        # WTE
+                        cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)
+                        imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize, batch_size=64)
+                        subdatasets = [cifar10_dataloader.dataset, imagenet_dataloader.dataset]
+                        start = time.time()
+                        reference = generate_reference(dataset_size, 4, 32, 10)
+                        wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=args.maxsize)
+                        wtes = wtes.reshape(wtes.shape[0], -1)
+                        wte_dist = distance.cdist(wtes, wtes, 'euclidean')[0][1]
+                        end = time.time()
+                        time_taken = end - start
+                        total_processing_time += time_taken
+                        print(f"WTE: {otdd_ga_dist}, time taken: {time_taken}")
+                        dist = wte_dist
+
                     elif args.method == "otdd_ga":
                         # OTDD (Gaussian)
                         cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)

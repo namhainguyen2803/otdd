@@ -144,3 +144,6 @@ saved_3/
 saved*/
 *.pdf 
 *.png 
+
+*.pkl
+.pth

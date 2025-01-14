@@ -3,8 +3,11 @@ import torch.optim as optim
 import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data
 import otdd.pytorch.method5 as method5
-import otdd.pytorch.method_gaussian as method_gaussian
+import otdd.pytorch.method_linear_gaussian as method_linear_gaussian
 from otdd.pytorch.distance import DatasetDistance
+
+from otdd.pytorch.method_gaussian import load_full_dataset
+from otdd.pytorch.moments import compute_label_stats
 
 import os
 import torch.nn.functional as F
@@ -18,7 +21,26 @@ from sklearn.linear_model import LinearRegression
 from scipy import stats
 import json
 
+import pickle
+
 from trainer import *
+
+
+from wte.distance import WTE
+from scipy.spatial import distance
+
+
+from geoopt import Lorentz as Lorentz_geoopt
+
+from hswfs_otdd.utils.hmds import HyperMDS
+# from hswfs_otdd.utils.datasets import *
+from hswfs_otdd.utils.bures_wasserstein import LabelsBW
+
+from hswfs_otdd.hswfs.manifold.euclidean import Euclidean
+from hswfs_otdd.hswfs.manifold.product import ProductManifold
+from hswfs_otdd.hswfs.manifold.poincare import Poincare
+from hswfs_otdd.hswfs.manifold.lorentz import Lorentz
+from hswfs_otdd.hswfs.sw import sliced_wasserstein
 
 
 
@@ -41,6 +63,15 @@ DEVICE = "cpu"
 MAXSIZE_DIST = 5000
 MAXSIZE_TRAINING = None
 
+def generate_reference(num, dim_low, dim, attached_dim, seed=0):
+    torch.manual_seed(seed)
+    med = torch.rand(num, dim_low, dim_low).unsqueeze(0)
+    s = dim/dim_low
+    m = nn.Upsample(scale_factor=s, mode='bilinear')
+    attached = torch.randn(num, attached_dim)
+    return torch.cat((m(med).reshape(num, -1), attached), dim=1).float()
+
+
 
 def create_dataset(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None):
 
@@ -50,12 +81,12 @@ def create_dataset(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None):
         METADATA_DATASET[dataset_name] = dict()
 
         if dataset_name == "USPS":
-            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data/USPS", maxsize_for_each_class=maxsize_for_each_class)[0]
+            data_folders = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, datadir="data/USPS", maxsize_for_each_class=maxsize_for_each_class)
         else:
-            dataloader = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, maxsize_for_each_class=maxsize_for_each_class)[0]
+            data_folders = load_torchvision_data(dataset_name, valid_size=0, resize=28, download=False, maxsize=maxsamples, maxsize_for_each_class=maxsize_for_each_class)
 
-        METADATA_DATASET[dataset_name]["train_loader"] = dataloader['train']
-        METADATA_DATASET[dataset_name]["test_loader"] = dataloader['test']
+        METADATA_DATASET[dataset_name]["train_loader"] = data_folders[0]['train']
+        METADATA_DATASET[dataset_name]["train_set"] = data_folders[1]['train']
         METADATA_DATASET[dataset_name]["pretrained_extractor_path"] = f'{pretrained_path}/{dataset_name}/extractor_layers.pth'
         METADATA_DATASET[dataset_name]["pretrained_classifier_path"] = f'{pretrained_path}/{dataset_name}/fc_layers.pth'
 
@@ -92,17 +123,6 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
             source_dataset = LIST_DATASETS[i]
             target_dataset = LIST_DATASETS[j]
 
-            # dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
-            #                         METADATA_DATASET[target_dataset]["train_loader"],
-            #                         inner_ot_method='gaussian_approx',
-            #                         sqrt_method='approximate',
-            #                         nworkers_stats=0,
-            #                         sqrt_niters=20,
-            #                         debiased_loss=True,
-            #                         p=2,
-            #                         entreg=1e-3,
-            #                         device=DEVICE)
-
             dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
                                     METADATA_DATASET[target_dataset]["train_loader"],
                                     inner_ot_method='exact',
@@ -121,25 +141,140 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
     return all_dist_dict
 
 
-def compute_sotdd_gaussian_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADATA_DATASET=None):
+def compute_otdd_gaussian_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
 
     if METADATA_DATASET is None:
         METADATA_DATASET = create_dataset(maxsamples=maxsamples)
 
-    list_dataset = list()
+    all_dist_dict = dict()
     for i in range(len(LIST_DATASETS)):
-        dt_name = LIST_DATASETS[i]
-        list_dataset.append(METADATA_DATASET[dt_name]["train_loader"])
+        all_dist_dict[LIST_DATASETS[i]] = dict()
+        for j in range(len(LIST_DATASETS)):
+            all_dist_dict[LIST_DATASETS[i]][LIST_DATASETS[j]] = 0
+
+    for i in range(len(LIST_DATASETS)):
+        for j in range(i+1, len(LIST_DATASETS)):
+            
+            source_dataset = LIST_DATASETS[i]
+            target_dataset = LIST_DATASETS[j]
+
+            dist = DatasetDistance(METADATA_DATASET[source_dataset]["train_loader"], 
+                                    METADATA_DATASET[target_dataset]["train_loader"],
+                                    inner_ot_method='gaussian_approx',
+                                    sqrt_method='approximate',
+                                    nworkers_stats=0,
+                                    sqrt_niters=20,
+                                    debiased_loss=True,
+                                    p=2,
+                                    entreg=1e-3,
+                                    device=DEVICE)
+
+            d = dist.distance(maxsamples = maxsamples).item()
+
+            all_dist_dict[source_dataset][target_dataset] = d
+            all_dist_dict[target_dataset][source_dataset] = d
+
+            print(f'DIST({source_dataset}, {target_dataset})={d:8.2f}')
+
+    return all_dist_dict
+
+
+def compute_wte_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
+
+    if METADATA_DATASET is None:
+        METADATA_DATASET = create_dataset(maxsamples=maxsamples)
+
+    all_dist_dict = dict()
+    for i in range(len(LIST_DATASETS)):
+        all_dist_dict[LIST_DATASETS[i]] = dict()
+        for j in range(len(LIST_DATASETS)):
+            all_dist_dict[LIST_DATASETS[i]][LIST_DATASETS[j]] = 0
+    
+
+    subdatasets = list()
+
+    for i in range(len(LIST_DATASETS)):
+        subdatasets.append(METADATA_DATASET[LIST_DATASETS[i]]["train_set"])
+
+    reference = generate_reference(MAXSIZE_DIST, 4, 28, 10)
+    wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=MAXSIZE_DIST)
+    wtes = wtes.reshape(wtes.shape[0], -1)
+    wte_distance = distance.cdist(wtes, wtes, 'euclidean')
+
+    for i in range(len(LIST_DATASETS)):
+        for j in range(i+1, len(LIST_DATASETS)):
+            source_dataset = LIST_DATASETS[i]
+            target_dataset = LIST_DATASETS[j]
+            all_dist_dict[source_dataset][target_dataset] = wte_distance[i][j].item()
+            all_dist_dict[target_dataset][source_dataset] = wte_distance[i][j].item()
+    return all_dist_dict
+
+
+def compute_hswfs_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
+
+    if METADATA_DATASET is None:
+        METADATA_DATASET = create_dataset(maxsamples=maxsamples)
+
+    all_dist_dict = dict()
+    for i in range(len(LIST_DATASETS)):
+        all_dist_dict[LIST_DATASETS[i]] = dict()
+        for j in range(len(LIST_DATASETS)):
+            all_dist_dict[LIST_DATASETS[i]][LIST_DATASETS[j]] = 0
+    
+    subdatasets = list()
+
+    for i in range(len(LIST_DATASETS)):
+        subdatasets.append(METADATA_DATASET[LIST_DATASETS[i]]["train_set"])
+
+    n_projs = 500
+    scaling = 0.1
+    d = 10
+    n_epochs = 10000
+
+    emb = LabelsBW(device=DEVICE, maxsamples=MAXSIZE_DIST)
+    distance_array = emb.dissimilarity_for_all(subdatasets)
+    lorentz_geoopt = Lorentz_geoopt()
+    embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
+    mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
+
+    dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
+    diff_dist = np.abs(scaling * distance_array - dist_mds)
+    data_X = [] # data
+    data_Y = [] # labels
+    for cac_idx, cac_dataset in enumerate(subdatasets):
+        X, Y = emb.preprocess_dataset(cac_dataset)
+        label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
+        labels = torch.stack([torch.from_numpy(label_emb[target])
+                            for target in Y], dim=0).squeeze(1).to(DEVICE)
+        data_X.append(X)
+        data_Y.append(labels)
+    d_y = data_Y[0].shape[1]
+    manifolds = [Euclidean(28*28, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+    product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
+    d_sw = np.zeros((len(subdatasets), len(subdatasets)))
+
+    for i in range(len(LIST_DATASETS)):
+        for j in range(i+1, len(LIST_DATASETS)):
+            source_dataset = LIST_DATASETS[i]
+            target_dataset = LIST_DATASETS[j]
+            sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold).item()
+            all_dist_dict[source_dataset][target_dataset] = sw
+            all_dist_dict[target_dataset][source_dataset] = sw
+
+    return all_dist_dict
+
+
+def compute_sotdd_gaussian_distance(list_dict_data, list_stats_data, num_projection=10000, METADATA_DATASET=None):
     
     kwargs = {
         "dimension": 28 * 28,
         "num_channels": 1,
         "precision": "float",
         "p": 2,
-        "chunk": 100
+        "chunk": 1000
     }
 
-    sw_list = method_gaussian.compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)
+    sw_list = method_linear_gaussian.compute_pairwise_distance(list_dict_data=list_dict_data, list_stats_data=list_stats_data, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)
 
     all_dist_dict = dict()
     for i in range(len(LIST_DATASETS)):
@@ -176,7 +311,7 @@ def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADA
     kwargs = {
         "dimension": 28 * 28,
         "num_channels": 1,
-        "num_moments": 5,
+        "num_moments": 1,
         "use_conv": False,
         "precision": "float",
         "p": 2,
@@ -312,24 +447,59 @@ def training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=D
 
 if __name__ == "__main__":
 
-    METADATA_DATASET = create_dataset(maxsamples=MAXSIZE_DIST)
+    # METADATA_DATASET = create_dataset(maxsamples=MAXSIZE_DIST)
+
+    # list_dataset = list()
+    # for i in range(len(LIST_DATASETS)):
+    #     dt_name = LIST_DATASETS[i]
+    #     list_dataset.append(METADATA_DATASET[dt_name]["train_loader"])
+    # list_stats_data = list()
+    # list_dict_data = list()
+
+    # for D in list_dataset:
+    #     X, Y, dict_data = load_full_dataset(data=D, labels_keep=None, maxsamples=None, device='cpu', precision=torch.FloatTensor, feature_embedding=None, reindex=False, reindex_start=0)
+    #     del X 
+    #     del Y 
+    #     M, C = compute_label_stats(data=D, device='cpu', eigen_correction="jitter", eigen_correction_scale=1e-4, dtype=torch.FloatTensor) # flatten all data points
+    #     list_dict_data.append(dict_data)
+    #     list_stats_data.append([M, C])
+    # with open(f'list_dict_data_{MAXSIZE_DIST}.pkl', 'wb') as f:
+    #     pickle.dump(list_dict_data, f)
+    # with open(f'list_stats_data_{MAXSIZE_DIST}.pkl', 'wb') as f:
+    #     pickle.dump(list_stats_data, f)
     
+
     # DIST_otdd = compute_otdd_distance()
-    # dist_file_path = f'{parent_dir}/otdd_dist_exact.json'
+    # dist_file_path = f'{parent_dir}/otdd_dist_gaussian_label.json'
     # with open(dist_file_path, 'w') as json_file:
     #     json.dump(DIST_otdd, json_file, indent=4)
 
+
     # DIST_sotdd = compute_sotdd_distance(num_projection=10000, METADATA_DATASET=METADATA_DATASET)
-    # dist_file_path = f'{parent_dir}/sotdd_arbitrary_dist.json'
+    # dist_file_path = f'{parent_dir}/sotdd_demo_1_moments.json'
     # with open(dist_file_path, 'w') as json_file:
     #     json.dump(DIST_sotdd, json_file, indent=4)
 
-    
 
-    DIST_sotdd_gaussian = compute_sotdd_gaussian_distance(num_projection=10000, METADATA_DATASET=METADATA_DATASET)
-    dist_file_path = f'{parent_dir}/sotdd_gaussian_dist.json'
+    DIST_sotdd = compute_wte_distance()
+    dist_file_path = f'{parent_dir}/wte_distance.json'
     with open(dist_file_path, 'w') as json_file:
-        json.dump(DIST_sotdd_gaussian, json_file, indent=4)
+        json.dump(DIST_sotdd, json_file, indent=4)
+
+    DIST_sotdd = compute_hswfs_distance()
+    dist_file_path = f'{parent_dir}/hswfs_distance.json'
+    with open(dist_file_path, 'w') as json_file:
+        json.dump(DIST_sotdd, json_file, indent=4)
+
+
+    # with open(f'list_dict_data_{MAXSIZE_DIST}.pkl', 'rb') as f:
+    #     list_dict_data = pickle.load(f)
+    # with open(f'list_stats_data_{MAXSIZE_DIST}.pkl', 'rb') as f:
+    #     list_stats_data = pickle.load(f)
+    # DIST_sotdd_gaussian = compute_sotdd_gaussian_distance(list_dict_data=list_dict_data, list_stats_data=list_stats_data, num_projection=10000)
+    # dist_file_path = f'{parent_dir}/sotdd_linear_gaussian_dist.json'
+    # with open(dist_file_path, 'w') as json_file:
+    #     json.dump(DIST_sotdd_gaussian, json_file, indent=4)
 
     # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
     # training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)

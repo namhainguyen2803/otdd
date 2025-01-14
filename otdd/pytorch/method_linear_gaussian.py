@@ -122,8 +122,8 @@ class Embeddings_sOTDD():
             X = X.reshape(X.shape[0], -1)
         X_projection = torch.matmul(X, projection_matrix.t())  # shape == (num_examples, num_projection)
         return X_projection
-    
-    def _project_distribution(self, mean, cov, w, theta, A):
+
+    def _project_distribution(self, mean, cov, w, theta):
         """
         mean has shape R^(num_cls, flatten_dim)
         cov has shape R^(num_cls, flatten_dim, flatten_dim)
@@ -134,52 +134,33 @@ class Embeddings_sOTDD():
         num_classes = cov.shape[0]
         flatten_dim = cov.shape[1]
         num_projections = w.shape[0]
-
-        # projected_mean = torch.matmul(mean, theta.transpose(0, 1))
-        # log_cov = geoopt.linalg.sym_logm(cov)
-        # projected_cov = torch.sum(torch.matmul(A, log_cov.unsqueeze(0))[:, torch.arange(flatten_dim), torch.arange(flatten_dim)], dim=1)
-        # return w[:, 0] * projected_mean + w[:, 1] * projected_cov
-
-        projected_mean = torch.matmul(mean, theta.transpose(0, 1)) # shape == ()
-        log_cov = geoopt.linalg.sym_logm(cov)
-        projected_cov = (A.unsqueeze(0) * log_cov.unsqueeze(1)).reshape(num_classes, num_projections, -1).sum(-1)
+        projected_mean = torch.matmul(mean, theta.transpose(0, 1))
+        projected_cov = torch.sum(torch.matmul(cov, theta.transpose(0, 1)) * theta.transpose(0, 1), dim=1)
         projected_distributions = torch.stack([projected_mean, projected_cov], dim=-1)
-        del projected_cov
-        del projected_mean
-        del log_cov
-        avg_projected_distributions = torch.sum(projected_distributions * w, dim=-1)
-        return avg_projected_distributions
-
+        # avg_projected_distributions = torch.sum(projected_distributions * w, dim=-1)
+        return projected_distributions
 
     def get_embeddings(self, dict_data, cls_stats, theta, psi):
-
         proj_matrix_dataset = list()
-
         M, C = cls_stats[0], cls_stats[1]
-        projected_distribution = self._project_distribution(mean=M, cov=C, w=theta[0], theta=theta[1], A=theta[2]) # shape == (num_cls, num_projections)
-
+        projected_distribution = self._project_distribution(mean=M, cov=C, w=theta[0], theta=theta[1]) # shape == (num_cls, num_projections)
+        if projected_distribution.ndim == 2:
+            projected_cls_distribution = projected_distribution.unsqueeze(-1) # shape == (num_cls, num_projections, 1)
         del cls_stats
-
         for (cls_id, data) in dict_data.items():
-
             # compute projected distribution and projected data
             projected_cls_data = self._project_data(X=data, projection_matrix=theta[1]) # shape == (num_examples, num_projections)
-
             # concat projected distribution into projected data
             projected_cls_data = projected_cls_data.T # shape == (num_projections, num_examples)
-            projected_cls_distribution = projected_distribution[cls_id].unsqueeze(-1)
-
+            projected_cls_distribution = projected_distribution[cls_id, :] # shape == (num_projections, 1)
+            # print(f"projected_cls_data: {torch.mean(projected_cls_data)}")
+            # print(f"projected_cls_distribution: {torch.mean(projected_cls_distribution)}")
             num_projection, num_examples = projected_cls_data.shape[0], projected_cls_data.shape[1]
-
             h = torch.cat((projected_cls_data.unsqueeze(-1),
-                            projected_cls_distribution.unsqueeze(1).expand(num_projection, num_examples, 1)), 
+                            projected_cls_distribution.unsqueeze(1).expand(num_projection, num_examples, projected_cls_distribution.shape[-1])), 
                             dim=2) # shape == (num_projection, num_examples, num_moments+1)
 
-            # has_nan = torch.isnan(h).any()
-            # print(f"If matrix h has nan: {has_nan}")
-
             proj_matrix_dataset.append(h)
-        
         proj_matrix_dataset = torch.cat(proj_matrix_dataset, dim=1) # shape == (num_projection, total_examples, num_moments+1)
         proj_proj_matrix_dataset = torch.matmul(proj_matrix_dataset, psi.unsqueeze(-1)).squeeze(-1) # shape == (num_projection, total_examples)
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
@@ -191,7 +172,6 @@ def compute_pairwise_distance(list_dict_data=None, list_stats_data=None, device=
     precision = kwargs.get('precision', "float")
     p = kwargs.get('p', 2)
     chunk = kwargs.get('chunk', 1000)
-
     if num_channels != 1:
         flatten_dimension = num_channels * dimension * dimension
     else:
@@ -209,13 +189,14 @@ def compute_pairwise_distance(list_dict_data=None, list_stats_data=None, device=
 
     for i in range(chunk_num_projection):
 
-        chunk_theta, chunk_A = generate_Gaussian_projectors(dim=flatten_dimension, num_projection=chunk, device=device, dtype=dtype)
-        chunk_psi = generate_uniform_unit_sphere_projections(dim=2, num_projection=chunk, device=device, dtype=dtype)
+        chunk_theta = generate_uniform_unit_sphere_projections(dim=flatten_dimension, num_projection=chunk, device=device, dtype=dtype)
+        chunk_psi = generate_uniform_unit_sphere_projections(dim=3, num_projection=chunk, device=device, need_cheat=True, dtype=dtype)
         chunk_w = generate_uniform_unit_sphere_projections(dim=2, num_projection=chunk, device=device, dtype=dtype)
+        # dtype = torch.float64 if precision == 'double' else torch.float32
+        # chunk_w = torch.tensor([[1.0, 0.0]] * chunk, device=device, dtype=dtype)
 
-        list_theta.append([chunk_w, chunk_theta, chunk_A])
+        list_theta.append([chunk_w, chunk_theta])
         list_psi.append(chunk_psi)
-    
 
     embeddings = Embeddings_sOTDD(device=device)
 
@@ -244,14 +225,14 @@ def compute_pairwise_distance(list_dict_data=None, list_stats_data=None, device=
         list_w1d.append(list_chunk_w1d)
 
 
-        cac = torch.cat(list_w1d, dim=0)
-        if p != 1:
-            sw = torch.pow(input=cac, exponent=p)
-        else:
-            sw = cac
-        sw = torch.pow(torch.mean(sw, dim=0), exponent=1/p) 
+        # cac = torch.cat(list_w1d, dim=0)
+        # if p != 1:
+        #     sw = torch.pow(input=cac, exponent=p)
+        # else:
+        #     sw = cac
+        # sw = torch.pow(torch.mean(sw, dim=0), exponent=1/p) 
         
-        print(f"sw: {sw}")
+        # print(f"sw: {sw}")
         
 
     list_w1d = torch.cat(list_w1d, dim=0)

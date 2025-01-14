@@ -336,7 +336,7 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
                     stratified=False, random_seed=None, batch_size = 64,
                     resize=None, to3channels=False,
                     maxsize = None, maxsize_test=None, num_workers = 0, transform=None,
-                    data=None, datadir=None, download=True, filt=False, print_stats = False, maxsize_for_each_class=None, **kwargs):
+                    data=None, datadir=None, download=True, filt=False, print_stats = False, maxsize_for_each_class=None, num_classes=10, **kwargs):
     """ Load torchvision datasets.
 
         We return train and test for plots and post-training experiments
@@ -400,6 +400,22 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
                 ## The letters fold (and only that fold!!!) is 1-indexed
                 train.targets -= 1
                 test.targets -= 1
+
+            if num_classes is not None:
+                # Filter the training set to only include the desired number of classes
+                train_mask = torch.isin(train.targets, torch.arange(num_classes))
+                train.data = train.data[train_mask]
+                train.targets = train.targets[train_mask]
+                # Filter the test set to only include the desired number of classes
+                test_mask = torch.isin(test.targets, torch.arange(num_classes))
+                test.data = test.data[test_mask]
+                test.targets = test.targets[test_mask]
+                # Create datasets for each class
+                datasets_i = []
+                for i in range(num_classes):
+                    datasets_i.append([(data, i) for data in train.data[train.targets == i]])
+
+
                     
         elif dataname == 'STL10':
             train = DATASET(datadir, split='train', download=download, transform=train_transform)

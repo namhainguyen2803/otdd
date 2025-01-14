@@ -215,7 +215,7 @@ class Embeddings_sOTDD():
             # generate_and_plot_data(X_projection[0], "cac2.png")
             # print(f"Range of X_projection: min={X_projection.min()}, max={X_projection.max()}, mean={torch.mean(X_projection)}")
 
-            X_projection = torch.clamp(X_projection, min=-5, max=5)
+            # X_projection = torch.clamp(X_projection, min=-5, max=5)
             # print(f"Range of X_projection after clamping: min={X_projection.min()}, max={X_projection.max()}")
 
             # seed = random.randint(1, 100)
@@ -290,9 +290,9 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     list_theta = list()
     list_psi = list()
     for i in range(chunk_num_projection):
-        chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=5, gen_type="poisson") for lz in range(chunk)])
+        # chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=5, gen_type="poisson") for lz in range(chunk)])
 
-        # chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
+        chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
 
         unique_chunk_moments = torch.unique(chunk_moments)
 

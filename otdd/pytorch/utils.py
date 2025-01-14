@@ -565,7 +565,7 @@ def set_parameter_requires_grad(model, feature_extracting):
 
 #### NEW UTILS CODES
 
-def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="cpu", dtype=torch.FloatTensor):
+def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="cpu", need_cheat=False, dtype=torch.FloatTensor):
     """
     Generate random uniform unit sphere projections matrix
     :param dim: dimension of measures
@@ -573,6 +573,9 @@ def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="c
     :return: projection matrix \in \mathbb R^(num_projection, dim)
     """
     projection_matrix = torch.randn((num_projection, dim), device=device)
+
+    if need_cheat is True:
+        projection_matrix[:, 0] /= 50
 
     projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=1, keepdim=True))
 
@@ -801,7 +804,6 @@ def SOT_GMs(mu1s,Sigma1s,mu2s,Sigma2s,a,b,L=10,p=2):
     Y = torch.stack([prod_mu2s, torch.log(prod_Sigma2s)], dim=-1)
     psi = torch.randn(L, 2, device=mu1s.device)
     psi = psi / torch.sqrt(torch.sum(psi ** 2, dim=1, keepdim=True))
-
     X_prod = torch.sum(X*psi,dim=-1)
     Y_prod = torch.sum(Y* psi,dim=-1)
     return torch.mean(one_dimensional_Wasserstein(X_prod, Y_prod, a, b, p)) ** (1. / p)
