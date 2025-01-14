@@ -272,6 +272,9 @@ class DatasetDistance():
         targets1, classes1, idxs1 = extract_data_targets(D1)
         targets2, classes2, idxs2 = extract_data_targets(D2)
 
+        classes1 = torch.arange(0, 10)
+        classes2 = torch.arange(0, 200)
+
         ## Get effective dataset number of samples
         self.idxs1, self.idxs2 = idxs1, idxs2
         self.n1 = len(self.idxs1)
@@ -316,7 +319,6 @@ class DatasetDistance():
 
         ## Ignore everything with a label occurring less than k times
         self.V2 = torch.sort(vals2[cts2 >= self.min_labelcount])[0]
-
 
         self.classes1 = [classes1[i] for i in self.V1]
         self.classes2 = [classes2[i] for i in self.V2]

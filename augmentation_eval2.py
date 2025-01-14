@@ -66,8 +66,8 @@ def main():
 
     saved_path = 'saved_augmentation_2'
 
-    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    DEVICE = "cpu"
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # DEVICE = "cpu"
 
 
     result = dict()
@@ -160,7 +160,7 @@ def main():
                                                     p=2,
                                                     sqrt_method='approximate',
                                                     nworkers_stats=0,
-                                                    sqrt_niters=20,
+                                                    sqrt_niters=5,
                                                     entreg=1e-3,
                                                     device=DEVICE)
                         otdd_ga_dist = otdd_dist.distance(maxsamples=None).item()
