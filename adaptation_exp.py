@@ -56,8 +56,8 @@ os.makedirs(parent_dir, exist_ok=True)
 os.makedirs(pretrained_path, exist_ok=True)
 os.makedirs(adapt_path, exist_ok=True)
 
-# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEVICE = "cpu"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# DEVICE = "cpu"
 
 # Load data
 MAXSIZE_DIST = 5000
@@ -210,7 +210,7 @@ def compute_wte_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
     return all_dist_dict
 
 
-def compute_hswfs_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
+def compute_hswfs_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None, num_proj=500):
 
     if METADATA_DATASET is None:
         METADATA_DATASET = create_dataset(maxsamples=maxsamples)
@@ -226,10 +226,10 @@ def compute_hswfs_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
     for i in range(len(LIST_DATASETS)):
         subdatasets.append(METADATA_DATASET[LIST_DATASETS[i]]["train_set"])
 
-    n_projs = 10000
+    n_projs = num_proj
     scaling = 0.1
     d = 10
-    n_epochs = 10000
+    n_epochs = 5000
 
     emb = LabelsBW(device=DEVICE, maxsamples=MAXSIZE_DIST)
     distance_array = emb.dissimilarity_for_all(subdatasets)
@@ -486,8 +486,9 @@ if __name__ == "__main__":
     # with open(dist_file_path, 'w') as json_file:
     #     json.dump(DIST_sotdd, json_file, indent=4)
 
-    DIST_sotdd = compute_hswfs_distance()
-    dist_file_path = f'{parent_dir}/hswfs_10000_distance.json'
+    num_proj = 10000
+    DIST_sotdd = compute_hswfs_distance(num_proj=num_proj)
+    dist_file_path = f'{parent_dir}/hswfs_{num_proj}_distance.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_sotdd, json_file, indent=4)
 

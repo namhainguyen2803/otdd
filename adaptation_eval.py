@@ -14,7 +14,7 @@ if method == "sotdd":
 elif method == "otdd":
     display_method = "OTDD (Gaussian Approx)"
 elif method == "hswfs":
-    display_method = "CHSW (500 projections)"
+    display_method = "CHSW (10,000 projections)"
 elif method == "wte":
     display_method = "WTE"
 saved_dir = "saved_nist"
@@ -26,7 +26,7 @@ if method == "sotdd":
 elif method == "otdd":
     dist_path = f"saved_nist/dist/otdd_dist_gaussian.json"
 elif method == "hswfs":
-    dist_path = "saved_nist/dist/hswfs_distance.json"
+    dist_path = "saved_nist/dist/hswfs_10000_distance.json"
 elif method == "wte":
     dist_path = "saved_nist/dist/wte_distance.json"
     

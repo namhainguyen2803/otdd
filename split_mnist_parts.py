@@ -249,9 +249,8 @@ def main():
 
         def hswfs_otdd(subdatasets=subdatasets, save_dir=save_dir, dataset_size=dataset_size):
             # HSWFS_OTDD
-            projection_list = [500, 800, 1000, 3000, 5000]
+            projection_list = [100, 500, 1000, 5000, 10000]
             for n_projs in projection_list:
-                n_projs
                 scaling = 0.1
                 d = 10
                 n_epochs = 10000
