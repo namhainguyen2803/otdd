@@ -125,7 +125,7 @@ def main():
                                                     p=2,
                                                     entreg=1e-3,
                                                     device=DEVICE)
-                        otdd_exact_dist = otdd_dist.distance(maxsamples=None).item()
+                        otdd_exact_dist = otdd_dist.distance(maxsamples=args.maxsize).item()
                         end = time.time()
                         time_taken = end - start
                         total_processing_time += time_taken
@@ -163,7 +163,7 @@ def main():
                                                     sqrt_niters=5,
                                                     entreg=1e-3,
                                                     device=DEVICE)
-                        otdd_ga_dist = otdd_dist.distance(maxsamples=None).item()
+                        otdd_ga_dist = otdd_dist.distance(maxsamples=args.maxsize).item()
                         end = time.time()
                         time_taken = end - start
                         total_processing_time += time_taken

@@ -158,7 +158,7 @@ class DatasetDistance():
                  inner_ot_entreg=0.001,
                  ## Gaussian Approximation Args
                  diagonal_cov=False,
-                 min_labelcount=1,
+                 min_labelcount=5,
                  online_stats=True,
                  sqrt_method='spectral',
                  sqrt_niters=20,
@@ -272,8 +272,8 @@ class DatasetDistance():
         targets1, classes1, idxs1 = extract_data_targets(D1)
         targets2, classes2, idxs2 = extract_data_targets(D2)
 
-        classes1 = torch.arange(0, 10)
-        classes2 = torch.arange(0, 200)
+        # classes1 = torch.arange(0, 10)
+        # classes2 = torch.arange(0, 200)
 
         ## Get effective dataset number of samples
         self.idxs1, self.idxs2 = idxs1, idxs2
