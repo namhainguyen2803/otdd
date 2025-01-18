@@ -249,47 +249,47 @@ def main():
 
         def hswfs_otdd(subdatasets=subdatasets, save_dir=save_dir, dataset_size=dataset_size):
             # HSWFS_OTDD
-            n_projs = 500
-            scaling = 0.1
-            d = 10
-            n_epochs = dataset_size * 5
-            start = time.time()
-            emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
-            distance_array = emb.dissimilarity_for_all(subdatasets)
-            lorentz_geoopt = Lorentz_geoopt()
-            embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
+            projection_list = [500, 800, 1000, 3000, 5000]
+            for n_projs in projection_list:
+                n_projs
+                scaling = 0.1
+                d = 10
+                n_epochs = 10000
+                start = time.time()
+                emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
+                distance_array = emb.dissimilarity_for_all(subdatasets)
+                lorentz_geoopt = Lorentz_geoopt()
+                embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
+                mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
 
-            plt.plot(np.log(np.array(L)))
-            plt.savefig(f"{save_dir}/hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
+                # plt.plot(np.log(np.array(L)))
+                # plt.savefig(f"{save_dir}/hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
 
-            dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
-            diff_dist = np.abs(scaling * distance_array - dist_mds)
-            data_X = [] # data
-            data_Y = [] # labels
-            for cac_idx, cac_dataset in enumerate(subdatasets):
-                X, Y = emb.preprocess_dataset(cac_dataset)
-                label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
-                labels = torch.stack([torch.from_numpy(label_emb[target])
-                                    for target in Y], dim=0).squeeze(1).to(DEVICE)
-                data_X.append(X)
-                data_Y.append(labels)
-            d_y = data_Y[0].shape[1]
-            manifolds = [Euclidean(28*28, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
-            product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
-            d_sw = np.zeros((len(subdatasets), len(subdatasets)))
-            for i in range(len(subdatasets)):
-                for j in range(i): 
-                    sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
-                    d_sw[i, j] = sw.item()
-                    d_sw[j, i] = sw.item()
-            end = time.time()
-            hswfs_time_taken = end - start
-            print(d_sw)
-            print(hswfs_time_taken)
-            torch.save(d_sw, f'{save_dir}/hswfs_otdd.pt')
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
+                dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
+                diff_dist = np.abs(scaling * distance_array - dist_mds)
+                data_X = [] # data
+                data_Y = [] # labels
+                for cac_idx, cac_dataset in enumerate(subdatasets):
+                    X, Y = emb.preprocess_dataset(cac_dataset)
+                    label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
+                    labels = torch.stack([torch.from_numpy(label_emb[target])
+                                        for target in Y], dim=0).squeeze(1).to(DEVICE)
+                    data_X.append(X)
+                    data_Y.append(labels)
+                d_y = data_Y[0].shape[1]
+                manifolds = [Euclidean(28*28, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+                product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
+                d_sw = np.zeros((len(subdatasets), len(subdatasets)))
+                for i in range(len(subdatasets)):
+                    for j in range(i): 
+                        sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
+                        d_sw[i, j] = sw.item()
+                        d_sw[j, i] = sw.item()
+                end = time.time()
+                hswfs_time_taken = end - start
+                torch.save(d_sw, f'{save_dir}/hswfs_{n_projs}_dist.pt')
+                with open(f'{save_dir}/time_running.txt', 'a') as file:
+                    file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
 
         if args.method == "sotdd":
             sotdd(save_dir=save_dir)

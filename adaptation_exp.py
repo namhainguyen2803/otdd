@@ -226,7 +226,7 @@ def compute_hswfs_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
     for i in range(len(LIST_DATASETS)):
         subdatasets.append(METADATA_DATASET[LIST_DATASETS[i]]["train_set"])
 
-    n_projs = 500
+    n_projs = 10000
     scaling = 0.1
     d = 10
     n_epochs = 10000
@@ -481,13 +481,13 @@ if __name__ == "__main__":
     #     json.dump(DIST_sotdd, json_file, indent=4)
 
 
-    DIST_sotdd = compute_wte_distance()
-    dist_file_path = f'{parent_dir}/wte_distance.json'
-    with open(dist_file_path, 'w') as json_file:
-        json.dump(DIST_sotdd, json_file, indent=4)
+    # DIST_sotdd = compute_wte_distance()
+    # dist_file_path = f'{parent_dir}/wte_distance.json'
+    # with open(dist_file_path, 'w') as json_file:
+    #     json.dump(DIST_sotdd, json_file, indent=4)
 
     DIST_sotdd = compute_hswfs_distance()
-    dist_file_path = f'{parent_dir}/hswfs_distance.json'
+    dist_file_path = f'{parent_dir}/hswfs_10000_distance.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_sotdd, json_file, indent=4)
 

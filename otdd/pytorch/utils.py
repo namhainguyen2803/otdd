@@ -565,7 +565,7 @@ def set_parameter_requires_grad(model, feature_extracting):
 
 #### NEW UTILS CODES
 
-def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="cpu", need_cheat=False, dtype=torch.FloatTensor):
+def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="cpu", dtype=torch.FloatTensor):
     """
     Generate random uniform unit sphere projections matrix
     :param dim: dimension of measures
@@ -573,9 +573,6 @@ def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="c
     :return: projection matrix \in \mathbb R^(num_projection, dim)
     """
     projection_matrix = torch.randn((num_projection, dim), device=device)
-
-    if need_cheat is True:
-        projection_matrix[:, 0] /= 50
 
     projection_matrix = projection_matrix / torch.sqrt(torch.sum(projection_matrix ** 2, dim=1, keepdim=True))
 

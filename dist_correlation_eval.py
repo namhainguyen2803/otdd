@@ -71,15 +71,15 @@ for file_name in os.listdir(saved_path):
 
 
 title_dict = {
-    "ga": "OTDD (Gaussian approx)",
-    "exact": "OTDD (Exact)",
+    "ga": "OTDD (Gaussian approx) Distance",
+    "exact": "OTDD (Exact) Distance",
     "wte": "WTE",
-    "hswfs": "CHSW (500 projections) $\\times 10^{-3}$",
-    "sotdd_100": "s-OTDD (100 projections)",
-    "sotdd_500": "s-OTDD (500 projections)",
-    "sotdd_1000": "s-OTDD (1,000 projections)",
-    "sotdd_5000": "s-OTDD (5,000 projections)",
-    "sotdd_10000": "s-OTDD (10,000 projections)"
+    "hswfs": "CHSW (500 projections) Distance $\\times 10^{-3}$",
+    "sotdd_100": "s-OTDD (100 projections) Distance",
+    "sotdd_500": "s-OTDD (500 projections) Distance",
+    "sotdd_1000": "s-OTDD (1,000 projections) Distance",
+    "sotdd_5000": "s-OTDD (5,000 projections) Distance",
+    "sotdd_10000": "s-OTDD (10,000 projections) Distance"
 }
 
 # cac = list()
@@ -132,6 +132,7 @@ def calculate_correlation(list_dist_1, name_1, list_dist_2, name_2):
     # plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     plt.grid(False)
     plt.legend(loc="upper left", frameon=True, fontsize=15)
+    plt.tight_layout()
     plt.savefig(f'{saved_path}/correlation_dist_{dataset}_{name_1}_{name_2}.png', dpi=1000)
     plt.savefig(f'{saved_path}/correlation_dist_{dataset}_{name_1}_{name_2}.pdf', dpi=1000)
 
@@ -168,5 +169,5 @@ def retrieve_pair(method1, method2):
 
 list_methods = ["exact", "ga", "wte", "hswfs", "sotdd_100", "sotdd_500", "sotdd_1000", "sotdd_5000", "sotdd_10000"]
 
-abc = retrieve_pair("sotdd_100", "exact")
+abc = retrieve_pair("exact", "sotdd_10000")
 calculate_correlation(list_dist_1=abc[0], name_1=abc[1], list_dist_2=abc[2], name_2=abc[3])
