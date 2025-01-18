@@ -699,10 +699,7 @@ def generate_moments(num_moments, min_moment=1, max_moment=None, gen_type="unifo
 
     elif gen_type == "poisson":
 
-        if max_moment is not None:
-            mean_moment = (max_moment + 3 * min_moment) / 4
-        else:
-            mean_moment = 5
+        mean_moment = 3
 
         moment = torch.sort(torch.poisson(torch.ones(num_moments) * mean_moment))[0]
 
