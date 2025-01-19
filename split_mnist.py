@@ -263,8 +263,8 @@ def main():
                 torch.save(d_sw, f'{save_dir}/hswfs_{n_projs}_dist.pt')
                 with open(f'{save_dir}/time_running.txt', 'a') as file:
                     file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
-            except:
-                print()
+        except:
+            print()
 
 
 if __name__ == "__main__":
