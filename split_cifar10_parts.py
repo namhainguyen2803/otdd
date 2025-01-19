@@ -105,7 +105,7 @@ def main():
     max_dataset_size = len(dataset) // 2
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
 
-    list_dataset_size = [2000 * (i + 1) for i in range(int(len(dataset) // 2000))]
+    list_dataset_size = [5000 * (i + 1) for i in range(int(len(dataset) // 5000))]
 
     print(list_dataset_size)
 
