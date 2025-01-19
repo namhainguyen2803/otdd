@@ -19,33 +19,52 @@ wte = list()
 sotdd = dict()
 hswfs = list()
 
-for file_name in os.listdir(parent_path):
-    if ".pdf" in file_name or ".png" in file_name or "npy" in file_name:
-        continue
-    dataset_size = int(file_name.split("_")[-1])
-    runtime_path = f"{parent_path}/{file_name}/time_running.txt"
-    with open(runtime_path, "r") as file:
-        for line in file:
-            pattern = r"sOTDD \((\d+) projections\): ([\d.]+)"
-            match = re.search(pattern, line)
-            if "sOTDD" in line:
-                if match:
+def retrieve_running_time(parent_path, exclude_hswfs=False):
+    otdd_gaussian = list()
+    otdd_exact = list()
+    wte = list()
+    sotdd = dict()
+    hswfs = dict()
+    for file_name in os.listdir(parent_path):
+        if ".pdf" in file_name or ".png" in file_name or "npy" in file_name:
+            continue
+        dataset_size = int(file_name.split("_")[-1])
+        runtime_path = f"{parent_path}/{file_name}/time_running.txt"
+        print(runtime_path)
+        with open(runtime_path, "r") as file:
+            for line in file:
+                if "sOTDD" in line:
+                    pattern = r"sOTDD \((\d+) projections\): ([\d.]+)"
+                    match = re.search(pattern, line)
                     proj_id = int(match.group(1))
                     if proj_id not in sotdd:
                         sotdd[proj_id] = list()
                     sotdd[proj_id].append([dataset_size, float(match.group(2))])
-            elif "OTDD" in line and (("exact" in line) or ("gaussian" in line)):
-                parts = float(line.split(": ")[-1])
-                if "exact" in line:
-                    otdd_exact.append([dataset_size, parts])
-                elif "gaussian" in line:
-                    otdd_gaussian.append([dataset_size, parts])
-            elif "WTE" in line:
-                parts = float(line.split(": ")[-1])
-                wte.append([dataset_size, parts])
-            elif "HSWFS_OTDD" in line:
-                parts = float(line.split(": ")[-1])
-                hswfs.append([dataset_size, parts])
+                elif "OTDD" in line and (("exact" in line) or ("gaussian" in line)):
+                    parts = float(line.split(": ")[-1])
+                    if "exact" in line:
+                        otdd_exact.append([dataset_size, parts])
+                    elif "gaussian" in line:
+                        otdd_gaussian.append([dataset_size, parts])
+                elif "WTE" in line:
+                    parts = float(line.split(": ")[-1])
+                    wte.append([dataset_size, parts])
+                elif "HSWFS_OTDD" in line and exclude_hswfs is False:
+                    pattern = r"Time proccesing for HSWFS_OTDD \((\d+) epochs, (\d+) projections\): ([\d\.]+)"
+                    match = re.search(pattern, line)
+                    epochs = int(match.group(1))
+                    proj_id = int(match.group(2))
+                    time = float(match.group(3))
+                    if proj_id not in hswfs:
+                        hswfs[proj_id] = list()
+                    hswfs[proj_id].append([dataset_size, time])
+                else:
+                    print("lozzz")
+    return sotdd, otdd_exact, otdd_gaussian, wte, hswfs
+
+
+sotdd, otdd_exact, otdd_gaussian, wte, _ = retrieve_running_time(parent_path=parent_path, exclude_hswfs=True)
+_, _, _, _, hsfws = retrieve_running_time(parent_path="saved_runtime_mnist_parts_19_01_2025/time_comparison/MNIST")
 
 
 def make_xy_coordinate(lst_data, sort=True):
@@ -71,7 +90,13 @@ def make_xy_coordinate(lst_data, sort=True):
 list_dataset_size_otdd_exact, list_otdd_exact = make_xy_coordinate(otdd_exact)
 list_dataset_size_otdd_gaussian, list_otdd_gaussian = make_xy_coordinate(otdd_gaussian)
 list_dataset_size_wte, list_wte = make_xy_coordinate(wte)
-list_dataset_size_hswfs, list_hswfs = make_xy_coordinate(hswfs, False)
+
+list_dataset_size_hsfws_100, list_hsfws_100 = make_xy_coordinate(hsfws[100])
+list_dataset_size_hsfws_500, list_hsfws_500 = make_xy_coordinate(hsfws[500])
+list_dataset_size_hsfws_1000, list_hsfws_1000 = make_xy_coordinate(hsfws[1000])
+list_dataset_size_hsfws_5000, list_hsfws_5000 = make_xy_coordinate(hsfws[5000])
+list_dataset_size_hsfws_10000, list_hsfws_10000 = make_xy_coordinate(hsfws[10000])
+
 list_dataset_size_sotdd_100, list_sotdd_100 = make_xy_coordinate(sotdd[100])
 list_dataset_size_sotdd_500, list_sotdd_500 = make_xy_coordinate(sotdd[500])
 list_dataset_size_sotdd_1000, list_sotdd_1000 = make_xy_coordinate(sotdd[1000])
@@ -91,7 +116,7 @@ plt.figure(figsize=(8, 8))
 plt.plot(list_dataset_size_otdd_exact, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_otdd_gaussian, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian approx)', marker='s', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_hswfs, list_hswfs, color=colors[4], label='CHSW (500 projections)', marker='*', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_hsfws_10000, list_hsfws_10000, color=colors[4], label='CHSW (10,000 projections)', marker='*', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
 plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[7], label='sOTDD (10,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)

@@ -18,7 +18,7 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-dataset = "mnist"
+dataset = "cifar10"
 if dataset == "mnist":
     saved_path = "saved_corr_mnist_v100_4/correlation/MNIST"
 # saved_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
@@ -73,7 +73,7 @@ for file_name in os.listdir(saved_path):
 title_dict = {
     "ga": "OTDD (Gaussian approx) Distance",
     "exact": "OTDD (Exact) Distance",
-    "wte": "WTE",
+    "wte": "WTE Distance",
     "hswfs": "CHSW (500 projections) Distance $\\times 10^{-3}$",
     "sotdd_100": "s-OTDD (100 projections) Distance",
     "sotdd_500": "s-OTDD (500 projections) Distance",
