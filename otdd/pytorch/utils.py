@@ -685,29 +685,11 @@ def quantile_function(qs, cws, xs):
     return torch.take_along_dim(input=xs, indices=torch.clip(idx, 0, n - 1), dim=0)
 
 
-def generate_moments(num_moments, min_moment=1, max_moment=None, gen_type="uniform"):
-    assert gen_type in ("uniform", "poisson", "fixed")
-
-    if gen_type == "fixed":
-        return torch.arange(num_moments) + 1
-
-    elif gen_type == "uniform":
-        assert num_moments > max_moment
-        moments = torch.sort(torch.randperm(max_moment)[:num_moments])[0] + 1
-        moments[moments < min_moment] = min_moment
-        return moments
-
-    elif gen_type == "poisson":
-
-        mean_moment = 3
-
-        moment = torch.sort(torch.poisson(torch.ones(num_moments) * mean_moment))[0]
-
-        if max_moment is not None:
-            moment[moment > max_moment] = max_moment
-        moment[moment < min_moment] = min_moment
-
-        return moment
+def generate_moments(num_moments, min_moment=1, max_moment=None):
+    mean_moment = torch.arange(num_moments) + 1
+    moment = torch.sort(torch.poisson(torch.ones(num_moments) * mean_moment))[0]
+    moment[moment < min_moment] = min_moment
+    return moment
 
 
 def normalizing_moments(empirical_moments, k):

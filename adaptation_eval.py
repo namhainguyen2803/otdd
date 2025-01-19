@@ -8,7 +8,7 @@ from scipy import stats
 import json
 from matplotlib.ticker import FormatStrFormatter
 
-method = "hswfs"
+method = "sotdd"
 if method == "sotdd":
     display_method = "s-OTDD Demo (10,000 projections)"
 elif method == "otdd":
@@ -22,7 +22,7 @@ if method == "sotdd":
     # dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
     # dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
     # dist_path = f"saved_nist/dist/sotdd_linear_gaussian_dist_mean.json"
-    dist_path = f"saved_nist/dist/otdd_dist_gaussian.json"
+    dist_path = f"saved_nist/dist/sotdd_dist_19_01_2025.json"
 elif method == "otdd":
     dist_path = f"saved_nist/dist/otdd_dist_gaussian.json"
 elif method == "hswfs":

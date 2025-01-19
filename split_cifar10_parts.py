@@ -239,34 +239,38 @@ def main():
 
         def hswfs_otdd(subdatasets=subdatasets, save_dir=save_dir, dataset_size=dataset_size):
             # HSWFS_OTDD
+            start = time.time()
+            scaling = 0.1
+            d = 10
+            n_epochs = 20000
+            emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
+            distance_array = emb.dissimilarity_for_all(subdatasets)
+            lorentz_geoopt = Lorentz_geoopt()
+            embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
+            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
+            print(np.log(np.array(L))[-5:])
+            dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
+            diff_dist = np.abs(scaling * distance_array - dist_mds)
+            data_X = [] # data
+            data_Y = [] # labels
+            for cac_idx, cac_dataset in enumerate(subdatasets):
+                X, Y = emb.preprocess_dataset(cac_dataset)
+                label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
+                labels = torch.stack([torch.from_numpy(label_emb[target])
+                                    for target in Y], dim=0).squeeze(1).to(DEVICE)
+                data_X.append(X)
+                data_Y.append(labels)
+            d_y = data_Y[0].shape[1]
+            manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+            product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
+            end = time.time()
+            hswfs_embedding_time_taken = end - start
+
             projection_list = [100, 500, 1000, 5000, 10000]
-            for n_projs in projection_list:
-                scaling = 0.1
-                d = 10
-                n_epochs = 20000
+            projection_time_taken = [0 for i in range(len(projection_list))]
+            for proj_id in range(len(projection_list)):
+                n_projs = projection_list[proj_id]
                 start = time.time()
-                emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
-                distance_array = emb.dissimilarity_for_all(subdatasets)
-                lorentz_geoopt = Lorentz_geoopt()
-                embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-                mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
-
-                print(np.log(np.array(L))[-5:])
-
-                dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
-                diff_dist = np.abs(scaling * distance_array - dist_mds)
-                data_X = [] # data
-                data_Y = [] # labels
-                for cac_idx, cac_dataset in enumerate(subdatasets):
-                    X, Y = emb.preprocess_dataset(cac_dataset)
-                    label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
-                    labels = torch.stack([torch.from_numpy(label_emb[target])
-                                        for target in Y], dim=0).squeeze(1).to(DEVICE)
-                    data_X.append(X)
-                    data_Y.append(labels)
-                d_y = data_Y[0].shape[1]
-                manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
-                product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
                 d_sw = np.zeros((len(subdatasets), len(subdatasets)))
                 for i in range(len(subdatasets)):
                     for j in range(i): 
@@ -274,12 +278,10 @@ def main():
                         d_sw[i, j] = sw.item()
                         d_sw[j, i] = sw.item()
                 end = time.time()
-                hswfs_time_taken = end - start
-                print(d_sw)
-                print(hswfs_time_taken)
+                projection_time_taken[proj_id] = end - start
                 torch.save(d_sw, f'{save_dir}/hswfs_{n_projs}_dist.pt')
                 with open(f'{save_dir}/time_running.txt', 'a') as file:
-                    file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
+                    file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {projection_time_taken[proj_id] + hswfs_embedding_time_taken} \n")
 
         if args.method == "sotdd":
             sotdd(save_dir=save_dir)

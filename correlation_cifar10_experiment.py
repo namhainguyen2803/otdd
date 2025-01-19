@@ -74,7 +74,7 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_corr_cifar10_v100_5", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_corr_cifar10_v100_19_01_2025_2", help='Parent directory')
     args = parser.parse_args()
 
     parent_dir = f'{args.parent_dir}/correlation/CIFAR10'
@@ -127,7 +127,6 @@ def main():
         # NEW METHOD
         projection_list = [10000, 5000, 3000, 1000, 500]
         for proj_id in projection_list:
-
             pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute sOTDD...")
             print(f"Number of datasets: {len(dataloaders)}")
@@ -148,14 +147,11 @@ def main():
                     pairwise_dist[j, i] = list_pairwise_dist[t]
                     t += 1
             torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for sOTDD ({proj_id} projections): {sotdd_time_taken} \n")
 
 
         # OTDD
         dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
         print("Compute OTDD (exact)...")
-        start = time.time()
         for i in range(len(dataloaders)):
             for j in range(i+1, len(dataloaders)):
                 dist = DatasetDistance(dataloaders[i],
@@ -168,19 +164,12 @@ def main():
                 d = dist.distance(maxsamples=None).item()
                 dict_OTDD[i][j] = d
                 dict_OTDD[j][i] = d
-        end = time.time()
-        otdd_time_taken = end - start
-        print(otdd_time_taken)
-
         torch.save(dict_OTDD, f'{save_dir}/exact_otdd_dist.pt')
-        with open(f'{save_dir}/time_running.txt', 'a') as file:
-            file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
 
 
         # OTDD
         dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
         print("Compute OTDD (gaussian_approx, iter 20)...")
-        start = time.time()
         for i in range(len(dataloaders)):
             for j in range(i+1, len(dataloaders)):
                 dist = DatasetDistance(dataloaders[i],
@@ -196,63 +185,53 @@ def main():
                 d = dist.distance(maxsamples=None).item()
                 dict_OTDD[i][j] = d
                 dict_OTDD[j][i] = d
-        end = time.time()
-        otdd_time_taken = end - start
-        print(otdd_time_taken)
         torch.save(dict_OTDD, f'{save_dir}/ga_otdd_dist.pt')
-        with open(f'{save_dir}/time_running.txt', 'a') as file:
-            file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
-        start = time.time()
+
+
+        # WTE
         reference = generate_reference(dataset_size, 4, 32, 10)
-        print(reference.shape)
         wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=dataset_size)
         wtes = wtes.reshape(wtes.shape[0], -1)
         wte_distance = distance.cdist(wtes, wtes, 'euclidean')
-        end = time.time()
-        wte_time_taken = end - start
         torch.save(wte_distance, f'{save_dir}/wte.pt')
-        with open(f'{save_dir}/time_running.txt', 'a') as file:
-            file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
+
 
         # HSWFS_OTDD
-        projection_list = [10000, 5000, 3000, 1000, 500]
-        for n_projs in projection_list:
-            scaling = 0.1
-            d = 10
-            n_epochs = 20000
-            start = time.time()
-            emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
-            distance_array = emb.dissimilarity_for_all(subdatasets)
-            lorentz_geoopt = Lorentz_geoopt()
-            embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
-            dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
-            diff_dist = np.abs(scaling * distance_array - dist_mds)
-            data_X = [] # data
-            data_Y = [] # labels
-            for cac_idx, cac_dataset in enumerate(subdatasets):
-                X, Y = emb.preprocess_dataset(cac_dataset)
-                label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
-                labels = torch.stack([torch.from_numpy(label_emb[target])
-                                    for target in Y], dim=0).squeeze(1).to(DEVICE)
-                data_X.append(X)
-                data_Y.append(labels)
-            d_y = data_Y[0].shape[1]
-            manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
-            product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
-            d_sw = np.zeros((len(subdatasets), len(subdatasets)))
-            for i in range(len(subdatasets)):
-                for j in range(i): 
-                    sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
-                    d_sw[i, j] = sw.item()
-                    d_sw[j, i] = sw.item()
-            end = time.time()
-            hswfs_time_taken = end - start
-            print(d_sw)
-            print(hswfs_time_taken)
-            torch.save(d_sw, f'{save_dir}/hswfs_{proj_id}_dist.pt')
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
+        scaling = 0.1
+        d = 10
+        n_epochs = 20000
+        emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
+        distance_array = emb.dissimilarity_for_all(subdatasets)
+        lorentz_geoopt = Lorentz_geoopt()
+        embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
+        mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
+        dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
+        diff_dist = np.abs(scaling * distance_array - dist_mds)
+        data_X = [] # data
+        data_Y = [] # labels
+        for cac_idx, cac_dataset in enumerate(subdatasets):
+            X, Y = emb.preprocess_dataset(cac_dataset)
+            label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
+            labels = torch.stack([torch.from_numpy(label_emb[target])
+                                for target in Y], dim=0).squeeze(1).to(DEVICE)
+            data_X.append(X)
+            data_Y.append(labels)
+        d_y = data_Y[0].shape[1]
+        manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+        product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
+
+        projection_list = [100, 500, 1000, 5000, 10000]
+        d_sw = np.zeros((len(projection_list), len(subdatasets), len(subdatasets)))
+        for i in range(len(subdatasets)):
+            for j in range(i): 
+                sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], projection_list[-1], product_manifold)
+                for proj_id in range(len(projection_list)):
+                    num_proj = projection_list[proj_id]
+                    d_sw[proj_id, i, j] = sw[num_proj].item()
+                    d_sw[proj_id, j, i] = sw[num_proj].item()
+        for proj_id in range(len(projection_list)):
+            num_proj = projection_list[proj_id]
+            torch.save(d_sw[num_proj, :, :], f'{save_dir}/hswfs_{num_proj}_dist.pt')
 
 
 if __name__ == "__main__":

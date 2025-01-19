@@ -60,7 +60,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 
 # Load data
-MAXSIZE_DIST = 5000
+MAXSIZE_DIST = 10000
 MAXSIZE_TRAINING = None
 
 def generate_reference(num, dim_low, dim, attached_dim, seed=0):
@@ -311,7 +311,7 @@ def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADA
     kwargs = {
         "dimension": 28 * 28,
         "num_channels": 1,
-        "num_moments": 1,
+        "num_moments": 5,
         "use_conv": False,
         "precision": "float",
         "p": 2,
@@ -475,10 +475,10 @@ if __name__ == "__main__":
     #     json.dump(DIST_otdd, json_file, indent=4)
 
 
-    # DIST_sotdd = compute_sotdd_distance(num_projection=10000, METADATA_DATASET=METADATA_DATASET)
-    # dist_file_path = f'{parent_dir}/sotdd_demo_1_moments.json'
-    # with open(dist_file_path, 'w') as json_file:
-    #     json.dump(DIST_sotdd, json_file, indent=4)
+    DIST_sotdd = compute_sotdd_distance(num_projection=10000)
+    dist_file_path = f'{parent_dir}/sotdd_dist_19_01_2025.json'
+    with open(dist_file_path, 'w') as json_file:
+        json.dump(DIST_sotdd, json_file, indent=4)
 
 
     # DIST_sotdd = compute_wte_distance()
@@ -486,11 +486,11 @@ if __name__ == "__main__":
     # with open(dist_file_path, 'w') as json_file:
     #     json.dump(DIST_sotdd, json_file, indent=4)
 
-    num_proj = 10000
-    DIST_sotdd = compute_hswfs_distance(num_proj=num_proj)
-    dist_file_path = f'{parent_dir}/hswfs_{num_proj}_distance.json'
-    with open(dist_file_path, 'w') as json_file:
-        json.dump(DIST_sotdd, json_file, indent=4)
+    # num_proj = 10000
+    # DIST_sotdd = compute_hswfs_distance(num_proj=num_proj)
+    # dist_file_path = f'{parent_dir}/hswfs_{num_proj}_distance.json'
+    # with open(dist_file_path, 'w') as json_file:
+    #     json.dump(DIST_sotdd, json_file, indent=4)
 
 
     # with open(f'list_dict_data_{MAXSIZE_DIST}.pkl', 'rb') as f:
