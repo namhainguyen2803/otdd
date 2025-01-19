@@ -243,7 +243,7 @@ def main():
             for n_projs in projection_list:
                 scaling = 0.1
                 d = 10
-                n_epochs = dataset_size * 5
+                n_epochs = 20000
                 start = time.time()
                 emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
                 distance_array = emb.dissimilarity_for_all(subdatasets)
@@ -251,9 +251,7 @@ def main():
                 embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
                 mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
 
-                plt.plot(np.log(np.array(L)))
-                plt.savefig(f"{save_dir}/hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
-                plt.close()
+                print(np.log(np.array(L))[-5:])
 
                 dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
                 diff_dist = np.abs(scaling * distance_array - dist_mds)

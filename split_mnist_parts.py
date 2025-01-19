@@ -109,7 +109,7 @@ def main():
     max_dataset_size = len(dataset) // 2
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
 
-    list_dataset_size = [2000 * (i + 1) for i in range(int(len(dataset) // 2000))]
+    list_dataset_size = [5000 * (i + 1) for i in range(int(len(dataset) // 5000))]
 
     print(list_dataset_size)
 
@@ -261,8 +261,7 @@ def main():
                 embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
                 mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
 
-                # plt.plot(np.log(np.array(L)))
-                # plt.savefig(f"{save_dir}/hswfs_dataset_size_{dataset_size}.png", dpi=300, bbox_inches='tight')
+                print(np.log(np.array(L))[-5:])
 
                 dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
                 diff_dist = np.abs(scaling * distance_array - dist_mds)
