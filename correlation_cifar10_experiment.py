@@ -227,11 +227,11 @@ def main():
                 sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], projection_list[-1], product_manifold)
                 for proj_id in range(len(projection_list)):
                     num_proj = projection_list[proj_id]
-                    d_sw[proj_id, i, j] = sw[num_proj].item()
-                    d_sw[proj_id, j, i] = sw[num_proj].item()
+                    d_sw[proj_id, i, j] = sw[num_proj - 1].item()
+                    d_sw[proj_id, j, i] = sw[num_proj - 1].item()
         for proj_id in range(len(projection_list)):
             num_proj = projection_list[proj_id]
-            torch.save(d_sw[num_proj, :, :], f'{save_dir}/hswfs_{num_proj}_dist.pt')
+            torch.save(d_sw[proj_id, :, :], f'{save_dir}/hswfs_{num_proj}_dist.pt')
 
 
 if __name__ == "__main__":

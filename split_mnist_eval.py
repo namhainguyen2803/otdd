@@ -63,8 +63,7 @@ def retrieve_running_time(parent_path, exclude_hswfs=False):
     return sotdd, otdd_exact, otdd_gaussian, wte, hswfs
 
 
-sotdd, otdd_exact, otdd_gaussian, wte, _ = retrieve_running_time(parent_path=parent_path, exclude_hswfs=True)
-_, _, _, _, hsfws = retrieve_running_time(parent_path="saved_runtime_mnist_parts_19_01_2025/time_comparison/MNIST")
+sotdd, otdd_exact, otdd_gaussian, wte, hswfs = retrieve_running_time(parent_path="saved_runtime_mnist_parts_19_01_2025_final/time_comparison/MNIST")
 
 
 def make_xy_coordinate(lst_data, sort=True):
@@ -91,11 +90,11 @@ list_dataset_size_otdd_exact, list_otdd_exact = make_xy_coordinate(otdd_exact)
 list_dataset_size_otdd_gaussian, list_otdd_gaussian = make_xy_coordinate(otdd_gaussian)
 list_dataset_size_wte, list_wte = make_xy_coordinate(wte)
 
-list_dataset_size_hsfws_100, list_hsfws_100 = make_xy_coordinate(hsfws[100])
-list_dataset_size_hsfws_500, list_hsfws_500 = make_xy_coordinate(hsfws[500])
-list_dataset_size_hsfws_1000, list_hsfws_1000 = make_xy_coordinate(hsfws[1000])
-list_dataset_size_hsfws_5000, list_hsfws_5000 = make_xy_coordinate(hsfws[5000])
-list_dataset_size_hsfws_10000, list_hsfws_10000 = make_xy_coordinate(hsfws[10000])
+list_dataset_size_hswfs_100, list_hswfs_100 = make_xy_coordinate(hswfs[100])
+list_dataset_size_hswfs_500, list_hswfs_500 = make_xy_coordinate(hswfs[500])
+list_dataset_size_hswfs_1000, list_hswfs_1000 = make_xy_coordinate(hswfs[1000])
+list_dataset_size_hswfs_5000, list_hswfs_5000 = make_xy_coordinate(hswfs[5000])
+list_dataset_size_hswfs_10000, list_hswfs_10000 = make_xy_coordinate(hswfs[10000])
 
 list_dataset_size_sotdd_100, list_sotdd_100 = make_xy_coordinate(sotdd[100])
 list_dataset_size_sotdd_500, list_sotdd_500 = make_xy_coordinate(sotdd[500])
@@ -115,10 +114,15 @@ FONT_SIZE = 18
 plt.figure(figsize=(8, 8))
 plt.plot(list_dataset_size_otdd_exact, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', markersize=MARKERSIZE)
 plt.plot(list_dataset_size_otdd_gaussian, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian approx)', marker='s', markersize=MARKERSIZE)
-plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', markersize=MARKERSIZE)
-plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[3], label='s-OTDD (1,000 projections)', marker='*', markersize=MARKERSIZE)
-plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[6], label='s-OTDD (5,000 projections)', marker='*', markersize=MARKERSIZE)
-plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[7], label='s-OTDD (10,000 projections)', marker='*', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_wte, list_wte, color=colors[2], label='WTE', marker='D', markersize=MARKERSIZE)
+
+plt.plot(list_dataset_size_hswfs_1000, list_hswfs_1000, color=colors[3], label='CHSW (1,000 projections)', marker='v', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_hswfs_5000, list_hswfs_5000, color=colors[4], label='CHSW (5,000 projections)', marker='v', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_hswfs_10000, list_hswfs_10000, color=colors[5], label='CHSW (10,000 projections)', marker='v', markersize=MARKERSIZE)
+
+plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[6], label='s-OTDD (1,000 projections)', marker='*', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[7], label='s-OTDD (5,000 projections)', marker='*', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[8], label='s-OTDD (10,000 projections)', marker='*', markersize=MARKERSIZE)
 
 plt.xlabel("Dataset Size", fontsize=FONT_SIZE - 2)
 plt.ylabel("Processing Time (s)", fontsize=FONT_SIZE - 2)
