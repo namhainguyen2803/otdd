@@ -95,7 +95,7 @@ def main():
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
 
     list_dataset_size = [5000 * (i + 1) for i in range(int(len(dataset) // 5000))]
-
+    list_dataset_size.reverse()
     print(list_dataset_size)
 
     for dataset_size in list_dataset_size:
@@ -146,16 +146,11 @@ def main():
                     file.write(f"Time proccesing for sOTDD ({proj_id} projections): {sotdd_time_taken} \n")
             except:
                 print()
-                # with open(f'{save_dir}/time_running.txt', 'a') as file:
-                #     file.write(f"Time proccesing for sOTDD ({proj_id} projections): None \n")
 
         try:
             # OTDD
             dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute OTDD (exact)...")
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
             start = time.time()
             for i in range(len(dataloaders)):
                 for j in range(i+1, len(dataloaders)):
@@ -169,9 +164,6 @@ def main():
                     d = dist.distance(maxsamples=None).item()
                     dict_OTDD[i][j] = d
                     dict_OTDD[j][i] = d
-            # end.record()
-            # torch.cuda.synchronize()
-            # otdd_time_taken = start.elapsed_time(end) / 1000
             end = time.time()
             otdd_time_taken = end - start
             print(otdd_time_taken)
@@ -181,16 +173,11 @@ def main():
                 file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
         except:
             print()
-            # with open(f'{save_dir}/time_running.txt', 'a') as file:
-            #     file.write(f"Time proccesing for OTDD (exact): None \n")
 
         try:
             # OTDD
             dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
             print("Compute OTDD (gaussian_approx, iter 20)...")
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
             start = time.time()
             for i in range(len(dataloaders)):
                 for j in range(i+1, len(dataloaders)):
@@ -207,9 +194,6 @@ def main():
                     d = dist.distance(maxsamples=None).item()
                     dict_OTDD[i][j] = d
                     dict_OTDD[j][i] = d
-            # end.record()
-            # torch.cuda.synchronize()
-            # otdd_time_taken = start.elapsed_time(end) / 1000
             end = time.time()
             otdd_time_taken = end - start
             print(otdd_time_taken)
@@ -218,24 +202,15 @@ def main():
                 file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
         except:
             print()
-            # with open(f'{save_dir}/time_running.txt', 'a') as file:
-            #     file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): None \n")
-
 
         try:
             # WTE
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
             start = time.time()
             reference = generate_reference(dataset_size, 4, 32, 10)
             print(reference.shape)
             wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=dataset_size)
             wtes = wtes.reshape(wtes.shape[0], -1)
             wte_distance = distance.cdist(wtes, wtes, 'euclidean')
-            # end.record()
-            # torch.cuda.synchronize()
-            # wte_time_taken = start.elapsed_time(end) / 1000
             end = time.time()
             wte_time_taken = end - start
             torch.save(wte_distance, f'{save_dir}/wte.pt')
@@ -243,15 +218,11 @@ def main():
                 file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
         except:
             print()
-            # with open(f'{save_dir}/time_running.txt', 'a') as file:
-            #     file.write(f"Time proccesing for WTE: None \n")
 
 
-        try:
-            # HSWFS_OTDD
-            projection_list = [100, 500, 1000, 5000, 10000]
-            for n_projs in projection_list:
-
+        projection_list = [100, 500, 1000, 5000, 10000]
+        for n_projs in projection_list:
+            try:
                 scaling = 0.1
                 d = 10
                 start = time.time()
@@ -287,8 +258,8 @@ def main():
                 torch.save(d_sw, f'{save_dir}/hswfs_{n_projs}_dist.pt')
                 with open(f'{save_dir}/time_running.txt', 'a') as file:
                     file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
-        except:
-            print()
+            except:
+                print()
 
 
 if __name__ == "__main__":
