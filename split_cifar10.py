@@ -74,10 +74,7 @@ transform = transforms.Compose([
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
     parser.add_argument('--parent_dir', type=str, default="saved_runtime_cifar10", help='Parent directory')
-    parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
     args = parser.parse_args()
-
-    num_projections = args.num_projections
 
     parent_dir = f'{args.parent_dir}/time_comparison/CIFAR10'
     os.makedirs(parent_dir, exist_ok=True)
@@ -96,9 +93,6 @@ def main():
     
     max_dataset_size = len(dataset) // 2
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
-
-    pointer_dataset1 = 0
-    pointer_dataset2 = max_dataset_size
 
     list_dataset_size = [5000 * (i + 1) for i in range(int(len(dataset) // 5000))]
 
@@ -151,8 +145,9 @@ def main():
                 with open(f'{save_dir}/time_running.txt', 'a') as file:
                     file.write(f"Time proccesing for sOTDD ({proj_id} projections): {sotdd_time_taken} \n")
             except:
-                with open(f'{save_dir}/time_running.txt', 'a') as file:
-                    file.write(f"Time proccesing for sOTDD ({proj_id} projections): None \n")
+                print()
+                # with open(f'{save_dir}/time_running.txt', 'a') as file:
+                #     file.write(f"Time proccesing for sOTDD ({proj_id} projections): None \n")
 
         try:
             # OTDD
@@ -185,8 +180,9 @@ def main():
             with open(f'{save_dir}/time_running.txt', 'a') as file:
                 file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
         except:
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for OTDD (exact): None \n")
+            print()
+            # with open(f'{save_dir}/time_running.txt', 'a') as file:
+            #     file.write(f"Time proccesing for OTDD (exact): None \n")
 
         try:
             # OTDD
@@ -221,8 +217,9 @@ def main():
             with open(f'{save_dir}/time_running.txt', 'a') as file:
                 file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
         except:
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): None \n")
+            print()
+            # with open(f'{save_dir}/time_running.txt', 'a') as file:
+            #     file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): None \n")
 
 
         try:
@@ -245,57 +242,53 @@ def main():
             with open(f'{save_dir}/time_running.txt', 'a') as file:
                 file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
         except:
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for WTE: None \n")
+            print()
+            # with open(f'{save_dir}/time_running.txt', 'a') as file:
+            #     file.write(f"Time proccesing for WTE: None \n")
 
 
         try:
             # HSWFS_OTDD
-            n_projs = 500
-            scaling = 0.1
-            d = 10
-            # start = torch.cuda.Event(enable_timing=True)
-            # end = torch.cuda.Event(enable_timing=True)
-            # start.record()
-            start = time.time()
-            emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
-            distance_array = emb.dissimilarity_for_all(subdatasets)
-            lorentz_geoopt = Lorentz_geoopt()
-            embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-            mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=50000, lr=1e-3)
-            dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
-            diff_dist = np.abs(scaling * distance_array - dist_mds)
-            data_X = [] # data
-            data_Y = [] # labels
-            for cac_idx, cac_dataset in enumerate(subdatasets):
-                X, Y = emb.preprocess_dataset(cac_dataset)
-                label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
-                labels = torch.stack([torch.from_numpy(label_emb[target])
-                                    for target in Y], dim=0).squeeze(1).to(DEVICE)
-                data_X.append(X)
-                data_Y.append(labels)
-            d_y = data_Y[0].shape[1]
-            manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
-            product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
-            d_sw = np.zeros((len(subdatasets), len(subdatasets)))
-            for i in range(len(subdatasets)):
-                for j in range(i): 
-                    sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
-                    d_sw[i, j] = sw.item()
-                    d_sw[j, i] = sw.item()
-            # end.record()
-            # torch.cuda.synchronize()
-            # hswfs_time_taken = start.elapsed_time(end) / 1000
-            end = time.time()
-            hswfs_time_taken = end - start
-            print(d_sw)
-            print(hswfs_time_taken)
-            torch.save(d_sw, f'{save_dir}/hswfs_otdd.pt')
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for HSWFS_OTDD: {hswfs_time_taken} \n")
-        except:
-            with open(f'{save_dir}/time_running.txt', 'a') as file:
-                file.write(f"Time proccesing for HSWFS_OTDD: None \n")
+            projection_list = [100, 500, 1000, 5000, 10000]
+            for n_projs in projection_list:
+
+                scaling = 0.1
+                d = 10
+                start = time.time()
+                emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
+                distance_array = emb.dissimilarity_for_all(subdatasets)
+                lorentz_geoopt = Lorentz_geoopt()
+                embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
+                mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=50000, lr=1e-3)
+                dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
+                diff_dist = np.abs(scaling * distance_array - dist_mds)
+                data_X = [] # data
+                data_Y = [] # labels
+                for cac_idx, cac_dataset in enumerate(subdatasets):
+                    X, Y = emb.preprocess_dataset(cac_dataset)
+                    label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
+                    labels = torch.stack([torch.from_numpy(label_emb[target])
+                                        for target in Y], dim=0).squeeze(1).to(DEVICE)
+                    data_X.append(X)
+                    data_Y.append(labels)
+                d_y = data_Y[0].shape[1]
+                manifolds = [Euclidean(32*32*3, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
+                product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
+                d_sw = np.zeros((len(subdatasets), len(subdatasets)))
+                for i in range(len(subdatasets)):
+                    for j in range(i): 
+                        sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
+                        d_sw[i, j] = sw.item()
+                        d_sw[j, i] = sw.item()
+                end = time.time()
+                hswfs_time_taken = end - start
+                print(d_sw)
+                print(hswfs_time_taken)
+                torch.save(d_sw, f'{save_dir}/hswfs_{n_projs}_dist.pt')
+                with open(f'{save_dir}/time_running.txt', 'a') as file:
+                    file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
+            except:
+                print()
 
 
 if __name__ == "__main__":
