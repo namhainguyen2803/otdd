@@ -274,7 +274,7 @@ def main():
                 d_sw = np.zeros((len(subdatasets), len(subdatasets)))
                 for i in range(len(subdatasets)):
                     for j in range(i): 
-                        sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
+                        sw = torch.mean(sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold))
                         d_sw[i, j] = sw.item()
                         d_sw[j, i] = sw.item()
                 end = time.time()
