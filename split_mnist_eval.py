@@ -113,13 +113,12 @@ LINEWIDTH = 2
 FONT_SIZE = 18
 
 plt.figure(figsize=(8, 8))
-plt.plot(list_dataset_size_otdd_exact, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_otdd_gaussian, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian approx)', marker='s', linestyle='-', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_hsfws_10000, list_hsfws_10000, color=colors[4], label='CHSW (10,000 projections)', marker='*', linestyle='--', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[3], label='sOTDD (1,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[6], label='sOTDD (5,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
-plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[7], label='sOTDD (10,000 projections)', marker='*', linestyle='-.', linewidth=LINEWIDTH, markersize=MARKERSIZE)
+plt.plot(list_dataset_size_otdd_exact, list_otdd_exact, color=colors[0], label='OTDD (Exact)', marker='o', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_otdd_gaussian, list_otdd_gaussian, color=colors[1], label='OTDD (Gaussian approx)', marker='s', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_wte, list_wte, color=colors[5], label='WTE', marker='D', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_1000, list_sotdd_1000, color=colors[3], label='s-OTDD (1,000 projections)', marker='*', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_5000, list_sotdd_5000, color=colors[6], label='s-OTDD (5,000 projections)', marker='*', markersize=MARKERSIZE)
+plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[7], label='s-OTDD (10,000 projections)', marker='*', markersize=MARKERSIZE)
 
 plt.xlabel("Dataset Size", fontsize=FONT_SIZE - 2)
 plt.ylabel("Processing Time (s)", fontsize=FONT_SIZE - 2)

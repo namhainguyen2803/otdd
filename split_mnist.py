@@ -76,10 +76,7 @@ transform = transforms.Compose([
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
     parser.add_argument('--parent_dir', type=str, default="saved_runtime_mnist", help='Parent directory')
-    parser.add_argument('--num_projections', type=int, default=10000, help='Number of projections for sOTDD')
     args = parser.parse_args()
-
-    num_projections = args.num_projections
 
     parent_dir = f'{args.parent_dir}/time_comparison/MNIST'
     os.makedirs(parent_dir, exist_ok=True)
@@ -99,6 +96,7 @@ def main():
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
 
     list_dataset_size = [5000 * (i + 1) for i in range(int(len(dataset) // 5000))]
+    list_dataset_size.reverse()
 
     print(list_dataset_size)
 
@@ -223,6 +221,7 @@ def main():
                 file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
         except:
             print()
+
 
         try:
             # HSWFS_OTDD
