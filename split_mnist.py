@@ -150,9 +150,6 @@ def main():
                     file.write(f"Time proccesing for sOTDD ({proj_id} projections): {sotdd_time_taken} \n")
             except:
                 print()
-                # with open(f'{save_dir}/time_running.txt', 'a') as file:
-                #     file.write(f"Time proccesing for sOTDD ({proj_id} projections): None \n")
-                    
 
         try:
             # OTDD
@@ -179,8 +176,6 @@ def main():
                 file.write(f"Time proccesing for OTDD (exact): {otdd_time_taken} \n")
         except:
             print()
-            # with open(f'{save_dir}/time_running.txt', 'a') as file:
-            #     file.write(f"Time proccesing for OTDD (exact): None \n")
 
 
         try:
@@ -211,8 +206,6 @@ def main():
                 file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): {otdd_time_taken} \n")
         except:
             print()
-            # with open(f'{save_dir}/time_running.txt', 'a') as file:
-            #     file.write(f"Time proccesing for OTDD (gaussian_approx, iter 20): None \n")
 
 
         try:
@@ -230,8 +223,6 @@ def main():
                 file.write(f"Time proccesing for WTE: {wte_time_taken} \n")
         except:
             print()
-            # with open(f'{save_dir}/time_running.txt', 'a') as file:
-            #     file.write(f"Time proccesing for WTE: None \n")
 
         try:
             # HSWFS_OTDD
@@ -274,8 +265,6 @@ def main():
                     file.write(f"Time proccesing for HSWFS_OTDD ({n_epochs} epochs, {n_projs} projections): {hswfs_time_taken} \n")
             except:
                 print()
-                # with open(f'{save_dir}/time_running.txt', 'a') as file:
-                #     file.write(f"Time proccesing for HSWFS_OTDD: None \n")
 
 
 if __name__ == "__main__":
