@@ -18,10 +18,10 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-dataset = "mnist"
+dataset = "cifar10"
 if dataset == "mnist":
     saved_path = "saved_corr_mnist_v100_4/correlation/MNIST"
-    saved_path = "saved_corr_mnist_v100_19_01_2025_2/correlation/MNIST"
+    saved_path = "saved_corr_mnist_projection_v100_19_01_2025_2/correlation/MNIST"
 # saved_path = "saved_runtime_cifar10_vietdt11_parts/time_comparison/CIFAR10"
 else:
     # saved_path = "saved_corr_cifar10_v100_2/correlation/CIFAR10"
@@ -31,7 +31,7 @@ sotdd_dict_list = dict()
 ga_otdd_list = list()
 exact_otdd_list = list()
 wte_list = list()
-hswfs_list = list()
+hswfs_dict_list = dict()
 
 for file_name in os.listdir(saved_path):
     if ".png" in file_name or ".pdf" in file_name:
@@ -66,16 +66,22 @@ for file_name in os.listdir(saved_path):
                 elif "wte" in each_file_name:
                     wte_dist = torch.load(f"{each_run_file_name}/wte.pt")[0][1].item()
                     wte_list.append(wte_dist)
+                    
                 elif "hswfs" in each_file_name:
-                    hswfs_dist = torch.load(f"{each_run_file_name}/hswfs_otdd.pt")[0][1].item()
-                    hswfs_list.append(hswfs_dist)
+                    proj_id = int(each_file_name.split("_")[1])
+                    if proj_id not in hswfs_dict_list:
+                        hswfs_dict_list[proj_id] = list()
+                    hswfs_dist = torch.load(f"{each_run_file_name}/hswfs_{proj_id}_dist.pt")[0][1].item() * 10**3
+                    hswfs_dict_list[proj_id].append(hswfs_dist)
 
 
 title_dict = {
     "ga": "OTDD (Gaussian approx)",
     "exact": "OTDD (Exact)",
     "wte": "WTE",
-    "hswfs_500": "CHSW (500 projections) $\\times 10^{-3}$",
+    "hswfs_1000": "CHSW (1,000 projections) $\\times 10^{-3}$",
+    "hswfs_5000": "CHSW (5,000 projections) $\\times 10^{-3}$",
+    "hswfs_10000": "s-CHSW (10,000 projections) $\\times 10^{-3}$",
     "sotdd_1000": "s-OTDD (1,000 projections)",
     "sotdd_5000": "s-OTDD (5,000 projections)",
     "sotdd_10000": "s-OTDD (10,000 projections)"
@@ -144,7 +150,7 @@ def retrieve_dist_list(method_name):
     elif method_name == "hswfs_100":
         return hswfs_dict_list[100], method_name
     elif method_name == "hswfs_500":
-        return hswfs_list, method_name
+        return hswfs_dict_list[500], method_name
     elif method_name == "hswfs_1000":
         return hswfs_dict_list[1000], method_name
     elif method_name == "hswfs_5000":
@@ -162,5 +168,5 @@ def retrieve_pair(method1, method2):
 
 list_methods = ["exact", "ga", "wte", "hswfs_100", "hswfs_500", "hswfs_1000", "hswfs_5000", "hswfs_10000", "sotdd_100", "sotdd_500", "sotdd_1000", "sotdd_5000", "sotdd_10000"]
 
-abc = retrieve_pair("sotdd_10000", "exact")
+abc = retrieve_pair("ga", "exact")
 calculate_correlation(list_dist_1=abc[0], name_1=abc[1], list_dist_2=abc[2], name_2=abc[3])

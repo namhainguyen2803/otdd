@@ -207,6 +207,7 @@ def main():
                     pairwise_dist[i, j] = list_pairwise_dist[t]
                     pairwise_dist[j, i] = list_pairwise_dist[t]
                     t += 1
+            torch.save(pairwise_dist, f'{save_dir}/sotdd_{proj_id}_dist.pt')
 
 
         # OTDD
