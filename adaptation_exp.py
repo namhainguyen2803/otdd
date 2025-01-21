@@ -476,7 +476,7 @@ if __name__ == "__main__":
 
 
     DIST_sotdd = compute_sotdd_distance(num_projection=10000)
-    dist_file_path = f'{parent_dir}/sotdd_dist_19_01_2025.json'
+    dist_file_path = f'{parent_dir}/sotdd_dist_21_01_2025.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_sotdd, json_file, indent=4)
 

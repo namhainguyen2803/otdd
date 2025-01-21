@@ -8,9 +8,9 @@ from matplotlib.ticker import FormatStrFormatter
 dataset = "mnist"
 
 if dataset == "mnist":
-    parent_path = "saved_runtime_mnist_vietdt11_parts_4/time_comparison/MNIST"
+    parent_path = "saved_runtime_mnist_parts_19_01_2025_final/time_comparison/MNIST"
 else:
-    parent_path = "saved_runtime_cifar10_parts/time_comparison/CIFAR10"
+    parent_path = "saved_runtime_cifar10_parts_19_01_2025_final/time_comparison/CIFAR10"
 
 
 otdd_gaussian = list()
@@ -63,7 +63,7 @@ def retrieve_running_time(parent_path, exclude_hswfs=False):
     return sotdd, otdd_exact, otdd_gaussian, wte, hswfs
 
 
-sotdd, otdd_exact, otdd_gaussian, wte, hswfs = retrieve_running_time(parent_path="saved_runtime_mnist_parts_19_01_2025_final/time_comparison/MNIST")
+sotdd, otdd_exact, otdd_gaussian, wte, hswfs = retrieve_running_time(parent_path=parent_path)
 
 
 def make_xy_coordinate(lst_data, sort=True):
@@ -126,7 +126,7 @@ plt.plot(list_dataset_size_sotdd_10000, list_sotdd_10000, color=colors[8], label
 
 plt.xlabel("Dataset Size", fontsize=FONT_SIZE - 2)
 plt.ylabel("Processing Time (s)", fontsize=FONT_SIZE - 2)
-plt.title(f"Time Comparison by Dataset Size: {dataset.upper()}", fontsize=FONT_SIZE, fontweight='bold')
+plt.title(f"Runtime Comparison: {dataset.upper()}", fontsize=FONT_SIZE, fontweight='bold')
 plt.legend(loc="upper left", frameon=True, fontsize=15)
 # plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 plt.grid(True)

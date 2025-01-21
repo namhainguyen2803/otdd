@@ -22,7 +22,7 @@ if method == "sotdd":
     # dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
     # dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
     # dist_path = f"saved_nist/dist/sotdd_linear_gaussian_dist_mean.json"
-    dist_path = f"saved_nist/dist/sotdd_dist_19_01_2025.json"
+    dist_path = f"saved_nist/dist/sotdd_dist_21_01_2025.json"
 elif method == "otdd":
     dist_path = f"saved_nist/dist/otdd_dist_gaussian.json"
 elif method == "hswfs":
@@ -122,6 +122,8 @@ df = pd.DataFrame(perf_data)
 
 # Calculate Pearson correlation
 pearson_corr, p_value = stats.pearsonr(df["OT Dataset Distance"], df["Relative Drop in Test Error (%)"])
+
+print(pearson_corr, p_value)
 
 label=f"$\\rho$: {pearson_corr:.2f}\np-value: {p_value:.2f}"
 

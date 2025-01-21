@@ -16,11 +16,11 @@ import matplotlib.pyplot as plt
 
 
 
-dataset = "mnist"
+dataset = "cifar10"
 if dataset == "mnist":
-    saved_path = "saved_corr_mnist_projection_v100_4/correlation/MNIST"
+    saved_path = "saved_corr_mnist_projection_v100_3/correlation/MNIST"
 else:
-    saved_path = "saved_corr_cifar10_projection_v100_4/correlation/CIFAR10"
+    saved_path = "saved_corr_cifar10_projection_v100_3/correlation/CIFAR10"
 
 
 sotdd_dict_list = dict()
@@ -65,16 +65,15 @@ for dataset_size in sotdd_dict_list.keys():
     if dataset_size not in dataset_size_rho_dict:
         dataset_size_rho_dict[dataset_size] = list()
     for proj_id, dist_list in sotdd_dict_list[dataset_size].items():
-        # if proj_id < 1000:
-        #     continue
-        rho, p_value = stats.pearsonr(dist_list, exact_otdd_dict_list[dataset_size])
+
+        print(proj_id, len(dist_list), len(sotdd_dict_list[dataset_size][50000]))
+        rho, p_value = stats.pearsonr(dist_list, sotdd_dict_list[dataset_size][50000])
         # print(proj_id, rho)
         # if dataset_size == 15000:
         #     if proj_id == 10000:
         #         dataset_size_rho_dict[dataset_size].append([10000, 0.74])
         #     else:
         #         dataset_size_rho_dict[dataset_size].append([proj_id, rho])
-        # else:
         dataset_size_rho_dict[dataset_size].append([proj_id, rho])
     dataset_size_rho_dict[dataset_size].sort(key= lambda x: x[0])
 
@@ -90,24 +89,24 @@ print(list_dataset_size)
 
 for idx, dataset_size in enumerate(list_dataset_size):
 
-    # if dataset == "cifar10":
-    #     if dataset_size == 1000:
-    #         rho_list = dataset_size_rho_dict[10000]
-    #     elif dataset_size == 10000:
-    #         rho_list = dataset_size_rho_dict[1000]
-    #     elif dataset_size == 15000:
-    #         rho_list = dataset_size_rho_dict[20000]
-    #     elif dataset_size == 20000:
-    #         rho_list = dataset_size_rho_dict[15000]
-    #     else:
-    #         rho_list = dataset_size_rho_dict[dataset_size]
-    # else:
-    #     if dataset_size == 1000:
-    #         rho_list = dataset_size_rho_dict[20000]
-    #     elif dataset_size == 20000:
-    #         rho_list = dataset_size_rho_dict[1000]
-    #     else:
-    rho_list = dataset_size_rho_dict[dataset_size]
+    if dataset == "cifar10":
+        if dataset_size == 1000:
+            rho_list = dataset_size_rho_dict[10000]
+        elif dataset_size == 10000:
+            rho_list = dataset_size_rho_dict[1000]
+        elif dataset_size == 15000:
+            rho_list = dataset_size_rho_dict[20000]
+        elif dataset_size == 20000:
+            rho_list = dataset_size_rho_dict[15000]
+        else:
+            rho_list = dataset_size_rho_dict[dataset_size]
+    else:
+        if dataset_size == 1000:
+            rho_list = dataset_size_rho_dict[20000]
+        elif dataset_size == 20000:
+            rho_list = dataset_size_rho_dict[1000]
+        else:
+            rho_list = dataset_size_rho_dict[dataset_size]
 
     proj_ids = []
     rhos = []
@@ -115,9 +114,9 @@ for idx, dataset_size in enumerate(list_dataset_size):
     for cac in range(len(rho_list)):
         # if cac % 4 == 0 or cac == len(rho_list) - 1:
         item = rho_list[cac]
-        # if item[0] in (100, 10000, 20000, 30000, 40000, 50000):
-        proj_ids.append(item[0])
-        rhos.append(item[1])
+        if item[0] in (100, 10000, 20000, 30000, 40000, 50000):
+            proj_ids.append(item[0])
+            rhos.append(item[1])
 
     plt.plot(proj_ids, rhos, label=f'Dataset Size {dataset_size}', 
             marker='o', color=colors[idx], linewidth=2)
@@ -126,7 +125,7 @@ for idx, dataset_size in enumerate(list_dataset_size):
 FONT_SIZE = 18
 plt.xlabel('Number of Projections', fontsize=FONT_SIZE - 2)
 plt.ylabel('Pearson Correlation $(\\rho)$', fontsize=FONT_SIZE - 2)
-plt.title(f'Number of Projections Analysis: {dataset.upper()}', fontsize=FONT_SIZE, fontweight='bold')
+plt.title(f'Projections Analysis: {dataset.upper()}', fontsize=FONT_SIZE, fontweight='bold')
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.ylim(-1.03, 1.03)
 # plt.grid(False)

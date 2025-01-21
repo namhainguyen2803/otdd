@@ -685,10 +685,23 @@ def quantile_function(qs, cws, xs):
     return torch.take_along_dim(input=xs, indices=torch.clip(idx, 0, n - 1), dim=0)
 
 
-def generate_moments(num_moments, min_moment=1, max_moment=None):
-    mean_moment = torch.arange(num_moments) + 1
-    moment = torch.sort(torch.poisson(torch.ones(num_moments) * mean_moment))[0]
-    moment[moment < min_moment] = min_moment
+# def generate_moments(num_moments, min_moment=1, max_moment=None):
+#     mean_moment = torch.arange(num_moments) + 1
+#     moment = torch.sort(torch.poisson(torch.ones(num_moments) * mean_moment))[0]
+#     moment[moment < min_moment] = min_moment
+#     return moment
+
+
+def sample_zero_truncated_poisson(rate_vector):
+    rate_vector = rate_vector.to(dtype=torch.float)
+    u = torch.rand_like(rate_vector) * (1 - torch.exp(-rate_vector)) + torch.exp(-rate_vector)
+    t = -torch.log(u)
+    return 1 + torch.poisson(rate_vector - t)
+
+
+def generate_moments(num_moments):
+    mean_moment = torch.tensor([0.01, 2, 3, 4, 5])
+    moment = sample_zero_truncated_poisson(mean_moment)
     return moment
 
 

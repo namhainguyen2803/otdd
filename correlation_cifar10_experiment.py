@@ -103,7 +103,7 @@ def main():
 
     for idx in range(len(list_dataset_size)):
         dataset_size = list_dataset_size[idx]
-        save_dir = f"{parent_dir}/seed_{idx}_size_{dataset_size}"
+        save_dir = f"{parent_dir}/seed_{idx + 3}_size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
 
         shuffled_indices = np.random.permutation(indices)

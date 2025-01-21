@@ -168,9 +168,9 @@ plt.title(f"Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE, fo
 #              perf_data[i]["Source -> Target"], ha='right', fontsize=10)
 
 if method == "sOTDD":
-    plt.xlabel(f's-OTDD (10,000 projections) Distance', fontsize=FONT_SIZE - 2)
+    plt.xlabel(f's-OTDD (10,000 projections)', fontsize=FONT_SIZE - 2)
 else:
-    plt.xlabel(f'OTDD (Exact) Distance', fontsize=FONT_SIZE - 2)
+    plt.xlabel(f'OTDD (Exact)', fontsize=FONT_SIZE - 2)
 plt.ylabel('Performance Gap (%)', fontsize=FONT_SIZE - 2)
 plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
