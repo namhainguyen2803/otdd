@@ -17,28 +17,36 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 2000
+# NUM_EXAMPLES = 2000
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
-parent_dir = f"saved_text_dist/text_cls/otdd_dist"
+parent_dir = f"saved_text_dist"
 os.makedirs(parent_dir, exist_ok=True)
 
-method = None
-method2 = None
+# method = None
+# method2 = None
 # method = "OTDD"
-method2 = "sOTDD"
+# method2 = "sOTDD"
 
 
 def main():
 
+    parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
+    parser.add_argument('--method', type=str, default="sotdd", help="Method name")
+    parser.add_argument('--max_size', type=int, default=2000, help='Sie')
+    args = parser.parse_args()
+
+    method = args.method
+    max_size = args.max_size
+
     METADATA_DATASET = dict()
     for dataset_name in DATASET_NAMES:
         METADATA_DATASET[dataset_name] = dict()
-        METADATA_DATASET[dataset_name]["dataloader"] = load_textclassification_data(dataset_name, maxsize=NUM_EXAMPLES, load_tensor=True)[0]
+        METADATA_DATASET[dataset_name]["dataloader"] = load_textclassification_data(dataset_name, maxsize=max_size, load_tensor=True)[0]
 
         if dataset_name == "AG_NEWS":
             METADATA_DATASET[dataset_name]["num_classes"] = 4
@@ -62,7 +70,7 @@ def main():
             METADATA_DATASET[dataset_name]["num_classes"] = 5
 
 
-    if method == "OTDD":
+    if method == "otdd":
         print("Computing OTDD...")
         OTDD_DIST = dict()
         for i in range(len(DATASET_NAMES)):
@@ -108,7 +116,7 @@ def main():
         print(f"Finish computing OTDD")
 
 
-    if method2 == "sOTDD":
+    elif method == "sotdd":
         print("Computing s-OTDD...")
         sOTDD_DIST = dict()
         for i in range(len(DATASET_NAMES)):
@@ -126,7 +134,7 @@ def main():
         kwargs = {
             "dimension": 768,
             "num_channels": 1,
-            "num_moments": 10,
+            "num_moments": 5,
             "use_conv": False,
             "precision": "float",
             "p": 2,
