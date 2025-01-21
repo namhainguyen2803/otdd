@@ -11,7 +11,7 @@ import random
 import json
 from datetime import datetime, timedelta
 import argparse
-
+import time
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
@@ -81,6 +81,7 @@ def main():
                     OTDD_DIST[data_source] = dict()
                 OTDD_DIST[data_source][data_target] = 0
 
+        start = time.time()
         for i in range(len(DATASET_NAMES)):
             for j in range(i + 1, len(TARGET_NAMES)):
                 data_source = DATASET_NAMES[i]
@@ -109,8 +110,10 @@ def main():
                 OTDD_DIST[data_target][data_source] = d.item()
                 OTDD_DIST[data_source][data_target] = d.item()
                 print(f"Data source: {data_source}, Data target: {data_target}, Distance: {d}")
+        end = time.time()
+        processing_time = end - start
 
-        dist_file_path = f'{parent_dir}/otdd_exact_text_dist.json'
+        dist_file_path = f'{parent_dir}/otdd_exact_text_dist_num_examples_{max_size}.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(OTDD_DIST, json_file, indent=4)
         print(f"Finish computing OTDD")
@@ -141,7 +144,7 @@ def main():
             "chunk": 1000
         }
 
-        sw_list = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=10000, evaluate_time=False, **kwargs)
+        sw_list, processing_time = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=10000, evaluate_time=True, **kwargs)
 
         k = 0
         for i in range(len(DATASET_NAMES)):
@@ -156,10 +159,14 @@ def main():
         
         assert k == len(sw_list), "k != len(sw_list)"
 
-        dist_file_path = f'{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_2000.json'
+        dist_file_path = f'{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_{max_size}.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(sOTDD_DIST, json_file, indent=4)
         print(f"Finish computing s-OTDD")
+
+    with open(f'{parent_dir}/running_time.txt', 'w') as file:
+        file.write(f"Method: {method}, total time processing: {processing_time} \n")
+    
 
 
 if __name__ == "__main__":
