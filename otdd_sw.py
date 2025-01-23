@@ -23,16 +23,16 @@ from functools import partialmethod
 from otdd.pytorch.datasets import *
 
 
-DEVICE = "cpu"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-MAXSIZE = 60000
+MAXSIZE = 500
 dataset_mnist  = load_torchvision_data('MNIST', valid_size=0, resize = 28, download=False, maxsize=MAXSIZE)
 dataset_kmnist  = load_torchvision_data('KMNIST', valid_size=0, resize = 28, download=False, maxsize=MAXSIZE)
-dataset_emnist  = load_torchvision_data('EMNIST', valid_size=0, resize = 28, download=True, maxsize=MAXSIZE)
-dataset_fmnist  = load_torchvision_data('FashionMNIST', valid_size=0, resize = 28, download=False, maxsize=MAXSIZE)
-dataset_usps  = load_torchvision_data('USPS',  valid_size=0, resize = 28, download=False, maxsize=MAXSIZE, datadir="data/USPS")
-train_all = [dataset_mnist[1]['train'], dataset_kmnist[1]['train'], dataset_emnist[1]['train'], dataset_fmnist[1]['train'], dataset_usps[1]['train']]
+# dataset_emnist  = load_torchvision_data('EMNIST', valid_size=0, resize = 28, download=True, maxsize=MAXSIZE)
+# dataset_fmnist  = load_torchvision_data('FashionMNIST', valid_size=0, resize = 28, download=False, maxsize=MAXSIZE)
+# dataset_usps  = load_torchvision_data('USPS',  valid_size=0, resize = 28, download=False, maxsize=MAXSIZE, datadir="data/USPS")
+train_all = [dataset_mnist[1]['train'], dataset_kmnist[1]['train']]
 
 
 
@@ -42,8 +42,9 @@ def otdd_hswfs(train_all, scaling=0.1, d=10, n_projs=500, device="cpu"):
     lorentz_geoopt = Lorentz_geoopt()
     scaling = 0.1
     d = 10
+    n_epochs = 500
     embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
-    mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=50000, lr=1e-3)
+    mds, L = embedding.fit_transform(torch.tensor(distance_array, dtype=torch.float64), n_epochs=n_epochs, lr=1e-3)
     dist_mds = lorentz_geoopt.dist(mds[None], mds[:,None]).detach().cpu().numpy()
     diff_dist = np.abs(scaling * distance_array - dist_mds)
     data_X = [] # data
@@ -62,7 +63,10 @@ def otdd_hswfs(train_all, scaling=0.1, d=10, n_projs=500, device="cpu"):
     for i in range(len(train_all)):
         for j in range(i):    
             sw = sliced_wasserstein([data_X[i], data_Y[i]], [data_X[j], data_Y[j]], n_projs, product_manifold)
+            print(sw.shape)
             d_sw[i, j] = sw.item()
             d_sw[j, i] = sw.item()
     return d_sw
 
+
+otdd_hswfs(train_all, device=DEVICE)

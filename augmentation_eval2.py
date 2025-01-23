@@ -66,9 +66,8 @@ def main():
 
     saved_path = 'saved_augmentation_2'
 
-    # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    DEVICE = "cpu"
-
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # DEVICE = "cpu"
 
     result = dict()
     result_list = list()
@@ -76,7 +75,7 @@ def main():
     total_processing_time = 0
 
     for seed_file_name in os.listdir(saved_path):
-        if "png" in seed_file_name or "pdf" in seed_file_name or "csv" in seed_file_name:
+        if "." in seed_file_name:
             continue
         else:
 
@@ -110,7 +109,7 @@ def main():
                         list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
                         sotdd_dist = list_pairwise_dist[0]
                         total_processing_time += sotdd_time_taken
-                        print(f"sOTDD distance: {sotdd_dist}")
+                        print(f"sOTDD distance: {sotdd_dist}, time taken: {sotdd_time_taken}")
                         dist = sotdd_dist
 
                     elif args.method == "otdd_exact":
@@ -125,12 +124,28 @@ def main():
                                                     p=2,
                                                     entreg=1e-3,
                                                     device=DEVICE)
-                        otdd_exact_dist = otdd_dist.distance(maxsamples=None).item()
+                        otdd_exact_dist = otdd_dist.distance(maxsamples=args.maxsize).item()
                         end = time.time()
                         time_taken = end - start
                         total_processing_time += time_taken
-                        print(f"OTDD (Exact): {otdd_exact_dist}")
+                        print(f"OTDD (Exact): {otdd_exact_dist}, time taken: {time_taken}")
                         dist = otdd_exact_dist
+
+                    elif args.method == "wte":
+                        # WTE
+                        cifar10_dataloader = get_dataloader(datadir=train_cifar10_path, maxsize=args.maxsize, batch_size=64)
+                        imagenet_dataloader = get_dataloader(datadir=train_imagenet_path, maxsize=args.maxsize, batch_size=64)
+                        subdatasets = [cifar10_dataloader.dataset, imagenet_dataloader.dataset]
+                        start = time.time()
+                        reference = generate_reference(dataset_size, 4, 32, 10)
+                        wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=args.maxsize)
+                        wtes = wtes.reshape(wtes.shape[0], -1)
+                        wte_dist = distance.cdist(wtes, wtes, 'euclidean')[0][1]
+                        end = time.time()
+                        time_taken = end - start
+                        total_processing_time += time_taken
+                        print(f"WTE: {otdd_ga_dist}, time taken: {time_taken}")
+                        dist = wte_dist
 
                     elif args.method == "otdd_ga":
                         # OTDD (Gaussian)
@@ -144,27 +159,31 @@ def main():
                                                     p=2,
                                                     sqrt_method='approximate',
                                                     nworkers_stats=0,
-                                                    sqrt_niters=20,
+                                                    sqrt_niters=5,
                                                     entreg=1e-3,
                                                     device=DEVICE)
-                        otdd_ga_dist = otdd_dist.distance(maxsamples=None).item()
+                        otdd_ga_dist = otdd_dist.distance(maxsamples=args.maxsize).item()
                         end = time.time()
                         time_taken = end - start
                         total_processing_time += time_taken
-                        print(f"OTDD (Gaussian): {otdd_ga_dist}")
+                        print(f"OTDD (Gaussian): {otdd_ga_dist}, time taken: {time_taken}")
                         dist = otdd_ga_dist
 
                     result[seed_id] = [acc, dist]
                     result_list.append([acc, dist])
     
-    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.txt', 'w') as file:
+    print(f"Method: {args.method}, total time processing: {total_processing_time}")
+    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}_7.txt', 'a') as file:
         file.write(f"Method: {args.method}, total time processing: {total_processing_time} \n")
-    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.txt', 'w') as file:
         for seed_id, list_acc_dist in result.items():
             file.write(f"seed id: {seed_id}, accuracy: {list_acc_dist[0]}, distance: {list_acc_dist[1]} \n")
-    
-    result_list = torch.tensor(result_list)
-    torch.save(result_list, f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.pt')
+
+    # result_list = torch.tensor(result_list)
+    # torch.save(result_list, f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.pt')
 
 if __name__ == "__main__":
     main()
+
+
+
+    

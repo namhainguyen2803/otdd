@@ -29,11 +29,22 @@ os.makedirs(parent_dir, exist_ok=True)
 
 # method = None
 # method2 = None
+# method = None
+# method2 = None
 # method = "OTDD"
+# method2 = "sOTDD"
 # method2 = "sOTDD"
 
 
 def main():
+
+    parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
+    parser.add_argument('--method', type=str, default="sotdd", help="Method name")
+    parser.add_argument('--max_size', type=int, default=2000, help='Sie')
+    args = parser.parse_args()
+
+    method = args.method
+    max_size = args.max_size
 
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
     parser.add_argument('--method', type=str, default="sotdd", help="Method name")
@@ -71,6 +82,7 @@ def main():
 
 
     if method == "otdd":
+    if method == "otdd":
         print("Computing OTDD...")
         OTDD_DIST = dict()
         for i in range(len(DATASET_NAMES)):
@@ -81,6 +93,7 @@ def main():
                     OTDD_DIST[data_source] = dict()
                 OTDD_DIST[data_source][data_target] = 0
 
+        start = time.time()
         start = time.time()
         for i in range(len(DATASET_NAMES)):
             for j in range(i + 1, len(TARGET_NAMES)):
@@ -112,13 +125,17 @@ def main():
                 print(f"Data source: {data_source}, Data target: {data_target}, Distance: {d}")
         end = time.time()
         processing_time = end - start
+        end = time.time()
+        processing_time = end - start
 
+        dist_file_path = f'{parent_dir}/otdd_exact_text_dist_num_examples_{max_size}.json'
         dist_file_path = f'{parent_dir}/otdd_exact_text_dist_num_examples_{max_size}.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(OTDD_DIST, json_file, indent=4)
         print(f"Finish computing OTDD")
 
 
+    elif method == "sotdd":
     elif method == "sotdd":
         print("Computing s-OTDD...")
         sOTDD_DIST = dict()
@@ -138,12 +155,14 @@ def main():
             "dimension": 768,
             "num_channels": 1,
             "num_moments": 5,
+            "num_moments": 5,
             "use_conv": False,
             "precision": "float",
             "p": 2,
             "chunk": 1000
         }
 
+        sw_list, processing_time = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=10000, evaluate_time=True, **kwargs)
         sw_list, processing_time = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=10000, evaluate_time=True, **kwargs)
 
         k = 0
@@ -160,9 +179,14 @@ def main():
         assert k == len(sw_list), "k != len(sw_list)"
 
         dist_file_path = f'{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_{max_size}.json'
+        dist_file_path = f'{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_{max_size}.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(sOTDD_DIST, json_file, indent=4)
         print(f"Finish computing s-OTDD")
+
+    with open(f'{parent_dir}/running_time.txt', 'w') as file:
+        file.write(f"Method: {method}, total time processing: {processing_time} \n")
+    
 
     with open(f'{parent_dir}/running_time.txt', 'w') as file:
         file.write(f"Method: {method}, total time processing: {processing_time} \n")

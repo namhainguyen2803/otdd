@@ -8,11 +8,11 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from scipy import stats
 
-display_method = "sOTDD"
-parent_dir = "saved/text_cls_new"
-baseline_result_path = f"{parent_dir}/baseline/accuracy.txt"
-adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
-text_dist_path = f"{parent_dir}/dist/{display_method}_text_dist.json"
+display_method = "sotdd"
+parent_dir = "saved_text_dataset"
+baseline_result_path = f"{parent_dir}/accuracy.txt"
+adapt_result_path = f"{parent_dir}/adapt_result.txt"
+text_dist_path = f"{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_2000.json"
 
 
 # read text distance
@@ -82,7 +82,7 @@ for i in range(len(DATASET_NAME)):
     global_max = max(global_max, np.max(dist_list))
 
 # Set up a figure for all plots
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(8, 8))
 
 # Loop over datasets and accumulate the data
 for i in range(len(DATASET_NAME)):

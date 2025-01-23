@@ -60,7 +60,7 @@ def sliced_wasserstein(Xs, Xt, num_projections, manifold,
 
     w = emd1D(Xps, Xpt, u_weights=u_weights, v_weights=v_weights, p=p)
 
-    return torch.mean(w)
+    return w
 
 
 def get_quantiles(x, ts, weights=None):

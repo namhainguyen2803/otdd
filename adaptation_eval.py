@@ -10,17 +10,26 @@ from matplotlib.ticker import FormatStrFormatter
 
 method = "sotdd"
 if method == "sotdd":
-    display_method = "s-OTDD (10,000 projections)"
-else:
-    display_method = "OTDD (Exact)"
-
+    display_method = "s-OTDD Demo (10,000 projections)"
+elif method == "otdd":
+    display_method = "OTDD (Gaussian Approx)"
+elif method == "hswfs":
+    display_method = "CHSW (10,000 projections)"
+elif method == "wte":
+    display_method = "WTE"
 saved_dir = "saved_nist"
 if method == "sotdd":
     # dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
-    dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
-else:
-    dist_path = f"saved_nist/dist/{method}_dist_exact.json"
-
+    # dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
+    # dist_path = f"saved_nist/dist/sotdd_linear_gaussian_dist_mean.json"
+    dist_path = f"saved_nist/dist/sotdd_dist_21_01_2025.json"
+elif method == "otdd":
+    dist_path = f"saved_nist/dist/otdd_dist_gaussian.json"
+elif method == "hswfs":
+    dist_path = "saved_nist/dist/hswfs_10000_distance.json"
+elif method == "wte":
+    dist_path = "saved_nist/dist/wte_distance.json"
+    
 with open(dist_path, 'r') as file:
     dict_dist = json.load(file)
 
@@ -114,6 +123,8 @@ df = pd.DataFrame(perf_data)
 # Calculate Pearson correlation
 pearson_corr, p_value = stats.pearsonr(df["OT Dataset Distance"], df["Relative Drop in Test Error (%)"])
 
+print(pearson_corr, p_value)
+
 label=f"$\\rho$: {pearson_corr:.2f}\np-value: {p_value:.2f}"
 
 # Plotting
@@ -170,5 +181,5 @@ plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 # Display plot
 plt.grid(False)
-plt.savefig(f'{saved_dir}/nist_{display_method}.png')
-plt.savefig(f'{saved_dir}/nist_{display_method}.pdf')
+plt.savefig(f'{saved_dir}/{method}_distance.png')
+plt.savefig(f'{saved_dir}/{method}_distance.pdf')

@@ -400,6 +400,22 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
                 ## The letters fold (and only that fold!!!) is 1-indexed
                 train.targets -= 1
                 test.targets -= 1
+
+            # if num_classes is not None:
+            #     # Filter the training set to only include the desired number of classes
+            #     train_mask = torch.isin(train.targets, torch.arange(num_classes))
+            #     train.data = train.data[train_mask]
+            #     train.targets = train.targets[train_mask]
+            #     # Filter the test set to only include the desired number of classes
+            #     test_mask = torch.isin(test.targets, torch.arange(num_classes))
+            #     test.data = test.data[test_mask]
+            #     test.targets = test.targets[test_mask]
+            #     # Create datasets for each class
+            #     datasets_i = []
+            #     for i in range(num_classes):
+            #         datasets_i.append([(data, i) for data in train.data[train.targets == i]])
+
+
                     
         elif dataname == 'STL10':
             train = DATASET(datadir, split='train', download=download, transform=train_transform)
@@ -499,7 +515,7 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
     ### Create DataLoaders
     dataloader_args = dict(batch_size=batch_size,num_workers=num_workers)
 
-    fold_loaders = {k:dataloader.DataLoader(train, sampler=sampler,**dataloader_args)
+    fold_loaders = {k:torch.utils.data.DataLoader(train, sampler=sampler,**dataloader_args)
                     for k,sampler in fold_samplers.items()}
 
     if maxsize_test and maxsize_test < len(test):
@@ -508,7 +524,7 @@ def load_torchvision_data(dataname, valid_size=0.0, splits=None, shuffle=True,
         dataloader_args['sampler'] = sampler_test
     else:
         dataloader_args['shuffle'] = False
-    test_loader = dataloader.DataLoader(test, **dataloader_args)
+    test_loader = torch.utils.data.DataLoader(test, **dataloader_args)
     fold_loaders['test'] = test_loader
 
     fnames, flens = zip(*[[k,len(v)] for k,v in fold_idxs.items()])
@@ -747,11 +763,11 @@ def load_textclassification_data(dataname, vecname='glove.42B.300d', shuffle=Tru
     valid_sampler = SubsetRandomSampler(valid_idx)
 
     dataloader_args = dict(batch_size=batch_size,num_workers=num_workers,collate_fn=None)
-    train_loader = dataloader.DataLoader(train, sampler=train_sampler, **dataloader_args)
+    train_loader = torch.utils.data.DataLoader(train, sampler=train_sampler, **dataloader_args)
     # valid_loader = dataloader.DataLoader(train, sampler=valid_sampler,**dataloader_args)
     valid_loader = None
     dataloader_args['shuffle'] = False
-    test_loader  = dataloader.DataLoader(test, **dataloader_args)
+    test_loader  = torch.utils.data.DataLoader(test, **dataloader_args)
 
     if print_stats:
         print('Classes: {} (effective: {})'.format(len(train.classes), len(torch.unique(train.targets))), torch.unique(train.targets))

@@ -209,26 +209,11 @@ class Embeddings_sOTDD():
 
             if use_conv is False:
                 data = data.reshape(data.shape[0], -1)
-            # print(f"Range of data: min={data.min()}, max={data.max()}")
-            # generate_and_plot_data(data[0], "cac1.png")
+
             X_projection = self._project_X(X=data, projection_matrix=projection_matrix, use_conv=use_conv) # shape == (num_examples, num_projection)
-            # generate_and_plot_data(X_projection[0], "cac2.png")
-            # print(f"Range of X_projection: min={X_projection.min()}, max={X_projection.max()}, mean={torch.mean(X_projection)}")
 
-            X_projection = torch.clamp(X_projection, min=-5, max=5)
-            # print(f"Range of X_projection after clamping: min={X_projection.min()}, max={X_projection.max()}")
-
-            # seed = random.randint(1, 100)
-            # if seed % 3:
-            #     max_idx = torch.argmax(X_projection)
-            #     row_idx = max_idx // X_projection.shape[1]
-            #     col_idx = max_idx % X_projection.shape[1]
-            #     assert X_projection[row_idx, col_idx] == X_projection.max(), "CACACCC"
-
-            #     # seed2 = random.randint(1, 10000)
-            #     generate_and_plot_data(data[row_idx], f"saved_trash/{round(X_projection.max().item(), 3)}_data.png")
-            #     generate_and_plot_data(X_projection[row_idx], f"saved_trash/{round(X_projection.max().item(), 3)}_proj.png")
-            #     # self.ans = 0
+            if use_conv is True:
+                X_projection = torch.clamp(X_projection, min=-5, max=5)
 
             avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k, factorial_k=factorial_k)
             # shape == (num_projection, num_moments)
@@ -290,9 +275,9 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     list_theta = list()
     list_psi = list()
     for i in range(chunk_num_projection):
-        # chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=5, gen_type="poisson") for lz in range(chunk)])
+        chunk_moments = torch.stack([generate_moments(num_moments=num_moments).to(device) for lz in range(chunk)])
 
-        chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
+        # chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
 
         unique_chunk_moments = torch.unique(chunk_moments)
 
@@ -300,11 +285,9 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
         for i in range(len(unique_chunk_moments)):
             lookup_factorial.append(math.factorial(int(unique_chunk_moments[i])))
 
-
         factorial_chunk_moments = torch.zeros_like(chunk_moments)
         for i in range(len(unique_chunk_moments)):
             factorial_chunk_moments[chunk_moments == unique_chunk_moments[i]] = lookup_factorial[i]
-            # factorial_chunk_moments[chunk_moments == unique_chunk_moments[i]] = 1
 
         if use_conv is True:
             chunk_theta = generate_unit_convolution_projections(image_size=dimension, num_channels=num_channels, num_projection=chunk, device=device, dtype=dtype)
