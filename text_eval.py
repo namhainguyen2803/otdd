@@ -18,9 +18,9 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-method = "sOTDD"
-# method = "OTDD"
-if method == "sOTDD":
+method = "sotdd"
+
+if method == "otdd":
     display_method = "s-OTDD"
 else:
     display_method = method.upper()
@@ -37,18 +37,16 @@ dataset_nicknames = {
 }
 
 
-parent_dir = "saved/text_cls_new"
-baseline_result_path = f"{parent_dir}/baseline_new/accuracy.txt"
-adapt_result_path = f"{parent_dir}/adapt_weights/adapt_result.txt"
-# text_dist_path = f"{parent_dir}/dist/{method}_text_dist.json"
-if method == "OTDD":
-    text_dist_path = "saved_text_dist/text_cls/dist/OTDD_20_text_dist.json"
-    text_dist_path = "saved/text_cls_new2/dist/OTDD_text_dist.json"
-    text_dist_path = "saved_text_dist/text_cls/otdd_dist/otdd_exact_text_dist.json"
+method = "sotdd"
+parent_dir = "saved_text_dataset"
+baseline_result_path = f"{parent_dir}/accuracy.txt"
+adapt_result_path = f"{parent_dir}/adapt_result.txt"
+text_dist_path = f"{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_2000.json"
+
+if method == "otdd":
+    text_dist_path = f"{parent_dir}/otdd_exact_text_dist_num_examples_2000.json"
 else:
-    text_dist_path = "saved_text_dist/text_cls/dist/sOTDD_text_dist.json"
-    # text_dist_path = "saved/text_cls_new2/dist/sOTDD_text_dist3.json"
-    # text_dist_path = "saved_text_dist/text_cls/otdd_dist/sotdd_text_dist_num_moments_5_num_examples_2000.json"
+    text_dist_path = f"{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_2000.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
@@ -73,10 +71,11 @@ baseline_acc = {}
 with open(baseline_result_path, 'r') as file:
     for line in file:
         parts = line.strip().split(': ')
-        # print(parts)
+        print(parts)
         source_dataset = parts[1].split(', ')[0]
-        accuracy = float(parts[3])
-        baseline_acc[source_dataset] = accuracy
+        accuracy_epoch_2 = float(parts[2].split(', ')[0])
+        accuracy_epoch_10 = float(parts[3])
+        baseline_acc[source_dataset] = accuracy_epoch_10
 
 # print(baseline_acc)
 
@@ -94,8 +93,8 @@ for i in range(len(DATASET_NAME)):
         # if source_name == "AmazonReviewPolarity" or target_name == "AmazonReviewPolarity":
         #     continue
         
-        perf = ((baseline_acc[target_name]) - (adapt_acc[target_name][source_name]))
-        # if perf > 0.4:
+        perf = (baseline_acc[target_name] - adapt_acc[target_name][source_name])
+        # if perf > 0.2:
         #     continue
         # error = torch.abs(torch.normal(mean=0.0, std=0.05, size=(1,)))
         # print(error)
@@ -167,7 +166,7 @@ plt.title(f"Distance vs Adaptation: Text Classification", fontsize=FONT_SIZE, fo
 #     plt.text(perf_data[i]["distance"], perf_data[i]["performance"], 
 #              perf_data[i]["Source -> Target"], ha='right', fontsize=10)
 
-if method == "sOTDD":
+if method == "sotdd":
     plt.xlabel(f's-OTDD (10,000 projections)', fontsize=FONT_SIZE - 2)
 else:
     plt.xlabel(f'OTDD (Exact)', fontsize=FONT_SIZE - 2)

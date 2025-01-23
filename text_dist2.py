@@ -10,37 +10,69 @@ import os
 import random
 import json
 from datetime import datetime, timedelta
+from torch.utils.data import Dataset, DataLoader
 import argparse
-
+import time
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
 torch.manual_seed(42)
+data_dir = "saved_text_dataset"
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
-# DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
-# TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
+DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
+TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
+
+
+class CustomTensorDataset(Dataset):
+    def __init__(self, data, labels):
+        self.data = data
+        self.labels = labels
+        self.targets = labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.labels[idx]
+    
+
+def get_dataloader(datadir, maxsize=None, batch_size=64):
+    images_tensor, labels_tensor = torch.load(datadir)
+    if maxsize is not None:
+        if maxsize < images_tensor.size(0):
+            indices = torch.randperm(images_tensor.size(0))[:maxsize]
+            selected_images = images_tensor[indices]
+            selected_labels = labels_tensor[indices]
+            dataset = CustomTensorDataset(selected_images, selected_labels)
+            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        else:
+            dataset = CustomTensorDataset(images_tensor, labels_tensor)
+            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    else:
+        dataset = CustomTensorDataset(images_tensor, labels_tensor)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    dataloader.datasets = dataset
+    return dataloader
 
 
 def main():
 
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--saved_path', type=str, default="saved_text_dist", help='Name of method')
-    parser.add_argument('--source', type=str, default="AG_NEWS", help='Source dataset')
-    parser.add_argument('--target', type=str, default="DBpedia", help='Target dataset')
-    parser.add_argument('--method', type=str, default="sotdd", help='Name of method')
-    parser.add_argument('--num_examples', type=int, default=1000, help='number of examples')
+    parser.add_argument('--method', type=str, default="sotdd", help="Method name")
+    parser.add_argument('--max_size', type=int, default=2000, help='Sie')
     args = parser.parse_args()
 
-    os.makedirs(args.saved_path, exist_ok=True)
+    method = args.method
+    max_size = args.max_size
 
-    DATASET_NAMES = [args.source, args.target]
+    os.makedirs(data_dir, exist_ok=True)
 
     METADATA_DATASET = dict()
     for dataset_name in DATASET_NAMES:
         METADATA_DATASET[dataset_name] = dict()
-        METADATA_DATASET[dataset_name]["dataloader"] = load_textclassification_data(dataset_name, maxsize=args.num_examples, load_tensor=True)[0]
+        METADATA_DATASET[dataset_name]["dataloader"] = get_dataloader(datadir=f"{data_dir}/{dataset_name}.pt", maxsize=max_size, batch_size=64)
 
         if dataset_name == "AG_NEWS":
             METADATA_DATASET[dataset_name]["num_classes"] = 4
@@ -64,53 +96,103 @@ def main():
             METADATA_DATASET[dataset_name]["num_classes"] = 5
 
 
-    if args.method == "otdd":
+    if method == "otdd":
         print("Computing OTDD...")
-        # dist = DatasetDistance(METADATA_DATASET[args.source]["dataloader"], 
-        #                         METADATA_DATASET[args.target]["dataloader"],
-        #                         inner_ot_method='gaussian_approx',
-        #                         sqrt_method='approximate',
-        #                         nworkers_stats=0,
-        #                         sqrt_niters=20,
-        #                         debiased_loss=True,
-        #                         p=2,
-        #                         entreg=1e-3,
-        #                         device=DEVICE)
-        dist = DatasetDistance(METADATA_DATASET[args.source]["dataloader"], 
-                                METADATA_DATASET[args.target]["dataloader"],
-                                inner_ot_method='exact',
-                                debiased_loss=True,
-                                p=2,
-                                entreg=1e-3,
-                                device=DEVICE)
-        d = dist.distance(maxsamples=None)
-        del dist
-        print(f"Data source: {args.source}, Data target: {args.target}, Distance: {d}")
-        with open(f'{args.saved_path}/otdd_exact_distance.txt', 'a') as file:
-            file.write(f"Data source: {args.source}, Data target: {args.target}, Distance: {d} \n")
+        OTDD_DIST = dict()
+        for i in range(len(DATASET_NAMES)):
+            for j in range(len(TARGET_NAMES)):
+                data_source = DATASET_NAMES[i]
+                data_target = DATASET_NAMES[j]
+                if data_source not in OTDD_DIST:
+                    OTDD_DIST[data_source] = dict()
+                OTDD_DIST[data_source][data_target] = 0
+
+        start = time.time()
+        for i in range(len(DATASET_NAMES)):
+            for j in range(i + 1, len(TARGET_NAMES)):
+                data_source = DATASET_NAMES[i]
+                data_target = DATASET_NAMES[j]
+                if data_source == data_target:
+                    continue
+                # dist = DatasetDistance(METADATA_DATASET[data_source]["dataloader"], 
+                #                         METADATA_DATASET[data_target]["dataloader"],
+                #                         inner_ot_method='gaussian_approx',
+                #                         sqrt_method='approximate',
+                #                         nworkers_stats=0,
+                #                         sqrt_niters=20,
+                #                         debiased_loss=True,
+                #                         p=2,
+                #                         entreg=1e-3,
+                #                         device=DEVICE)
+                dist = DatasetDistance(METADATA_DATASET[data_source]["dataloader"], 
+                                        METADATA_DATASET[data_target]["dataloader"],
+                                        inner_ot_method='exact',
+                                        debiased_loss=True,
+                                        p=2,
+                                        entreg=1e-3,
+                                        device=DEVICE)
+                d = dist.distance(maxsamples=None)
+                del dist
+                OTDD_DIST[data_target][data_source] = d.item()
+                OTDD_DIST[data_source][data_target] = d.item()
+                print(f"Data source: {data_source}, Data target: {data_target}, Distance: {d}")
+        end = time.time()
+        processing_time = end - start
+
+        dist_file_path = f'{data_dir}/otdd_exact_text_dist_num_examples_{max_size}.json'
+        with open(dist_file_path, 'w') as json_file:
+            json.dump(OTDD_DIST, json_file, indent=4)
+        print(f"Finish computing OTDD")
 
 
-    if args.method == "sotdd":
+    elif method == "sotdd":
         print("Computing s-OTDD...")
-        NUM_MOMENTS = 5
-        PROJ = 10000
+        sOTDD_DIST = dict()
+        for i in range(len(DATASET_NAMES)):
+            for j in range(len(TARGET_NAMES)):
+                data_source = DATASET_NAMES[i]
+                data_target = DATASET_NAMES[j]
+                if data_source not in sOTDD_DIST:
+                    sOTDD_DIST[data_source] = dict()
+                sOTDD_DIST[data_source][data_target] = 0
 
-        list_dataset = [METADATA_DATASET[args.source]["dataloader"], METADATA_DATASET[args.target]["dataloader"]]
+        list_dataset = list()
+        for i in range(len(DATASET_NAMES)):
+            list_dataset.append(METADATA_DATASET[DATASET_NAMES[i]]["dataloader"])
+
         kwargs = {
             "dimension": 768,
             "num_channels": 1,
-            "num_moments": NUM_MOMENTS,
+            "num_moments": 5,
             "use_conv": False,
             "precision": "float",
             "p": 2,
             "chunk": 1000
         }
 
-        sw_list = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=PROJ, evaluate_time=False, **kwargs)[0]
+        sw_list, processing_time = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=5000, evaluate_time=True, **kwargs)
 
-        print(f"Data source: {args.source}, Data target: {args.target}, Distance: {d}")
-        with open(f'{args.saved_path}/sotdd_num_moments_{NUM_MOMENTS}_projections_{PROJ}_distance.txt', 'a') as file:
-            file.write(f"Data source: {args.source}, Data target: {args.target}, Distance: {d} \n")
+        k = 0
+        for i in range(len(DATASET_NAMES)):
+            for j in range(i + 1, len(TARGET_NAMES)):
+                data_source = DATASET_NAMES[i]
+                data_target = DATASET_NAMES[j]
+                if data_source == data_target:
+                    continue
+                sOTDD_DIST[data_target][data_source] = sw_list[k].item()
+                sOTDD_DIST[data_source][data_target] = sw_list[k].item()
+                k += 1
+        
+        assert k == len(sw_list), "k != len(sw_list)"
+
+        dist_file_path = f'{data_dir}/sotdd_text_dist_num_moments_5_num_examples_{max_size}.json'
+        with open(dist_file_path, 'w') as json_file:
+            json.dump(sOTDD_DIST, json_file, indent=4)
+        print(f"Finish computing s-OTDD")
+
+    with open(f'{data_dir}/running_time.txt', 'w') as file:
+        file.write(f"Method: {method}, total time processing: {processing_time} \n")
+    
 
 
 if __name__ == "__main__":

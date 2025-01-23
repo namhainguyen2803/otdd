@@ -17,14 +17,14 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
 
-# NUM_EXAMPLES = 2000
+NUM_EXAMPLES = 2000
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
-parent_dir = f"saved_text_dist"
+parent_dir = f"saved_text_dist_final"
 os.makedirs(parent_dir, exist_ok=True)
 
 # method = None
@@ -46,7 +46,7 @@ def main():
     METADATA_DATASET = dict()
     for dataset_name in DATASET_NAMES:
         METADATA_DATASET[dataset_name] = dict()
-        METADATA_DATASET[dataset_name]["dataloader"] = load_textclassification_data(dataset_name, maxsize=max_size, load_tensor=True)[0]
+        METADATA_DATASET[dataset_name]["dataloader"] = load_textclassification_data(dataset_name, maxsize=max_size, load_tensor=True, device=DEVICE)[0]
 
         if dataset_name == "AG_NEWS":
             METADATA_DATASET[dataset_name]["num_classes"] = 4
