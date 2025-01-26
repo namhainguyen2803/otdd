@@ -22,15 +22,15 @@ def scientific_number(x):
 
 parent_path = "saved_augmentation_2"
 
-# method = "sotdd"
-# maxsize = 50000
-# displayed_method = "s-OTDD (10,000 projections)"
+method = "sotdd"
+maxsize = 50000
+displayed_method = "s-OTDD (10,000 projections)"
 
-method = "otdd_exact"
-maxsize = 5000
-displayed_method = "OTDD (Exact)"
+# method = "otdd_exact"
+# maxsize = 5000
+# displayed_method = "OTDD (Exact)"
 
-file_path = f"{parent_path}/acc_dist_method_{method}_maxsize_{maxsize}.txt"
+file_path = f"{parent_path}/acc_dist_method_{method}_maxsize_{maxsize}_10.txt"
 # file_path = "saved_augmentation_2/acc_dist_method_sotdd_maxsize_50000.txt"
 
 
@@ -44,8 +44,9 @@ with open(file_path, 'r') as file:
         accuracy = float(parts[1].split(': ')[1]) * 100
         distance = float(parts[2].split(': ')[1])
         print(accuracy, distance)
-        list_acc.append(accuracy)
-        list_dist.append(distance)
+        if accuracy < 87.6:
+            list_acc.append(accuracy)
+            list_dist.append(distance)
 
 
 print(list_acc)

@@ -17,27 +17,20 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
 
-NUM_EXAMPLES = 2000
-
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 
-parent_dir = f"saved_text_dist_final"
-os.makedirs(parent_dir, exist_ok=True)
-
-# method = None
-# method2 = None
-# method = "OTDD"
-# method2 = "sOTDD"
+data_dir = f"saved_text_dist_final"
+os.makedirs(data_dir, exist_ok=True)
 
 
 def main():
 
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
     parser.add_argument('--method', type=str, default="sotdd", help="Method name")
-    parser.add_argument('--max_size', type=int, default=2000, help='Sie')
+    parser.add_argument('--max_size', type=int, default=20000, help='Sie')
     args = parser.parse_args()
 
     method = args.method
@@ -113,7 +106,7 @@ def main():
         end = time.time()
         processing_time = end - start
 
-        dist_file_path = f'{parent_dir}/otdd_exact_text_dist_num_examples_{max_size}.json'
+        dist_file_path = f'{data_dir}/otdd_exact_text_dist_num_examples_{max_size}.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(OTDD_DIST, json_file, indent=4)
         print(f"Finish computing OTDD")
@@ -159,12 +152,12 @@ def main():
         
         assert k == len(sw_list), "k != len(sw_list)"
 
-        dist_file_path = f'{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_{max_size}.json'
+        dist_file_path = f'{data_dir}/sotdd_text_dist_num_moments_{kwargs["num_moments"]}_num_examples_{max_size}.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(sOTDD_DIST, json_file, indent=4)
         print(f"Finish computing s-OTDD")
 
-    with open(f'{parent_dir}/running_time.txt', 'w') as file:
+    with open(f'{data_dir}/running_time.txt', 'w') as file:
         file.write(f"Method: {method}, total time processing: {processing_time} \n")
     
 

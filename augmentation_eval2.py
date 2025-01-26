@@ -106,7 +106,7 @@ def main():
                             "p": 2,
                             "chunk": 1000
                         }
-                        list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=10000, device=DEVICE, evaluate_time=True, **kwargs)
+                        list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=50000, device=DEVICE, evaluate_time=True, **kwargs)
                         sotdd_dist = list_pairwise_dist[0]
                         total_processing_time += sotdd_time_taken
                         print(f"sOTDD distance: {sotdd_dist}, time taken: {sotdd_time_taken}")

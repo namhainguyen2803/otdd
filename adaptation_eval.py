@@ -10,8 +10,10 @@ from matplotlib.ticker import FormatStrFormatter
 
 method = "sotdd"
 if method == "sotdd":
-    display_method = "s-OTDD Demo (10,000 projections)"
-elif method == "otdd":
+    display_method = "s-OTDD (10,000 projections)"
+elif method == "otdd_exact":
+    display_method = "OTDD (Exact)"
+elif method == "otdd_gaussian":
     display_method = "OTDD (Gaussian Approx)"
 elif method == "hswfs":
     display_method = "CHSW (10,000 projections)"
@@ -23,7 +25,10 @@ if method == "sotdd":
     # dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
     # dist_path = f"saved_nist/dist/sotdd_linear_gaussian_dist_mean.json"
     dist_path = f"saved_nist/dist/sotdd_dist_21_01_2025.json"
-elif method == "otdd":
+    # dist_path = "saved_nist/dist/sotdd_dist_26_01_2025.json"
+elif method == "otdd_exact":
+    dist_path = f"saved_nist/dist/otdd_dist_exact.json"
+elif method == "otdd_gaussian":
     dist_path = f"saved_nist/dist/otdd_dist_gaussian.json"
 elif method == "hswfs":
     dist_path = "saved_nist/dist/hswfs_10000_distance.json"
@@ -175,7 +180,7 @@ plt.legend(loc="upper left", frameon=True, fontsize=15)
 # Customize title and labels
 FONT_SIZE = 18
 plt.title(f"Distance vs Adaptation: *NIST Datasets", fontsize=FONT_SIZE, weight='bold')
-plt.xlabel(f"{display_method} Distance", fontsize=FONT_SIZE - 2)
+plt.xlabel(f"{display_method}", fontsize=FONT_SIZE - 2)
 plt.ylabel("Performance Gap (%)", fontsize=FONT_SIZE - 2)
 plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 

@@ -18,13 +18,6 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-method = "sotdd"
-
-if method == "otdd":
-    display_method = "s-OTDD"
-else:
-    display_method = method.upper()
-
 
 dataset_nicknames = {
 "AG_NEWS": "ag",
@@ -38,15 +31,18 @@ dataset_nicknames = {
 
 
 method = "sotdd"
-parent_dir = "saved_text_dataset"
-baseline_result_path = f"{parent_dir}/accuracy.txt"
-adapt_result_path = f"{parent_dir}/adapt_result.txt"
-text_dist_path = f"{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_2000.json"
+parent_dir = "saved_text_data_2"
+baseline_result_path = "saved_text_dataset/accuracy.txt"
+adapt_result_path = "saved_text_dataset/adapt_result.txt"
+if method == "sotdd":
+    display_method = "s-OTDD"
+else:
+    display_method = method.upper()
 
 if method == "otdd":
-    text_dist_path = f"{parent_dir}/otdd_exact_text_dist_num_examples_2000.json"
+    text_dist_path = f"{parent_dir}/otdd_exact_text_dist_num_examples_5000.json"
 else:
-    text_dist_path = f"{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_2000.json"
+    text_dist_path = f"{parent_dir}/sotdd_text_dist_num_moments_5_num_examples_50000.json"
 
 # read text distance
 with open(text_dist_path, "r") as file:
@@ -94,7 +90,7 @@ for i in range(len(DATASET_NAME)):
         #     continue
         
         perf = (baseline_acc[target_name] - adapt_acc[target_name][source_name])
-        # if perf > 0.2:
+        # if perf > 0.4:
         #     continue
         # error = torch.abs(torch.normal(mean=0.0, std=0.05, size=(1,)))
         # print(error)

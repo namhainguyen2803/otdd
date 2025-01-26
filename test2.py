@@ -10,11 +10,20 @@ def sample_zero_truncated_poisson(rate_vector):
 
 
 def generate_moments(num_moments):
-    mean_moment = torch.tensor([0.01, 2, 3, 4, 5])
-    moment = torch.sort(sample_zero_truncated_poisson(mean_moment))[0]
+    # mean_moment = torch.tensor([0.01, 2, 3, 4, 5])
+    mean_moment = torch.tensor([1, 2, 3, 4, 5])
+    moment = sample_zero_truncated_poisson(mean_moment)
     return moment
 
+# cac = generate_moments(5)
+# print(cac)
 
+# data, label = torch.load("saved_text_data_2/AmazonReviewPolarity_text.pt")
+# print(data.shape, label.shape)
+# print(data.min(), data.max())
 
+# data_mean = data.mean()
+# data_std = data.std()
+# normalized_data = (data - data_mean) / data_std
 
-print(generate_moments(1))
+# print(normalized_data.min(), normalized_data.max())

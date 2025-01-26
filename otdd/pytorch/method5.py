@@ -27,28 +27,14 @@ from otdd.pytorch.utils import generate_and_plot_data
 class Embeddings_sOTDD():
 
     def __init__(self, 
-                min_labelcount=2,
                 p=2,
                 device="cpu",
                 precision="float"):
 
         self.p = p 
         self.device = device
-        self.min_labelcount = min_labelcount
         self.precision = precision
         self.ans = 1
-
-
-    def _init_data(self, D):
-        """ Preprocessing of datasets. Extracts value and coding for effective
-        (i.e., those actually present in sampled data) class labels.
-        """
-        targets, classes, idxs = extract_data_targets(D)
-        vals, cts = torch.unique(targets[idxs], return_counts=True)
-        labels_kept = torch.sort(vals[cts >= self.min_labelcount])[0]
-        classes = [classes[i] for i in labels_kept]
-        # class_to_idx = {i: c for i, c in enumerate(labels_kept)}
-        return classes, labels_kept
 
 
     def _load_datasets(self, D, labels_kept=None, maxsamples=None, device='cpu'):
@@ -212,8 +198,8 @@ class Embeddings_sOTDD():
 
             X_projection = self._project_X(X=data, projection_matrix=projection_matrix, use_conv=use_conv) # shape == (num_examples, num_projection)
 
-            if use_conv is True:
-                X_projection = torch.clamp(X_projection, min=-5, max=5)
+            # print(X_projection.min(), X_projection.max())
+            X_projection = torch.clamp(X_projection, min=-5, max=5)
 
             avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k, factorial_k=factorial_k)
             # shape == (num_projection, num_moments)

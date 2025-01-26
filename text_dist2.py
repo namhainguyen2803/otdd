@@ -17,8 +17,8 @@ import time
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 print(f"Use CUDA or not: {DEVICE}")
-torch.manual_seed(42)
-data_dir = "saved_text_dataset"
+# torch.manual_seed(42)
+data_dir = "saved_text_data_2"
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 DATASET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
@@ -27,6 +27,10 @@ TARGET_NAMES = ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "Y
 
 class CustomTensorDataset(Dataset):
     def __init__(self, data, labels):
+
+        # data_mean = data.mean()
+        # data_std = data.std()
+        # self.data = (data - data_mean) / data_std
         self.data = data
         self.labels = labels
         self.targets = labels
@@ -61,18 +65,16 @@ def main():
 
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
     parser.add_argument('--method', type=str, default="sotdd", help="Method name")
-    parser.add_argument('--max_size', type=int, default=2000, help='Sie')
+    parser.add_argument('--max_size', type=int, default=2000, help='Size')
     args = parser.parse_args()
 
     method = args.method
     max_size = args.max_size
 
-    os.makedirs(data_dir, exist_ok=True)
-
     METADATA_DATASET = dict()
     for dataset_name in DATASET_NAMES:
         METADATA_DATASET[dataset_name] = dict()
-        METADATA_DATASET[dataset_name]["dataloader"] = get_dataloader(datadir=f"{data_dir}/{dataset_name}.pt", maxsize=max_size, batch_size=64)
+        METADATA_DATASET[dataset_name]["dataloader"] = get_dataloader(datadir=f"{data_dir}/{dataset_name}_text.pt", maxsize=max_size, batch_size=64)
 
         if dataset_name == "AG_NEWS":
             METADATA_DATASET[dataset_name]["num_classes"] = 4
@@ -170,7 +172,7 @@ def main():
             "chunk": 1000
         }
 
-        sw_list, processing_time = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=5000, evaluate_time=True, **kwargs)
+        sw_list, processing_time = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=10000, evaluate_time=True, **kwargs)
 
         k = 0
         for i in range(len(DATASET_NAMES)):
@@ -185,7 +187,7 @@ def main():
         
         assert k == len(sw_list), "k != len(sw_list)"
 
-        dist_file_path = f'{data_dir}/sotdd_text_dist_num_moments_5_num_examples_{max_size}.json'
+        dist_file_path = f'{data_dir}/sotdd_text_dist_num_moments_{kwargs["num_moments"]}_num_examples_{max_size}.json'
         with open(dist_file_path, 'w') as json_file:
             json.dump(sOTDD_DIST, json_file, indent=4)
         print(f"Finish computing s-OTDD")

@@ -72,7 +72,6 @@ def generate_reference(num, dim_low, dim, attached_dim, seed=0):
     return torch.cat((m(med).reshape(num, -1), attached), dim=1).float()
 
 
-
 def create_dataset(maxsamples=MAXSIZE_DIST, maxsize_for_each_class=None):
 
     METADATA_DATASET = dict()
@@ -163,7 +162,7 @@ def compute_otdd_gaussian_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=Non
                                     inner_ot_method='gaussian_approx',
                                     sqrt_method='approximate',
                                     nworkers_stats=0,
-                                    sqrt_niters=20,
+                                    sqrt_niters=10,
                                     debiased_loss=True,
                                     p=2,
                                     entreg=1e-3,
@@ -469,14 +468,14 @@ if __name__ == "__main__":
     #     pickle.dump(list_stats_data, f)
     
 
-    # DIST_otdd = compute_otdd_distance()
-    # dist_file_path = f'{parent_dir}/otdd_dist_gaussian_label.json'
+    # DIST_otdd = compute_otdd_gaussian_distance()
+    # dist_file_path = f'{parent_dir}/otdd_dist_gaussian.json'
     # with open(dist_file_path, 'w') as json_file:
     #     json.dump(DIST_otdd, json_file, indent=4)
 
 
-    DIST_sotdd = compute_sotdd_distance(num_projection=10000)
-    dist_file_path = f'{parent_dir}/sotdd_dist_21_01_2025.json'
+    DIST_sotdd = compute_sotdd_distance(num_projection=50000)
+    dist_file_path = f'{parent_dir}/sotdd_dist_26_01_2025.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_sotdd, json_file, indent=4)
 
@@ -504,5 +503,4 @@ if __name__ == "__main__":
 
     # train_source(num_epoch_source=20, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
     # training_and_adaptation(num_epochs=10, maxsamples=MAXSIZE_TRAINING, device=DEVICE)
-
 

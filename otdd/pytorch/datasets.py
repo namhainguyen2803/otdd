@@ -137,7 +137,7 @@ class SentencesDataset(Dataset):
                             padding=True,
                             truncation=True,
                             return_tensors='pt').to(self.device)
-        return self.model(encoding)["sentence_embedding"], self.labels[item]
+        return self.model(encoding)["sentence_embedding"].detach(), self.labels[item]
 
     def __len__(self):
         return len(self.examples)
@@ -162,8 +162,8 @@ class SentencesDataset2(Dataset):
                                     padding='max_length',
                                     truncation=True, 
                                     return_tensors='pt')
-        input_ids = encoding['input_ids'].squeeze().to(self.device)
-        attention_mask = encoding['attention_mask'].squeeze().to(self.device)
+        input_ids = encoding['input_ids'].detach().squeeze().to(self.device)
+        attention_mask = encoding['attention_mask'].detach().squeeze().to(self.device)
         return {'input_ids': input_ids, 'attention_mask': attention_mask}, self.labels[item]
 
     def __len__(self):
