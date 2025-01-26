@@ -10,7 +10,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 method = "sotdd"
 if method == "sotdd":
-    display_method = "s-OTDD (10,000 projections)"
+    display_method = "s-OTDD (20,000 projections)"
 elif method == "otdd_exact":
     display_method = "OTDD (Exact)"
 elif method == "otdd_gaussian":
@@ -19,13 +19,14 @@ elif method == "hswfs":
     display_method = "CHSW (10,000 projections)"
 elif method == "wte":
     display_method = "WTE"
+    
 saved_dir = "saved_nist"
 if method == "sotdd":
     # dist_path = f"saved/nist/{method}_dist_no_conv_8_normalizing_moments_3.json"
     # dist_path = f"saved_nist/dist/sotdd_dist_use_conv_False_num_moments_10.json"
     # dist_path = f"saved_nist/dist/sotdd_linear_gaussian_dist_mean.json"
-    dist_path = f"saved_nist/dist/sotdd_dist_21_01_2025.json"
-    # dist_path = "saved_nist/dist/sotdd_dist_26_01_2025.json"
+    # dist_path = f"saved_nist/dist/sotdd_dist_21_01_2025.json"
+    dist_path = "saved_nist/dist/sotdd_dist_26_01_2025.json"
 elif method == "otdd_exact":
     dist_path = f"saved_nist/dist/otdd_dist_exact.json"
 elif method == "otdd_gaussian":
@@ -110,8 +111,6 @@ for target_name, sources in perf_dict.items():
         if perf_list:  # Ensure the list is not empty
             avg_perf = np.mean(perf_list)  # Average performance drop
             error = np.std(perf_list) / 2  # Standard deviation as error (converted to percentage)
-            # if error > 0.7:
-            #     error = 0.7
             dist = dict_dist[target_name][source_name]
             if dist is not None or dist != 0:
                 perf_data.append({

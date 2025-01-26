@@ -64,7 +64,7 @@ def main():
     parser.add_argument('--maxsize', type=int, default=50000, help='Parent directory')
     args = parser.parse_args()
 
-    saved_path = 'saved_augmentation_2'
+    saved_path = 'saved_augmentation_3'
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # DEVICE = "cpu"
@@ -106,7 +106,7 @@ def main():
                             "p": 2,
                             "chunk": 1000
                         }
-                        list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=50000, device=DEVICE, evaluate_time=True, **kwargs)
+                        list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=100000, device=DEVICE, evaluate_time=True, **kwargs)
                         sotdd_dist = list_pairwise_dist[0]
                         total_processing_time += sotdd_time_taken
                         print(f"sOTDD distance: {sotdd_dist}, time taken: {sotdd_time_taken}")
@@ -173,7 +173,7 @@ def main():
                     result_list.append([acc, dist])
     
     print(f"Method: {args.method}, total time processing: {total_processing_time}")
-    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}_7.txt', 'a') as file:
+    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}_4.txt', 'a') as file:
         file.write(f"Method: {args.method}, total time processing: {total_processing_time} \n")
         for seed_id, list_acc_dist in result.items():
             file.write(f"seed id: {seed_id}, accuracy: {list_acc_dist[0]}, distance: {list_acc_dist[1]} \n")

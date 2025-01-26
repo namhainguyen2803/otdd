@@ -20,17 +20,17 @@ def scientific_number(x):
     a = x / (10 ** b)
     return a, b
 
-parent_path = "saved_augmentation_2"
+parent_path = "saved_augmentation_3"
 
-method = "sotdd"
-maxsize = 50000
-displayed_method = "s-OTDD (10,000 projections)"
+# method = "sotdd"
+# maxsize = 100000
+# displayed_method = "s-OTDD (10,000 projections)"
 
-# method = "otdd_exact"
-# maxsize = 5000
-# displayed_method = "OTDD (Exact)"
+method = "otdd_exact"
+maxsize = 5000
+displayed_method = "OTDD (Exact)"
 
-file_path = f"{parent_path}/acc_dist_method_{method}_maxsize_{maxsize}_10.txt"
+file_path = f"{parent_path}/acc_dist_method_{method}_maxsize_{maxsize}_3.txt"
 # file_path = "saved_augmentation_2/acc_dist_method_sotdd_maxsize_50000.txt"
 
 
