@@ -64,10 +64,8 @@ def main():
     parser.add_argument('--maxsize', type=int, default=50000, help='Parent directory')
     args = parser.parse_args()
 
-    saved_path = 'saved_augmentation_2'
-
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # DEVICE = "cpu"
+    saved_path = 'saved_augmentation'
+    DEVICE = "cpu"
 
     result = dict()
     result_list = list()
@@ -173,13 +171,10 @@ def main():
                     result_list.append([acc, dist])
     
     print(f"Method: {args.method}, total time processing: {total_processing_time}")
-    with open(f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}_7.txt', 'a') as file:
+    with open(f'{saved_path}/acc_dist_method_{args.method}.txt', 'a') as file:
         file.write(f"Method: {args.method}, total time processing: {total_processing_time} \n")
         for seed_id, list_acc_dist in result.items():
             file.write(f"seed id: {seed_id}, accuracy: {list_acc_dist[0]}, distance: {list_acc_dist[1]} \n")
-
-    # result_list = torch.tensor(result_list)
-    # torch.save(result_list, f'{saved_path}/acc_dist_method_{args.method}_maxsize_{args.maxsize}.pt')
 
 if __name__ == "__main__":
     main()

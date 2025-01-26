@@ -17,42 +17,29 @@ from tqdm.autonotebook import tqdm
 import numpy as np
 import random
 
-from .utils import load_full_dataset, extract_data_targets, process_device_arg, generate_uniform_unit_sphere_projections, generate_unit_convolution_projections, generate_uniform_unit_sphere_projections_2, generate_moments, normalizing_moments, normalizing_moments_2
+from .utils import *
 from .wasserstein import Sliced_Wasserstein_Distance, Wasserstein_One_Dimension
 
 import time
 
+from otdd.pytorch.utils import generate_and_plot_data
 
 class Embeddings_sOTDD():
 
     def __init__(self, 
-                min_labelcount=2,
                 p=2,
                 device="cpu",
                 precision="float"):
 
         self.p = p 
         self.device = device
-        self.min_labelcount = min_labelcount
         self.precision = precision
-
-
-    def _init_data(self, D):
-        """ Preprocessing of datasets. Extracts value and coding for effective
-        (i.e., those actually present in sampled data) class labels.
-        """
-        targets, classes, idxs = extract_data_targets(D)
-        vals, cts = torch.unique(targets[idxs], return_counts=True)
-        labels_kept = torch.sort(vals[cts >= self.min_labelcount])[0]
-        classes = [classes[i] for i in labels_kept]
-        # class_to_idx = {i: c for i, c in enumerate(labels_kept)}
-        return classes, labels_kept
+        self.ans = 1
 
 
     def _load_datasets(self, D, labels_kept=None, maxsamples=None, device='cpu'):
         logger.info('Concatenating feature vectors...')
-        ## We probably don't ever want to store the full datasets in GPU
-        device = 'cpu'
+        # device = 'cpu'
         dtype = torch.DoubleTensor if self.precision == 'double' else torch.FloatTensor
         X, Y, dict_data = self.load_full_dataset(D, 
                                                 labels_keep=labels_kept,
@@ -136,7 +123,7 @@ class Embeddings_sOTDD():
                 x = x.type(dtype).to(device)
 
             # X.append(x.squeeze().view(x.shape[0], -1))
-            X.append(x)
+            X.append(x.to(device))
             Y.append(y.to(device).squeeze())
 
         X = torch.cat(X)
@@ -177,7 +164,7 @@ class Embeddings_sOTDD():
             return X_projection
 
 
-    def _compute_moments_projected_distrbution(self, X_projection, k):
+    def _compute_moments_projected_distrbution(self, X_projection, k, factorial_k):
         """
         encode distribution into a vector having length num_moments, 
         which calculates high-order moment of projected distribution having support X.
@@ -196,12 +183,12 @@ class Embeddings_sOTDD():
         # shape == (num_projection, num_examples, num_moments)
 
         avg_moment_X_projection = torch.sum(moment_X_projection, dim=1) / X_projection.shape[0] # shape == (num_projection, num_moments)
-        avg_moment_X_projection = normalizing_moments(avg_moment_X_projection, k)
+        avg_moment_X_projection = normalizing_moments(avg_moment_X_projection, k, factorial_k)
 
         return avg_moment_X_projection # shape == (num_projection, num_moments)
 
 
-    def _compute_projected_dataset_matrix(self, dict_data, projection_matrix, projection_matrix_2, k, use_conv=False):
+    def _compute_projected_dataset_matrix(self, dict_data, projection_matrix, projection_matrix_2, k, factorial_k, use_conv=False):
         
         proj_matrix_dataset = list()
         for (cls_id, data) in dict_data.items():
@@ -210,7 +197,11 @@ class Embeddings_sOTDD():
                 data = data.reshape(data.shape[0], -1)
 
             X_projection = self._project_X(X=data, projection_matrix=projection_matrix, use_conv=use_conv) # shape == (num_examples, num_projection)
-            avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k)
+
+            # print(X_projection.min(), X_projection.max())
+            X_projection = torch.clamp(X_projection, min=-5, max=5)
+
+            avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k, factorial_k=factorial_k)
             # shape == (num_projection, num_moments)
             X_projection = torch.permute(X_projection, dims=(1, 0)) # shape == (num_projection, num_examples)
 
@@ -232,38 +223,57 @@ class Embeddings_sOTDD():
         return proj_proj_matrix_dataset.transpose(1, 0) # shape == (total_examples, num_projection)
 
     
-    def get_embeddings(self, dict_data, maxsamples, theta, psi, moment, num_projections=1000, use_conv=False):
+    def get_embeddings(self, dict_data, maxsamples, theta, psi, moment, factorial_moment, num_projections=1000, use_conv=False):
 
         chunk_dataset_embeddings = self._compute_projected_dataset_matrix(dict_data=dict_data,
                                                                         projection_matrix=theta,
                                                                         projection_matrix_2=psi,
                                                                         k=moment,
+                                                                        factorial_k=factorial_moment,
                                                                         use_conv=use_conv) 
 
         return chunk_dataset_embeddings
 
 
-def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evaluate_time=False):
+def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, **kwargs):
 
-    num_moments = 5
+    num_moments = kwargs.get('num_moments', 8)
 
-    dimension = 28
-    num_channels = 1
-    use_conv = True
-    precision = "float"
-    p = 2
+    dimension = kwargs.get('dimension', 768)
+    num_channels = kwargs.get('num_channels', 1)
+    use_conv = kwargs.get('use_conv', False)
+    precision = kwargs.get('precision', "float")
+    p = kwargs.get('p', 2)
 
-    chunk = 1000
-    chunk_num_projection = num_projections // chunk
+    chunk = kwargs.get('chunk', 1000)
+    
+    if num_projections < chunk:
+        chunk = num_projections
+        chunk_num_projection = 1
+    else:
+        chunk_num_projection = num_projections // chunk
 
     dtype = torch.DoubleTensor if precision == 'double' else torch.FloatTensor
 
 
     list_moments = list()
+    list_factorial_moments = list()
     list_theta = list()
     list_psi = list()
     for i in range(chunk_num_projection):
-        chunk_moments = torch.stack([generate_moments(num_moments=num_moments, min_moment=1, max_moment=None, gen_type="poisson") for lz in range(chunk)])
+        chunk_moments = torch.stack([generate_moments(num_moments=num_moments).to(device) for lz in range(chunk)])
+
+        # chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
+
+        unique_chunk_moments = torch.unique(chunk_moments)
+
+        lookup_factorial = list()
+        for i in range(len(unique_chunk_moments)):
+            lookup_factorial.append(math.factorial(int(unique_chunk_moments[i])))
+
+        factorial_chunk_moments = torch.zeros_like(chunk_moments)
+        for i in range(len(unique_chunk_moments)):
+            factorial_chunk_moments[chunk_moments == unique_chunk_moments[i]] = lookup_factorial[i]
 
         if use_conv is True:
             chunk_theta = generate_unit_convolution_projections(image_size=dimension, num_channels=num_channels, num_projection=chunk, device=device, dtype=dtype)
@@ -275,13 +285,13 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
         list_moments.append(chunk_moments)
         list_theta.append(chunk_theta)
         list_psi.append(chunk_psi)
+        list_factorial_moments.append(factorial_chunk_moments)
 
     embeddings = Embeddings_sOTDD(precision=precision, device=device)
 
     list_dict_data = list()
     for D in list_D:
         X, Y, dict_data = embeddings._load_datasets(D=D, labels_kept=None, maxsamples=None, device=device)
-        print(X.shape, Y.shape)
         del X 
         del Y 
         list_dict_data.append(dict_data)
@@ -289,11 +299,6 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
     del list_D
 
     list_w1d = list()
-
-    if evaluate_time is True:
-        all_start_time = time.time()
-
-    duration_periods = dict()
 
     for ch in range(chunk_num_projection):
         
@@ -304,6 +309,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
                                                                 theta=list_theta[ch], 
                                                                 psi=list_psi[ch], 
                                                                 moment=list_moments[ch], 
+                                                                factorial_moment=list_factorial_moments[ch],
                                                                 num_projections=chunk,
                                                                 use_conv=use_conv)
             list_chunk_embeddings.append(chunk_dataset_embeddings)
@@ -318,23 +324,17 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, evalu
                                                 device=device)  # shape (chunk)
                 
                 list_chunk_w1d.append(w_1d.reshape(-1, 1))
-        
+         
         list_chunk_w1d = torch.cat(list_chunk_w1d, dim=1)
         list_w1d.append(list_chunk_w1d)
 
-        if evaluate_time is True:
-            period_end_time = time.time()
-            duration_periods[(ch + 1) * chunk] = period_end_time - all_start_time
-
     list_w1d = torch.cat(list_w1d, dim=0)
+
     if p != 1:
         sw = torch.pow(input=list_w1d, exponent=p)
     else:
         sw = list_w1d
     sw = torch.pow(torch.mean(sw, dim=0), exponent=1/p) 
 
-    if evaluate_time is True:
-        return sw, duration_periods
-    else:
-        return sw
+    return sw
 
