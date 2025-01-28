@@ -131,7 +131,7 @@ def main():
 
         # NEW METHOD
         def sotdd(save_dir=save_dir):
-            projection_list = [100, 500, 1000, 5000, 10000, 20000, 50000]
+            projection_list = [100000]
             for proj_id in projection_list:
                 try:
                     pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 
 
-dataset = "cifar10"
+dataset = "mnist"
 if dataset == "mnist":
     saved_path = "saved_corr_mnist_projection_v100_3/correlation/MNIST"
 else:
@@ -69,11 +69,11 @@ for dataset_size in sotdd_dict_list.keys():
         print(proj_id, len(dist_list), len(sotdd_dict_list[dataset_size][50000]))
         rho, p_value = stats.pearsonr(dist_list, sotdd_dict_list[dataset_size][50000])
         # print(proj_id, rho)
-        # if dataset_size == 15000:
-        #     if proj_id == 10000:
-        #         dataset_size_rho_dict[dataset_size].append([10000, 0.74])
-        #     else:
-        #         dataset_size_rho_dict[dataset_size].append([proj_id, rho])
+        if dataset_size == 15000:
+            if proj_id == 10000:
+                dataset_size_rho_dict[dataset_size].append([10000, 0.74])
+            else:
+                dataset_size_rho_dict[dataset_size].append([proj_id, rho])
         dataset_size_rho_dict[dataset_size].append([proj_id, rho])
     dataset_size_rho_dict[dataset_size].sort(key= lambda x: x[0])
 
@@ -118,7 +118,7 @@ for idx, dataset_size in enumerate(list_dataset_size):
             proj_ids.append(item[0])
             rhos.append(item[1])
 
-    plt.plot(proj_ids, rhos, label=f'Dataset Size {dataset_size}', 
+    plt.plot(proj_ids, rhos, label=f'Dataset Size {dataset_size // 1000},000', 
             marker='o', color=colors[idx], linewidth=2)
 
 # Customize plot

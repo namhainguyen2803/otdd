@@ -60,7 +60,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = "cpu"
 
 # Load data
-MAXSIZE_DIST = 10000
+MAXSIZE_DIST = None
 MAXSIZE_TRAINING = None
 
 def generate_reference(num, dim_low, dim, attached_dim, seed=0):
@@ -474,7 +474,7 @@ if __name__ == "__main__":
     #     json.dump(DIST_otdd, json_file, indent=4)
 
 
-    DIST_sotdd = compute_sotdd_distance(num_projection=50000)
+    DIST_sotdd = compute_sotdd_distance(num_projection=20000)
     dist_file_path = f'{parent_dir}/sotdd_dist_26_01_2025.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_sotdd, json_file, indent=4)
