@@ -1,2 +1,0 @@
-CUDA_VISIBLE_DEVICES=4 python3 augmentation_exp.py
-CUDA_VISIBLE_DEVICES=4 python3 augmentation_exp.py
