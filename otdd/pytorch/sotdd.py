@@ -262,9 +262,7 @@ def compute_pairwise_distance(list_D, device='cpu', num_projections=10000, **kwa
     list_psi = list()
     for i in range(chunk_num_projection):
         chunk_moments = torch.stack([generate_moments(num_moments=num_moments).to(device) for lz in range(chunk)])
-
-        # chunk_moments = torch.stack([torch.arange(num_moments).to(device) + 1 for lz in range(chunk)])
-
+        
         unique_chunk_moments = torch.unique(chunk_moments)
 
         lookup_factorial = list()

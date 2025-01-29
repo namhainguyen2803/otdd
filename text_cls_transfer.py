@@ -26,7 +26,7 @@ def main():
 
     args = parser.parse_args()
 
-    parent_dir = f"saved/text_cls_new"
+    parent_dir = f"saved_text_cls/"
     pretrained_weights = parent_dir + "/pretrained_weights" # save pretrained weights, already had
     adapt_weights = parent_dir + "/adapt_weights" # to save fine-tuned weights
     os.makedirs(adapt_weights, exist_ok=True)

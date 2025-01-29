@@ -74,7 +74,7 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_corr_cifar10_v100_19_01_2025_2", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_corr_cifar10", help='Parent directory')
     args = parser.parse_args()
 
     parent_dir = f'{args.parent_dir}/correlation/CIFAR10'
@@ -95,15 +95,13 @@ def main():
     max_dataset_size = len(dataset) // 2
     print(f"Maximum number of datapoint for each dataset: {max_dataset_size}")
 
-    # list_dataset_size = [1000 * (i + 1) for i in range(int(max_dataset_size // 1000))]
-    # list_dataset_size = [1000, 3000, 5000, 7000, 10000] * 10
     list_dataset_size = [random.randint(5, 10) * 1000 for i in range(10)]
 
     print(list_dataset_size)
 
     for idx in range(len(list_dataset_size)):
         dataset_size = list_dataset_size[idx]
-        save_dir = f"{parent_dir}/seed_{idx + 3}_size_{dataset_size}"
+        save_dir = f"{parent_dir}/seed_{idx}_size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
 
         shuffled_indices = np.random.permutation(indices)
@@ -124,7 +122,6 @@ def main():
         dataloaders = [dataloader1, dataloader2]
 
 
-        # NEW METHOD
         projection_list = [10000, 5000, 3000, 1000, 500]
         for proj_id in projection_list:
             pairwise_dist = torch.zeros(len(dataloaders), len(dataloaders))

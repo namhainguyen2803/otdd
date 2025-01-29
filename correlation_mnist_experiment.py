@@ -75,7 +75,7 @@ transform = transforms.Compose([
 
 def main():
     parser = argparse.ArgumentParser(description='Arguments for sOTDD and OTDD computations')
-    parser.add_argument('--parent_dir', type=str, default="saved_corr_mnist_v100_19_01_2025_2", help='Parent directory')
+    parser.add_argument('--parent_dir', type=str, default="saved_corr_mnist", help='Parent directory')
     args = parser.parse_args()
 
     parent_dir = f'{args.parent_dir}/correlation/MNIST'
@@ -100,15 +100,13 @@ def main():
     pointer_dataset2 = max_dataset_size
 
     list_dataset_size = [random.randint(5, 10) * 1000 for i in range(10)]
-    # list_dataset_size = [1000 * (i + 1) for i in range(int(max_dataset_size // 1000))]
-    # list_dataset_size = [1000, 3000, 5000, 7000, 10000] * 10
 
 
     print(list_dataset_size)
 
     for idx in range(len(list_dataset_size)):
         dataset_size = list_dataset_size[idx]
-        save_dir = f"{parent_dir}/seed_{idx + 8}_size_{dataset_size}"
+        save_dir = f"{parent_dir}/seed_{idx}_size_{dataset_size}"
         os.makedirs(save_dir, exist_ok=True)
 
         shuffled_indices = np.random.permutation(indices)

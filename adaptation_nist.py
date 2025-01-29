@@ -4,41 +4,31 @@ import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data
 from otdd.pytorch.method5 import compute_pairwise_distance
 from otdd.pytorch.distance import DatasetDistance
-
 from otdd.pytorch.method_gaussian import load_full_dataset
 from otdd.pytorch.moments import compute_label_stats
-
 import os
 import torch.nn.functional as F
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
-
 from scipy import stats
 import json
-
 import pickle
-
 from trainer import *
-
-
 from wte.distance import WTE
 from scipy.spatial import distance
-
-
 from geoopt import Lorentz as Lorentz_geoopt
-
 from hswfs_otdd.utils.hmds import HyperMDS
 from hswfs_otdd.utils.bures_wasserstein import LabelsBW
-
 from hswfs_otdd.hswfs.manifold.euclidean import Euclidean
 from hswfs_otdd.hswfs.manifold.product import ProductManifold
 from hswfs_otdd.hswfs.manifold.poincare import Poincare
 from hswfs_otdd.hswfs.manifold.lorentz import Lorentz
 from hswfs_otdd.hswfs.sw import sliced_wasserstein
+
+
 
 
 
@@ -280,7 +270,7 @@ def compute_sotdd_distance(maxsamples=MAXSIZE_DIST, num_projection=10000, METADA
         "chunk": 1000
     }
 
-    sw_list = compute_pairwise_distance(list_D=list_dataset, device="cpu", num_projections=num_projection, evaluate_time=False, **kwargs)
+    sw_list = compute_pairwise_distance(list_D=list_dataset, device="cpu", num_projections=num_projection, **kwargs)
 
     all_dist_dict = dict()
     for i in range(len(LIST_DATASETS)):

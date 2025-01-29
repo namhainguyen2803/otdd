@@ -199,7 +199,7 @@ def main():
     imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=SOTDD_MAX_SIZE, batch_size=64)
     
     # Compute s-OTDD
-    num_projection = 10000
+    num_projection = 100000
     kwargs = {
         "dimension": 32,
         "num_channels": 3,
@@ -210,13 +210,13 @@ def main():
         "chunk": 1000
     }
     list_dataset = [cifar10_dataloader, imagenet_dataloader]
-    sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device=DEVICE, num_projections=num_projection, evaluate_time=False, **kwargs)[0].item()
+    sotdd_dist = compute_pairwise_distance(list_D=list_dataset, device="cpu", num_projections=num_projection, **kwargs)[0].item()
     print(sotdd_dist)
 
     cifar10_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_cifar10.pt', maxsize=OTDD_MAX_SIZE, batch_size=64)
     imagenet_dataloader = get_dataloader(datadir=f'{parent_dir}/transformed_train_imagenet.pt', maxsize=OTDD_MAX_SIZE, batch_size=64)
 
-
+    # Compute OTDD (Exact)
     otdd_dist = DatasetDistance(cifar10_dataloader,
                                 imagenet_dataloader,
                                 inner_ot_method='exact',
@@ -232,8 +232,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-    

@@ -68,11 +68,7 @@ def eval_bert(model, classifier, test_loader, device="cuda"):
 
 def main():
 
-    # time_difference = timedelta(hours=7)
-    # current_utc = datetime.utcnow()
-    # current_vietnam_time = current_utc + time_difference
-    # current_datetime_vn = current_vietnam_time.strftime('%Y-%m-%d_%H-%M-%S')
-    parent_dir = f"saved/text_cls_new/baseline_new"
+    parent_dir = f"saved_text_cls"
     os.makedirs(parent_dir, exist_ok=True)
 
 

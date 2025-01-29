@@ -38,7 +38,6 @@ from hswfs_otdd.hswfs.manifold.lorentz import Lorentz
 from hswfs_otdd.hswfs.sw import sliced_wasserstein
 
 
-np.random.seed(42)
 
 
 def generate_reference(num, dim_low, dim, attached_dim, seed=0):
@@ -86,9 +85,6 @@ def main():
 
     parent_dir = f'{args.parent_dir}/time_comparison/MNIST'
     os.makedirs(parent_dir, exist_ok=True)
-
-    DEVICE = "cpu"
-    print(f"Use CUDA or not: {DEVICE}")
 
     dataset = MNIST(root='data', train=True, download=False)
     test_dataset = MNIST(root='data', train=False, download=False, transform=transform)
@@ -150,7 +146,10 @@ def main():
                         "p": 2,
                         "chunk": 1000
                     }
-                    list_pairwise_dist, sotdd_time_taken = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device=DEVICE, evaluate_time=True, **kwargs)
+                    start = time.time()
+                    list_pairwise_dist = compute_pairwise_distance(list_D=dataloaders, num_projections=proj_id, device="cpu", **kwargs)
+                    end = time.time()
+                    sotdd_time_taken = end - start
                     t = 0
                     for i in range(len(dataloaders)):
                         for j in range(i+1, len(dataloaders)):
@@ -169,9 +168,6 @@ def main():
                 # OTDD
                 dict_OTDD = torch.zeros(len(dataloaders), len(dataloaders))
                 print("Compute OTDD (exact)...")
-                # start = torch.cuda.Event(enable_timing=True)
-                # end = torch.cuda.Event(enable_timing=True)
-                # start.record()
                 start = time.time()
                 for i in range(len(dataloaders)):
                     for j in range(i+1, len(dataloaders)):
@@ -181,13 +177,10 @@ def main():
                                                 debiased_loss=True,
                                                 p=2,
                                                 entreg=1e-3,
-                                                device=DEVICE)
+                                                device="cpu")
                         d = dist.distance(maxsamples=None).item()
                         dict_OTDD[i][j] = d
                         dict_OTDD[j][i] = d
-                # end.record()
-                # torch.cuda.synchronize()
-                # otdd_time_taken = start.elapsed_time(end) / 1000
                 end = time.time()
                 otdd_time_taken = end - start
                 print(otdd_time_taken)
@@ -215,7 +208,7 @@ def main():
                                                 nworkers_stats=0,
                                                 sqrt_niters=20,
                                                 entreg=1e-3,
-                                                device=DEVICE)
+                                                device="cpu")
                         d = dist.distance(maxsamples=None).item()
                         dict_OTDD[i][j] = d
                         dict_OTDD[j][i] = d
@@ -235,7 +228,7 @@ def main():
                 start = time.time()
                 reference = generate_reference(dataset_size, 4, 28, 10)
                 print(reference.shape)
-                wtes = WTE(subdatasets, label_dim=10, device=DEVICE, ref=reference.cpu(), maxsamples=dataset_size)
+                wtes = WTE(subdatasets, label_dim=10, device="cpu", ref=reference.cpu(), maxsamples=dataset_size)
                 wtes = wtes.reshape(wtes.shape[0], -1)
                 wte_distance = distance.cdist(wtes, wtes, 'euclidean')
                 end = time.time()
@@ -254,7 +247,7 @@ def main():
             scaling = 0.1
             d = 10
             n_epochs = 10000
-            emb = LabelsBW(device=DEVICE, maxsamples=dataset_size)
+            emb = LabelsBW(device="cpu", maxsamples=dataset_size)
             distance_array = emb.dissimilarity_for_all(subdatasets)
             lorentz_geoopt = Lorentz_geoopt()
             embedding = HyperMDS(d, lorentz_geoopt, torch.optim.Adam, scaling=scaling, loss="ads")
@@ -268,12 +261,12 @@ def main():
                 X, Y = emb.preprocess_dataset(cac_dataset)
                 label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
                 labels = torch.stack([torch.from_numpy(label_emb[target])
-                                    for target in Y], dim=0).squeeze(1).to(DEVICE)
+                                    for target in Y], dim=0).squeeze(1).to("cpu")
                 data_X.append(X)
                 data_Y.append(labels)
             d_y = data_Y[0].shape[1]
-            manifolds = [Euclidean(28*28, device=DEVICE), Lorentz(d_y, projection="horospheric", device=DEVICE)]
-            product_manifold = ProductManifold(manifolds, torch.ones((2,), device=DEVICE)/np.sqrt(2))
+            manifolds = [Euclidean(28*28, device="cpu"), Lorentz(d_y, projection="horospheric", device="cpu")]
+            product_manifold = ProductManifold(manifolds, torch.ones((2,), device="cpu")/np.sqrt(2))
             end = time.time()
             hswfs_embedding_time_taken = end - start
 
