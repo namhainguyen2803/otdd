@@ -115,7 +115,7 @@ def compute_otdd_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None):
                                     debiased_loss=True,
                                     p=2,
                                     entreg=1e-3,
-                                    device=DEVICE)
+                                    device="cpu")
 
             d = dist.distance(maxsamples = maxsamples).item()
 
@@ -153,7 +153,7 @@ def compute_otdd_gaussian_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=Non
                                     debiased_loss=True,
                                     p=2,
                                     entreg=1e-3,
-                                    device=DEVICE)
+                                    device="cpu")
 
             d = dist.distance(maxsamples = maxsamples).item()
 
@@ -231,7 +231,7 @@ def compute_hswfs_distance(maxsamples=MAXSIZE_DIST, METADATA_DATASET=None, num_p
         X, Y = emb.preprocess_dataset(cac_dataset)
         label_emb = mds[emb.class_num*cac_idx:emb.class_num*(cac_idx+1)].detach().numpy()
         labels = torch.stack([torch.from_numpy(label_emb[target])
-                            for target in Y], dim=0).squeeze(1).to(DEVICE)
+                            for target in Y], dim=0).squeeze(1).to("cpu")
         data_X.append(X)
         data_Y.append(labels)
     d_y = data_Y[0].shape[1]
