@@ -583,24 +583,6 @@ def generate_uniform_unit_sphere_projections(dim, num_projection=1000, device="c
 
     return projection_matrix.type(dtype).to(device)
 
-
-def generate_Gaussian_projectors(dim, num_projection=1000, device="cpu", dtype=torch.FloatTensor):
-
-    # Random orthogonal vectors for mean
-    theta = torch.randn(num_projection, dim, device=device)
-    theta = theta / torch.sqrt(torch.sum(theta ** 2, dim=1, keepdim=True))
-
-    # Random orthogonal matrices for covariance
-    D = theta[:, None] * torch.eye(theta.shape[-1], device=device)
-    Z = torch.randn(size=(num_projection, dim, dim),device=device)
-    Q, R = torch.linalg.qr(Z)
-    lambd = torch.diagonal(R, dim1=-2, dim2=-1)
-    lambd = lambd / torch.abs(lambd)
-    P = lambd[:, None] * Q
-    A = torch.matmul(P, torch.matmul(D, torch.transpose(P, -2, -1)))
-
-    return theta, A
-
 def generate_uniform_unit_sphere_projections_2(num_projection_1=1000, num_projection_2=1000, dim=1024, device="cpu", dtype=torch.FloatTensor):
     """
     Generate random uniform unit sphere projections matrix

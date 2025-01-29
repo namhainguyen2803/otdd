@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data
-from otdd.pytorch.method5 import compute_pairwise_distance
+from otdd.pytorch.sotdd import compute_pairwise_distance
 from otdd.pytorch.distance import DatasetDistance
 from otdd.pytorch.method_gaussian import load_full_dataset
 from otdd.pytorch.moments import compute_label_stats
@@ -47,7 +47,7 @@ os.makedirs(adapt_path, exist_ok=True)
 DEVICE = "cpu"
 
 # Load data
-MAXSIZE_DIST = 10000
+MAXSIZE_DIST = None
 MAXSIZE_TRAINING = None
 
 def generate_reference(num, dim_low, dim, attached_dim, seed=0):
@@ -402,13 +402,13 @@ if __name__ == "__main__":
     
 
     DIST_otdd = compute_otdd_gaussian_distance(METADATA_DATASET=METADATA_DATASET)
-    dist_file_path = f'{parent_dir}/otdd_gaussian_dist.json'
+    dist_file_path = f'{parent_dir}/otdd_gaussian_distance.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_otdd, json_file, indent=4)
 
 
     DIST_otdd = compute_otdd_distance(METADATA_DATASET=METADATA_DATASET)
-    dist_file_path = f'{parent_dir}/otdd_exact_dist.json'
+    dist_file_path = f'{parent_dir}/otdd_exact_distance.json'
     with open(dist_file_path, 'w') as json_file:
         json.dump(DIST_otdd, json_file, indent=4)
 

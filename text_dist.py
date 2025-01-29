@@ -4,7 +4,7 @@ import torch.nn as nn
 from otdd.pytorch.datasets import load_textclassification_data
 from models.resnet import ResNet18, ResNet50
 from otdd.pytorch.distance import DatasetDistance
-from otdd.pytorch.method5 import compute_pairwise_distance
+from otdd.pytorch.sotdd import compute_pairwise_distance
 from trainer import *
 import os
 import random
@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import argparse
 import time
 
-# DEVICE = "cpu"
+DEVICE = "cpu"
 
 # ["AG_NEWS", "DBpedia", "YelpReviewPolarity", "YelpReviewFull", "YahooAnswers", "AmazonReviewPolarity", "AmazonReviewFull"]
 

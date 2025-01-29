@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, Dataset
 import numpy as np
 import os
 import pickle
-from otdd.pytorch.method5 import compute_pairwise_distance
+from otdd.pytorch.sotdd import compute_pairwise_distance
 from otdd.pytorch.datasets import load_torchvision_data
 from otdd.pytorch.distance import DatasetDistance
 from torch.utils.data.sampler import SubsetRandomSampler

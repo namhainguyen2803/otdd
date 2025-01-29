@@ -4,7 +4,7 @@ import torch.nn as nn
 from otdd.pytorch.datasets import load_torchvision_data, load_imagenet
 from models.resnet import ResNet50
 from otdd.pytorch.distance import DatasetDistance
-from otdd.pytorch.method5 import compute_pairwise_distance
+from otdd.pytorch.sotdd import compute_pairwise_distance
 from trainer import *
 import os
 import random
