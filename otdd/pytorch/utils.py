@@ -674,8 +674,13 @@ def sample_zero_truncated_poisson(rate_vector):
     return 1 + torch.poisson(rate_vector - t)
 
 
+# def generate_moments(num_moments):
+#     mean_moment = torch.tensor([1, 2, 3, 4, 5])
+#     moment = sample_zero_truncated_poisson(mean_moment)
+#     return moment
+
 def generate_moments(num_moments):
-    mean_moment = torch.tensor([1, 2, 3, 4, 5])
+    mean_moment = torch.arange(num_moments) + 1
     moment = sample_zero_truncated_poisson(mean_moment)
     return moment
 
