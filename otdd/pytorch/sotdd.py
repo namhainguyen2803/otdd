@@ -197,10 +197,8 @@ class Embeddings_sOTDD():
                 data = data.reshape(data.shape[0], -1)
 
             X_projection = self._project_X(X=data, projection_matrix=projection_matrix, use_conv=use_conv) # shape == (num_examples, num_projection)
-
-            # print(X_projection.min(), X_projection.max())
-            X_projection = torch.clamp(X_projection, min=-5, max=5)
-
+            if use_conv is True:
+                X_projection = torch.clamp(X_projection, min=-5, max=5)
             avg_moment_X_projection = self._compute_moments_projected_distrbution(X_projection=X_projection, k=k, factorial_k=factorial_k)
             # shape == (num_projection, num_moments)
             X_projection = torch.permute(X_projection, dims=(1, 0)) # shape == (num_projection, num_examples)
