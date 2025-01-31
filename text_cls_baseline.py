@@ -68,7 +68,7 @@ def eval_bert(model, classifier, test_loader, device="cuda"):
 
 def main():
 
-    parent_dir = f"saved_text_cls"
+    parent_dir = f"saved_text_cls/baseline"
     os.makedirs(parent_dir, exist_ok=True)
 
 
